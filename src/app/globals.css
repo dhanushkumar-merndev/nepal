@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root {
+  --background: #e6e6e6;
+  --foreground: #111111;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background-color: var(--background);
+  background-image: url("https://www.transparenttextures.com/patterns/arches.png");
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Inter, "Plus Jakarta Sans", sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.premium-card {
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.primary-btn {
+  border-radius: 999px;
+  background: linear-gradient(135deg, #159fd3, #0b7fae);
+  color: white;
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg, #777, #111, #777);
+  background-size: 200% auto;
+  color: transparent;
+  background-clip: text;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
