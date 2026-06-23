@@ -1,4 +1,6 @@
 import { HelpCircle, MessageCircle, PackageCheck, ShieldCheck, Sparkles } from "lucide-react";
+import { FAQItem } from "@/components/site/faq-item";
+import { FadeIn } from "@/components/site/fade-in";
 
 export function HowItWorks() {
   const items = [
@@ -38,10 +40,7 @@ export function FAQSection() {
       </div>
       <div className="mt-6 grid gap-3">
         {items.map(([question, answer]) => (
-          <details key={question} className="premium-card p-5">
-            <summary className="cursor-pointer font-semibold">{question}</summary>
-            <p className="mt-3 text-sm text-[#555]">{answer}</p>
-          </details>
+          <FAQItem key={question} question={question} answer={answer} />
         ))}
       </div>
     </section>
@@ -51,18 +50,19 @@ export function FAQSection() {
 export function TrustSection() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-10">
-      <div className="premium-card flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="size-9 text-[#16A34A]" />
-          <div>
-            <h2 className="text-xl font-bold">Secure, simple checkout</h2>
-            <p className="text-sm text-[#555]">Orders are saved server-side when Supabase is configured, then sent to WhatsApp.</p>
+      <FadeIn>
+        <div className="premium-card p-6">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="size-9 text-[#16A34A]" />
+            <div>
+              <h2 className="text-xl font-bold">Secure, simple checkout</h2>
+              <p className="text-sm text-[#555]">
+                Add your plans to cart, enter your details, and send a ready-made order message for quick confirmation.
+              </p>
+            </div>
           </div>
         </div>
-        <a className="primary-btn px-5 py-3 text-center text-sm font-bold" href="https://wa.me/9779842901942">
-          Chat on WhatsApp
-        </a>
-      </div>
+      </FadeIn>
     </section>
   );
 }

@@ -5,17 +5,20 @@ import { Header } from "@/components/site/header";
 import { Hero } from "@/components/site/hero";
 import { ServiceCard } from "@/components/site/service-card";
 import { FAQSection, TrustSection } from "@/components/site/sections";
+import { TopReviews } from "@/components/site/top-reviews";
+import { getHomeReviews } from "@/lib/data/home-reviews";
 import { getProducts } from "@/lib/data/products";
 
 export default async function Home() {
-  const products = await getProducts();
+  const [products, reviews] = await Promise.all([getProducts(), getHomeReviews()]);
   const featured = products.filter((product) => product.is_best_seller).slice(0, 4);
+  const popular = featured.length ? featured : products.slice(0, 4);
 
   return (
     <>
       <Header />
       <main className="flex-1">
-        <Hero />
+        <Hero services={popular} />
         <TrustSection />
         <section id="popular-plans" className="mx-auto max-w-7xl px-4 py-12">
           <div className="flex items-end justify-between gap-4">
@@ -31,7 +34,7 @@ export default async function Home() {
             </Link>
           </div>
           <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-            {(featured.length ? featured : products.slice(0, 4)).map((product) => (
+            {popular.map((product) => (
               <ServiceCard key={product.id} product={product} />
             ))}
           </div>
@@ -44,6 +47,7 @@ export default async function Home() {
             </Link>
           </div>
         </section>
+        <TopReviews reviews={reviews} />
         <FAQSection />
       </main>
       <Footer />

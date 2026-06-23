@@ -107,7 +107,7 @@ const outOfScopeTerms = [
 const greetings = ["hi", "hello", "hey", "namaste", "help"];
 
 const refusal =
-  "I can only help with OTT Subscriptions Nepal services, plans, pricing, checkout, and support. Try asking me about Netflix plans, Spotify Premium, YouTube Premium, Free Fire topup, or WhatsApp checkout.";
+  "I can only help with Ott Subscription Nepal services, plans, pricing, checkout, and support. Try asking me about Netflix plans, Spotify Premium, YouTube Premium, Free Fire topup, or WhatsApp checkout.";
 
 export async function POST(request: Request) {
   const limit = await rateLimit(`ai-chat:${getIp(request)}`);
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
 
   if (!apiKey) {
     return streamLocalResponse(
-      "I can help with OTT Subscriptions Nepal plans and checkout. Groq is not configured yet, but you can ask about Netflix, Spotify Premium, YouTube Premium, Free Fire topup, prices, stock, cart, payment, and WhatsApp checkout.",
+      "I can help with Ott Subscription Nepal plans and checkout. Groq is not configured yet, but you can ask about Netflix, Spotify Premium, YouTube Premium, Free Fire topup, prices, stock, cart, payment, and WhatsApp checkout.",
       defaultActions(),
     );
   }
@@ -198,7 +198,7 @@ export async function POST(request: Request) {
 }
 
 function buildSystemPrompt(productContext: string) {
-  return `You are the official AI assistant for OTT Subscriptions Nepal.
+  return `You are the official AI assistant for Ott Subscription Nepal.
 
 CRITICAL GUARDRAILS:
 - You must answer ONLY from the website/product context below.
@@ -212,7 +212,7 @@ Your job is to help users understand available OTT, music, gaming, and digital s
 
 You can help with product recommendations, comparing available plans, explaining prices and offer prices, stock availability, cart, WhatsApp checkout, payment methods, activation, renewal support, reviews, and website support.
 
-You must only answer questions related to OTT Subscriptions Nepal products, plans, prices, stock, cart, checkout, payment, reviews, activation, renewal, and support.
+You must only answer questions related to Ott Subscription Nepal products, plans, prices, stock, cart, checkout, payment, reviews, activation, renewal, and support.
 
 If the user asks anything unrelated, reply exactly:
 "${refusal}"
@@ -294,11 +294,19 @@ function supportsReasoningEffort(model: string) {
 
 function actionsForMessage(message: string): RecommendedAction[] {
   const lower = message.toLowerCase();
+  if (lower.includes("contact") || lower.includes("support") || lower.includes("enquiry") || lower.includes("inquiry")) {
+    return [
+      { label: "WhatsApp Support", prompt: "How can I contact support on WhatsApp?", type: "support" },
+      { label: "How to checkout", prompt: "How do I checkout on WhatsApp?", type: "cart" },
+      { label: "View all plans", prompt: "Show me available plans.", type: "question" },
+    ];
+  }
+
   if (lower.includes("netflix")) {
     return [
       { label: "View Netflix plans", prompt: "Show me Netflix plans and prices.", type: "product", productSlug: "netflix" },
       { label: "How to checkout", prompt: "How do I checkout on WhatsApp?", type: "cart" },
-      { label: "Talk to support", prompt: "How can I contact support?", type: "support" },
+      { label: "WhatsApp Support", prompt: "How can I contact support on WhatsApp?", type: "support" },
     ];
   }
 
@@ -310,7 +318,7 @@ function defaultActions(): RecommendedAction[] {
     { label: "Show cheapest OTT plan", prompt: "Show me the cheapest OTT plan available.", type: "question" },
     { label: "Compare Spotify and YouTube", prompt: "Compare Spotify Premium and YouTube Premium.", type: "question" },
     { label: "How to checkout", prompt: "How do I checkout on WhatsApp?", type: "cart" },
-    { label: "Talk to support", prompt: "How can I contact support?", type: "support" },
+    { label: "WhatsApp Support", prompt: "How can I contact support on WhatsApp?", type: "support" },
   ];
 }
 

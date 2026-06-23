@@ -11,7 +11,7 @@ type CheckoutInput = {
 
 export function buildWhatsAppMessage(input: CheckoutInput) {
   const lines = [
-    "Hello OTT Subscriptions Nepal,",
+    "Hello Ott Subscription Nepal,",
     "",
     "I want to order:",
     "",

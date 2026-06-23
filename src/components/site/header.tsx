@@ -1,10 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { CartSheet } from "@/components/site/cart-sheet";
 
 const nav = [
   ["Home", "/"],
-  ["How It Works", "/#how-it-works"],
+  ["Plans", "/plans"],
   ["FAQ", "/#faq"],
   ["Contact", "/contact"],
 ];
@@ -12,10 +11,16 @@ const nav = [
 export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-black/10 bg-white/75 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
-        <Link href="/" className="flex items-center gap-3">
-          <Image src="/logo.png" alt="OTT Subscriptions Nepal" width={44} height={44} className="rounded-xl" />
-          <span className="hidden text-sm font-bold sm:block">OTT Subscriptions Nepal</span>
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 ">
+        <Link href="/" className="flex items-center gap-3 leading-none">
+          <img
+            src="/header-logo.png"
+            alt="Ott Subscription Nepal"
+            width={160}
+            height={160}
+            className="size-18 shrink-0 object-contain"
+          />
+          
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-[#555] lg:flex">
           {nav.map(([label, href]) => (

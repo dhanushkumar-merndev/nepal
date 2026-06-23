@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Bot, Maximize2, Menu, Minimize2, Plus, Send, Sparkles, Square, Trash2, X } from "lucide-react";
+import { Bot, Maximize2, Menu, MessageCircle, Minimize2, Plus, Send, Square, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { ChatMessage, ChatSession, RecommendedAction } from "@/lib/chat/types";
@@ -25,6 +25,7 @@ export function ChatWidget() {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [thinkingIndex, setThinkingIndex] = useState(0);
+  const [showHelpBubble, setShowHelpBubble] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const sessionRef = useRef(session);
@@ -44,6 +45,11 @@ export function ChatWidget() {
     }, 0);
     return () => window.clearTimeout(id);
   }, [refreshSessions]);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setShowHelpBubble(true), 3000);
+    return () => window.clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     if (!streaming) return;
@@ -250,7 +256,7 @@ export function ChatWidget() {
               <Bot className="size-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold">OTT Nepal Assistant</h2>
+              <h2 className="text-sm font-bold">Ott Subscription Nepal Assistant</h2>
               <p className="text-xs text-[#737373]">Plans, prices, checkout and support</p>
             </div>
           </div>
@@ -279,20 +285,35 @@ export function ChatWidget() {
               >
                 <div
                   className={cn(
-                    "max-w-[85%] rounded-3xl px-4 py-3 text-sm leading-6",
+                    "max-w-[92%] rounded-3xl px-4 py-3 text-sm leading-6",
+                    expanded && message.role === "assistant" && "lg:max-w-[min(78%,900px)]",
                     message.role === "user" ? "bg-[#159FD3] text-white" : "bg-[#f4f4f5] text-[#111]",
                   )}
                 >
-                  {message.content || (streaming ? <span className="shimmer-text">{thinkingMessages[thinkingIndex]}</span> : null)}
+                  {message.content ? (
+                    message.role === "assistant" ? (
+                      <AssistantMessage content={message.content} />
+                    ) : (
+                      message.content
+                    )
+                  ) : streaming ? (
+                    <span className="shimmer-text">{thinkingMessages[thinkingIndex]}</span>
+                  ) : null}
                   {message.recommendedActions?.length ? (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {message.recommendedActions.map((action) => (
                         <button
                           key={action.label}
                           type="button"
-                          className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-[#0B7FAE]"
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
+                            action.type === "support"
+                              ? "border border-[#0B7FAE] bg-[#159FD3] text-white shadow-sm hover:bg-[#0B7FAE]"
+                              : "border border-black/10 bg-white text-[#0B7FAE]",
+                          )}
                           onClick={() => sendMessage(action.prompt)}
                         >
+                          {action.type === "support" ? <MessageCircle className="size-3.5" /> : null}
                           {action.label}
                         </button>
                       ))}
@@ -349,15 +370,26 @@ export function ChatWidget() {
       {open ? chatPanel : null}
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setOpen(true);
+          setShowHelpBubble(false);
+        }}
         className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-[#159FD3] px-4 py-3 text-white shadow-2xl transition hover:bg-[#0B7FAE]"
         aria-label="Open AI chat"
       >
         <span className="relative grid size-8 place-items-center rounded-full bg-white/15">
           <Bot className="size-5" />
-          <Sparkles className="absolute -right-1 -top-1 size-3 fill-white text-white" />
         </span>
-        <span className="text-sm font-bold">AI Help</span>
+        {showHelpBubble && !open ? (
+          <motion.span
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: "auto" }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden whitespace-nowrap text-sm font-bold"
+          >
+            How can I help you?
+          </motion.span>
+        ) : null}
       </button>
     </>
   );
@@ -420,6 +452,155 @@ function Sidebar({
       </aside>
     </>
   );
+}
+
+function AssistantMessage({ content }: { content: string }) {
+  const blocks = splitMessageBlocks(content);
+
+  return (
+    <div className="space-y-3">
+      {blocks.map((block, index) =>
+        block.type === "table" ? (
+          <MarkdownTable key={index} lines={block.lines} />
+        ) : (
+          <p key={index} className="whitespace-pre-wrap">
+            <InlineFormattedText text={block.text} />
+          </p>
+        ),
+      )}
+    </div>
+  );
+}
+
+function MarkdownTable({ lines }: { lines: string[] }) {
+  const rows = lines
+    .filter((line) => line.includes("|"))
+    .filter((line) => !/^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line))
+    .map((line) =>
+      line
+        .trim()
+        .replace(/^\|/, "")
+        .replace(/\|$/, "")
+        .split("|")
+        .map((cell) => cell.trim().replace(/\*\*/g, "")),
+    );
+
+  if (rows.length < 2) {
+    return (
+      <p className="whitespace-pre-wrap">
+        <InlineFormattedText text={lines.join("\n")} />
+      </p>
+    );
+  }
+
+  const [head, ...body] = rows;
+
+  return (
+    <div className="w-fit max-w-full overflow-x-auto rounded-2xl border border-black/10 bg-white">
+      <table className="w-auto min-w-[520px] max-w-full table-auto border-collapse text-left text-xs">
+        <thead className="bg-[#E6F7FD] text-[#0B7FAE]">
+          <tr>
+            {head.map((cell) => (
+              <th key={cell} className="border-b border-black/10 px-3 py-3 font-bold">
+                {cell}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {body.map((row, rowIndex) => (
+            <tr key={rowIndex} className="odd:bg-white even:bg-neutral-50">
+              {row.map((cell, cellIndex) => (
+                <td key={`${rowIndex}-${cellIndex}`} className="border-b border-black/5 px-3 py-3 align-top">
+                  <InlineFormattedText text={cell} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function InlineFormattedText({ text }: { text: string }) {
+  const normalized = text.replace(/\*\*/g, "");
+  const tokens = normalized.split(/(In Stock|Low Stock|Out of Stock|Coming Soon|Best Seller|Yes|No|Rs\.\s?\d+(?:,\d{3})*)/g);
+
+  return (
+    <>
+      {tokens.map((token, index) => {
+        if (!token) return null;
+        const className = getTokenClassName(token);
+        return className ? (
+          <span key={index} className={className}>
+            {token}
+          </span>
+        ) : (
+          <span key={index}>{token}</span>
+        );
+      })}
+    </>
+  );
+}
+
+function splitMessageBlocks(content: string) {
+  const lines = content.split("\n");
+  const blocks: Array<{ type: "text"; text: string } | { type: "table"; lines: string[] }> = [];
+  let textLines: string[] = [];
+  let tableLines: string[] = [];
+
+  const flushText = () => {
+    const text = textLines.join("\n").trim();
+    if (text) blocks.push({ type: "text", text });
+    textLines = [];
+  };
+
+  const flushTable = () => {
+    if (tableLines.length) blocks.push({ type: "table", lines: tableLines });
+    tableLines = [];
+  };
+
+  for (const line of lines) {
+    if (isTableLine(line)) {
+      flushText();
+      tableLines.push(line);
+    } else {
+      flushTable();
+      textLines.push(line);
+    }
+  }
+
+  flushText();
+  flushTable();
+  return blocks;
+}
+
+function isTableLine(line: string) {
+  return line.includes("|") && line.split("|").length >= 3;
+}
+
+function getTokenClassName(token: string) {
+  const clean = token.trim();
+  if (clean === "In Stock" || clean === "Yes") {
+    return "inline-flex rounded-full bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700";
+  }
+  if (clean === "Low Stock") {
+    return "inline-flex rounded-full bg-orange-50 px-2 py-0.5 text-xs font-bold text-orange-700";
+  }
+  if (clean === "Out of Stock" || clean === "No") {
+    return "inline-flex rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700";
+  }
+  if (clean === "Coming Soon") {
+    return "inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700";
+  }
+  if (clean === "Best Seller") {
+    return "inline-flex rounded-full bg-[#E6F7FD] px-2 py-0.5 text-xs font-bold text-[#0B7FAE]";
+  }
+  if (/^Rs\./.test(clean)) {
+    return "font-bold text-[#111]";
+  }
+  return "";
 }
 
 function createSession(): ChatSession {

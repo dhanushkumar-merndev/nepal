@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/store/cart-store";
@@ -9,22 +9,31 @@ import { buildWhatsAppMessage, getWhatsAppUrl } from "@/lib/utils/whatsapp";
 
 export function CartSheet() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Manual Confirmation");
   const [note, setNote] = useState("");
   const { items, count, total, increase, decrease, removeItem, clear } = useCartStore();
+  const cartItems = mounted ? items : [];
+  const cartCount = mounted ? count() : 0;
+  const cartTotal = mounted ? total() : 0;
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setMounted(true), 0);
+    return () => window.clearTimeout(id);
+  }, []);
 
   async function checkout() {
-    if (!customerName || !phone || !items.length) return;
+    if (!mounted || !customerName || !phone || !cartItems.length) return;
 
     const payload = {
       customer_name: customerName,
       phone,
       payment_method: paymentMethod,
       note,
-      cart_items: items,
-      total_amount: total(),
+      cart_items: cartItems,
+      total_amount: cartTotal,
       whatsapp_sent: true,
     };
 
@@ -39,7 +48,7 @@ export function CartSheet() {
       phone,
       paymentMethod,
       note,
-      items,
+      items: cartItems,
     });
     window.open(getWhatsAppUrl(message), "_blank");
   }
@@ -52,10 +61,10 @@ export function CartSheet() {
         className="relative rounded-full border border-black/10 bg-white p-3"
         aria-label="Open cart"
       >
-        <ShoppingCart className="size-5" />
-        {count() > 0 ? (
+        <ShoppingCart className="size-3.5" />
+        {cartCount > 0 ? (
           <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-[#159FD3] text-xs font-bold text-white">
-            {count()}
+            {cartCount}
           </span>
         ) : null}
       </button>
@@ -75,8 +84,8 @@ export function CartSheet() {
               </button>
             </div>
             <div className="mt-6 flex-1 space-y-4 overflow-y-auto">
-              {items.length ? (
-                items.map((item) => (
+              {cartItems.length ? (
+                cartItems.map((item) => (
                   <div key={item.planId} className="rounded-2xl border border-black/10 p-4">
                     <div className="flex justify-between gap-3">
                       <div>
@@ -115,7 +124,7 @@ export function CartSheet() {
             <div className="border-t border-black/10 pt-4">
               <div className="mb-4 flex justify-between text-lg font-bold">
                 <span>Subtotal</span>
-                <span>{formatPrice(total())}</span>
+                <span>{formatPrice(cartTotal)}</span>
               </div>
               <div className="grid gap-3">
                 <input
@@ -148,7 +157,7 @@ export function CartSheet() {
                 />
               </div>
               <div className="mt-4 flex gap-2">
-                <Button className="flex-1" onClick={checkout} disabled={!items.length}>
+                <Button className="flex-1" onClick={checkout} disabled={!cartItems.length}>
                   Checkout on WhatsApp
                 </Button>
                 <Button variant="secondary" onClick={clear}>

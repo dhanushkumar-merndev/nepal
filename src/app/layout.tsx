@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ChatWidget } from "@/components/chat/chat-widget";
+import { LenisProvider } from "@/components/site/lenis-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,15 +16,24 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: "OTT Subscriptions Nepal | Premium OTT Plans & Digital Services",
+  title: "Ott Subscription Nepal | Premium OTT Plans & Digital Services",
   description:
     "Buy Netflix, Spotify, Prime Video, YouTube Premium, Crunchyroll, Zee5, Free Fire topup and digital services in Nepal with easy WhatsApp checkout.",
   openGraph: {
-    title: "OTT Subscriptions Nepal",
+    title: "Ott Subscription Nepal",
     description:
       "Premium OTT plans and digital service support in Nepal with easy WhatsApp checkout.",
     images: ["/logo.png"],
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
@@ -38,6 +48,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        <LenisProvider />
         {children}
         <ChatWidget />
       </body>

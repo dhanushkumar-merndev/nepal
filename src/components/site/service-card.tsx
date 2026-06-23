@@ -34,7 +34,7 @@ export function ServiceCard({ product }: { product: Product }) {
   return (
     <Card className="flex h-full min-h-[560px] flex-col overflow-hidden p-0">
       <div className="h-44 overflow-hidden">
-        <ProductArt name={product.name} imageUrl={product.image_url} />
+        <ProductArt name={product.name} imageUrl={product.image_url} logoUrl={product.logo_url} />
       </div>
       <div className="flex flex-1 flex-col p-5">
         <div className="flex min-h-[64px] content-start flex-wrap gap-2">

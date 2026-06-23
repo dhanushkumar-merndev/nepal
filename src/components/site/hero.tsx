@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { Product } from "@/lib/types";
 
-const services = ["Netflix", "Spotify Premium", "Prime Video", "YouTube Premium"];
 const trust = ["Fast Activation", "Nepal Support", "Easy Renewal", "Secure Checkout"];
 
-export function Hero() {
+export function Hero({ services }: { services: Pick<Product, "name" | "logo_url" | "stock_status">[] }) {
+  const heroServices = services.slice(0, 4);
+
   return (
     <section className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
-      <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
         <Badge className="bg-[#E6F7FD] text-[#0B7FAE]">Premium digital services in Nepal</Badge>
         <h1 className="mt-5 max-w-3xl text-5xl font-black tracking-tight text-[#111] md:text-7xl">
           Premium OTT Subscriptions in Nepal
@@ -39,17 +41,32 @@ export function Hero() {
       </motion.div>
       <motion.div
         className="premium-card grid gap-4 p-5"
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.15 }}
       >
-        {services.map((service, index) => (
-          <div key={service} className="flex items-center justify-between rounded-2xl bg-white p-5 shadow-sm">
-            <div>
+        {heroServices.map((service, index) => (
+          <div key={service.name} className="flex items-center justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-2xl bg-[#E6F7FD] text-[#0B7FAE]">
+                {service.logo_url ? (
+                  <img
+                    src={service.logo_url}
+                    alt={service.name}
+                    width={36}
+                    height={36}
+                    className="size-8 object-contain"
+                  />
+                ) : (
+                  <Tv className="size-6" />
+                )}
+              </div>
+              <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-[#159FD3]">Popular #{index + 1}</p>
-              <h2 className="text-xl font-bold">{service}</h2>
+                <h2 className="truncate text-xl font-bold">{service.name}</h2>
+              </div>
             </div>
-            <Badge>Available</Badge>
+            <Badge className="shrink-0">{service.stock_status === "Coming Soon" ? "Soon" : "Available"}</Badge>
           </div>
         ))}
       </motion.div>

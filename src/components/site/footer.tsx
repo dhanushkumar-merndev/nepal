@@ -6,7 +6,7 @@ export function Footer() {
     <footer id="contact" className="mt-20 border-t border-black/10 bg-white/55">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1.2fr]">
         <div>
-          <h2 className="text-xl font-bold">OTT Subscriptions Nepal</h2>
+          <h2 className="text-xl font-bold">Ott Subscription Nepal</h2>
           <p className="mt-3 text-sm text-[#555]">
             Premium digital subscription support in Nepal.
           </p>
@@ -29,7 +29,6 @@ export function Footer() {
           <div className="mt-3 grid gap-2 text-sm text-[#555]">
             <a href="https://wa.me/9779842901942">WhatsApp</a>
             <a href="mailto:support@example.com">Email</a>
-            <span>Payment Help</span>
           </div>
         </div>
         <FeedbackForm />

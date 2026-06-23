@@ -24,3 +24,29 @@ export async function POST(request: Request) {
   await invalidateProductContextCache();
   return NextResponse.json({ data, message: "Product updated and AI cache refreshed." });
 }
+
+export async function PATCH(request: Request) {
+  if (!(await isAdminRequest())) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  const body = await request.json();
+  if (!body.id) return NextResponse.json({ error: "Plan id is required." }, { status: 400 });
+  const parsed = planSchema.partial().safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  const supabase = createAdminClient();
+  if (!supabase) return NextResponse.json({ error: "Supabase admin env is missing." }, { status: 503 });
+  const { data, error } = await supabase.from("plans").update(parsed.data).eq("id", body.id).select().single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await invalidateProductContextCache();
+  return NextResponse.json({ data, message: "Product updated and AI cache refreshed." });
+}
+
+export async function DELETE(request: Request) {
+  if (!(await isAdminRequest())) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  const { id } = await request.json();
+  if (!id) return NextResponse.json({ error: "Plan id is required." }, { status: 400 });
+  const supabase = createAdminClient();
+  if (!supabase) return NextResponse.json({ error: "Supabase admin env is missing." }, { status: 503 });
+  const { error } = await supabase.from("plans").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await invalidateProductContextCache();
+  return NextResponse.json({ ok: true, message: "Product updated and AI cache refreshed." });
+}
