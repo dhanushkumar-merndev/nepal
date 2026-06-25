@@ -19,6 +19,16 @@ body {
   font-family: var(--font-geist-sans), Inter, "Plus Jakarta Sans", sans-serif;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 button,
 input,
 select,
@@ -34,10 +44,51 @@ textarea {
   backdrop-filter: blur(12px);
 }
 
+@media (max-width: 1023px) {
+  .premium-card {
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+    backdrop-filter: none;
+  }
+
+  .header-pill {
+    animation: none;
+  }
+
+  .backdrop-blur-sm,
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl {
+    backdrop-filter: none !important;
+  }
+}
+
 .primary-btn {
   border-radius: 999px;
   background: linear-gradient(135deg, #159fd3, #0b7fae);
   color: white;
+}
+
+.mobile-shine-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.mobile-shine-btn::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: -35%;
+  width: 28%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0.7) 50%, rgba(255, 255, 255, 0.2) 80%, transparent 100%);
+  transform: skewX(-20deg);
+  animation: mobile-button-shine 2.6s ease-in-out infinite;
+}
+
+@media (min-width: 1024px) {
+  .mobile-shine-btn::after {
+    display: none;
+  }
 }
 
 .shimmer-text {
@@ -51,6 +102,24 @@ textarea {
 @keyframes shimmer {
   to {
     background-position: 200% center;
+  }
+}
+
+@keyframes mobile-button-shine {
+  0% {
+    left: -35%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  55% {
+    left: 110%;
+    opacity: 1;
+  }
+  100% {
+    left: 110%;
+    opacity: 0;
   }
 }
 

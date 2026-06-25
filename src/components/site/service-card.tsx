@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Tv } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ProductArt } from "@/components/site/product-art";
 import { Stars } from "@/components/site/stars";
 import { ProductModal } from "@/components/site/product-modal";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/store/cart-store";
@@ -14,6 +15,7 @@ import { getDisplayPrice, getSaveAmount, getStartingPlan, hasOffer } from "@/lib
 import { formatPrice } from "@/lib/utils/format";
 
 export function ServiceCard({ product }: { product: Product }) {
+  const isMobile = useIsMobile();
   const [modalOpen, setModalOpen] = useState(false);
   const startingPlan = getStartingPlan(product);
   const cart = useCartStore();
@@ -21,6 +23,49 @@ export function ServiceCard({ product }: { product: Product }) {
     const item = cart.items.find((ci) => ci.planId === plan.id);
     return sum + (item?.quantity ?? 0);
   }, 0);
+
+  if (isMobile) {
+    return (
+      <>
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label={`View ${product.name} plans`}
+          className="flex w-[76px] cursor-pointer flex-col items-center gap-0 transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#159FD3] focus-visible:ring-offset-2"
+          onClick={() => setModalOpen(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setModalOpen(true);
+            }
+          }}
+        >
+          <div className="relative mx-auto size-[68px] rounded-[20px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+            {product.logo_url ? (
+              <img
+                src={product.logo_url}
+                alt={`${product.name} logo`}
+                width={68}
+                height={68}
+                className="size-full rounded-[20px] object-contain p-2.5"
+              />
+            ) : (
+              <div className="flex size-full items-center justify-center rounded-[20px] bg-gradient-to-br from-[#E6F7FD] to-white text-[#0B7FAE]">
+                <Tv className="size-7" />
+              </div>
+            )}
+            {inCartQty > 0 ? (
+              <span className="absolute -right-1 -top-1 z-10 flex size-[20px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+                {inCartQty}
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-1 truncate text-center text-[10px] font-medium leading-tight text-[#333]">{product.name}</p>
+        </div>
+        <ProductModal product={product} open={modalOpen} onOpenChange={setModalOpen} showTrigger={false} />
+      </>
+    );
+  }
 
   return (
     <>

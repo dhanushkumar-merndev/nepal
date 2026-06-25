@@ -1,8 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { signInWithGoogle } from "@/lib/auth/sign-in-google";
 import { signOut } from "@/lib/auth/sign-out";
 import { toast } from "sonner";
@@ -14,6 +16,7 @@ type Product = { id: string; name: string; logo_url?: string | null };
 const REVIEW_FORM_SEEN_COOKIE = "review_form_seen";
 
 export function ReviewForm({ products }: { products: Product[] }) {
+  const isMobile = useIsMobile();
   const [user, setUser] = useState<{
     id: string;
     email?: string;
@@ -89,7 +92,7 @@ export function ReviewForm({ products }: { products: Product[] }) {
 
   return (
     <motion.div
-      initial={firstVisitReveal ? { opacity: 0, y: 12, scale: 0.99 } : false}
+      initial={!isMobile && firstVisitReveal ? { opacity: 0, y: 12, scale: 0.99 } : false}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.32, ease: [0.25, 0.46, 0.45, 0.94] }}
       className="rounded-3xl border border-black/10 bg-white p-6"
@@ -110,6 +113,7 @@ export function ReviewForm({ products }: { products: Product[] }) {
               <img
                 src={user.avatarUrl}
                 alt={user.name}
+                referrerPolicy="no-referrer"
                 className="size-10 rounded-full object-cover"
               />
             ) : (

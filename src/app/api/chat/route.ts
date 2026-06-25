@@ -56,6 +56,13 @@ const doneTerms = ["enough", "done", "that's all", "thats all", "checkout", "pro
 const websiteIntentTerms = [
   "plan",
   "plans",
+  "explain",
+  "description",
+  "describe",
+  "detail",
+  "details",
+  "info",
+  "information",
   "price",
   "prices",
   "pricing",
@@ -442,9 +449,18 @@ function localProductResponse(
   const cheapest = cheapestPlanResponse(lower, products);
   if (cheapest) return cheapest;
 
+  const servicesOverview = servicesOverviewResponse(lower, products);
+  if (servicesOverview) return servicesOverview;
+
   const mentionedProducts = findMentionedProducts(lower, products);
+  const followUpProducts = !mentionedProducts.length
+    ? inferFollowUpProducts(lower, messages, products)
+    : [];
+  const resolvedProducts = mentionedProducts.length ? mentionedProducts : followUpProducts;
   const suggestedProducts = findSuggestedProducts(lower, products, mentionedProducts);
   const isBuying = /\b(add|buy|purchase|need|want|get|book|order)\b/.test(lower);
+  const isExplainIntent = /\b(explain|describe|detail|details|about|info|information|what is|tell me about)\b/.test(lower);
+  const hasQuantityOnlyFollowUp = !mentionedProducts.length && followUpProducts.length > 0 && quantityLikeMessage(lower);
 
   if (suggestedProducts.length) {
     const resolvedProducts = uniqueProducts([...suggestedProducts, ...mentionedProducts]);
@@ -467,7 +483,7 @@ function localProductResponse(
     };
   }
 
-  if (!mentionedProducts.length) {
+  if (!resolvedProducts.length) {
     if (greetings.includes(lower)) {
       const greetingsTexts = [
         "Namaste! I can help you find OTT plans, compare prices, check stock, add subscriptions to cart, or connect with support.",
@@ -485,28 +501,80 @@ function localProductResponse(
     return null;
   }
 
-  if (isBuying) {
-    const addActions = addActionsForExplicitPlans(lower, mentionedProducts);
-    if (addActions.length === mentionedProducts.length) {
+  if (isBuying || hasQuantityOnlyFollowUp) {
+    const addActions = addActionsForExplicitPlans(lower, resolvedProducts);
+    if (addActions.length === resolvedProducts.length) {
       return {
         text: `I found the requested plan${addActions.length > 1 ? "s" : ""}. Use the button below to add ${addActions.length > 1 ? "them" : "it"} to cart.`,
         actions: addActions,
       };
     }
 
+    if (resolvedProducts.length === 1) {
+      const product = resolvedProducts[0];
+      const activePlans = product.plans.filter((plan) => plan.is_active);
+      const quantity = quantityForProductOrMessage(lower, product);
+      if (activePlans.length === 1) {
+        const plan = activePlans[0];
+        return {
+          text: `Use the button below to add ${quantity > 1 ? `${quantity}x ` : ""}${product.name} ${plan.name} to your cart.`,
+          actions: [addToCartAction(product, plan, quantity)],
+        };
+      }
+    }
+
     return {
       text: "Which plan/month should I add? Select the available option for each service, then press the cart button.",
-      actions: [planSelectionAction(mentionedProducts, lower)],
+      actions: [planSelectionAction(resolvedProducts, lower)],
+    };
+  }
+
+  if (isExplainIntent && resolvedProducts.length === 1) {
+    const product = resolvedProducts[0];
+    return {
+      text: explainProduct(product),
+      actions: [
+        planSelectionAction([product], lower),
+        { label: "How to checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+      ],
     };
   }
 
   return {
-    text: plansTable(mentionedProducts),
+    text: plansTable(resolvedProducts),
     actions: [
-      planSelectionAction(mentionedProducts, lower),
-      ...questionActionsForProducts(mentionedProducts),
+      planSelectionAction(resolvedProducts, lower),
+      ...questionActionsForProducts(resolvedProducts),
     ],
   };
+}
+
+function explainProduct(product: Product) {
+  const activePlans = product.plans.filter((plan) => plan.is_active);
+  const availablePlans = activePlans.filter((plan) => plan.stock_status !== "Out of Stock" && plan.stock_status !== "Coming Soon");
+  const cheapestPlan = [...availablePlans].sort((a, b) => getDisplayPrice(a) - getDisplayPrice(b))[0] ?? activePlans[0];
+
+  const lines = [
+    `${product.name} is ${product.description || "available on Ott Subscription Nepal."}`,
+    `Category: ${product.category}. Stock: ${product.stock_status}.`,
+  ];
+
+  if (cheapestPlan) {
+    lines.push(`Starting plan: ${cheapestPlan.name} for ${formatPrice(getDisplayPrice(cheapestPlan))}.`);
+  }
+
+  if (activePlans.length) {
+    lines.push("");
+    lines.push("| Service | Plan | Price | Offer | Stock |");
+    lines.push("| --- | --- | --- | --- | --- |");
+    for (const plan of activePlans) {
+      lines.push(`| ${product.name} | ${plan.name} | ${formatPrice(Number(plan.real_price))} | ${plan.offer_price ? formatPrice(Number(plan.offer_price)) : "None"} | ${plan.stock_status} |`);
+    }
+  }
+
+  lines.push("");
+  lines.push("Would you like to view or add a plan?");
+  return lines.join("\n");
 }
 
 function rejectionResponse(message: string, messages: { role: string; content: string }[]) {
@@ -575,6 +643,39 @@ function cheapestPlanResponse(message: string, products: Product[]) {
       { ...addToCartAction(cheapest.product, cheapest.plan, 1), label: "Yes" },
       { label: "No", prompt: "No", type: "question" as const },
     ],
+  };
+}
+
+function servicesOverviewResponse(message: string, products: Product[]) {
+  const asksServices =
+    /\b(what|which|show|list|tell)\b/.test(message) &&
+    /\b(service|services|product|products|plans)\b/.test(message);
+
+  if (!asksServices) return null;
+
+  const activeProducts = products.filter((product) => product.is_active);
+  if (!activeProducts.length) {
+    return {
+      text: "No active services are listed right now. Please contact support on WhatsApp.",
+      actions: [supportAction],
+    };
+  }
+
+  const byCategory = new Map<string, string[]>();
+  for (const product of activeProducts) {
+    byCategory.set(product.category, [...(byCategory.get(product.category) ?? []), product.name]);
+  }
+
+  const lines = ["Here are the services we currently provide:", ""];
+  for (const [category, names] of byCategory) {
+    lines.push(`- ${category}: ${names.join(", ")}`);
+  }
+  lines.push("");
+  lines.push("Tell me which service you want and I can show plans, prices, stock, and checkout help.");
+
+  return {
+    text: lines.join("\n"),
+    actions: defaultActions(activeProducts),
   };
 }
 
@@ -754,6 +855,45 @@ function quantityForProduct(message: string, product: Product) {
   const beforeProduct = productIndex >= 0 ? message.substring(Math.max(0, productIndex - 24), productIndex).trim() : "";
   const qty = parseTrailingQuantity(beforeProduct) ?? 1;
   return Math.min(Math.max(qty, 1), 50);
+}
+
+function quantityForProductOrMessage(message: string, product: Product) {
+  const fromProduct = quantityForProduct(message, product);
+  if (fromProduct > 1) return fromProduct;
+
+  const anywhere = parseTrailingQuantity(message) ?? quantityFromAnywhere(message);
+  return Math.min(Math.max(anywhere ?? 1, 1), 50);
+}
+
+function quantityFromAnywhere(message: string) {
+  const numeric = message.match(/\b(\d+)\b/);
+  if (numeric) return Number(numeric[1]);
+
+  const words = message.split(/\s+/).filter(Boolean);
+  for (const word of words) {
+    if (numberWords[word]) return numberWords[word];
+  }
+  return null;
+}
+
+function quantityLikeMessage(message: string) {
+  return /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|twenty|thirty|forty|fifty)\b/.test(message);
+}
+
+function inferFollowUpProducts(
+  message: string,
+  messages: { role: string; content: string }[],
+  products: Product[],
+) {
+  if (!quantityLikeMessage(message) && !/\b(this|that|it)\b/.test(message)) return [];
+
+  const recent = [...messages].reverse().slice(0, 6);
+  for (const entry of recent) {
+    const found = findMentionedProducts(entry.content.toLowerCase(), products);
+    if (found.length) return found;
+  }
+
+  return [];
 }
 
 function parseTrailingQuantity(text: string) {

@@ -60,6 +60,7 @@ export function ChatWidget() {
   const addCartItem = useCartStore((state) => state.addItem);
   const decreaseCartItem = useCartStore((state) => state.decrease);
   const removeCartItem = useCartStore((state) => state.removeItem);
+  const clearCart = useCartStore((state) => state.clear);
 
   const visibleMessages = useMemo(
     () => session.messages.filter((message) => message.role !== "system"),
@@ -164,13 +165,13 @@ export function ChatWidget() {
 
     const now = new Date().toISOString();
     const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       role: "user",
       content: text,
       createdAt: now,
     };
     const assistantMessage: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       role: "assistant",
       content: "",
       createdAt: now,
@@ -189,12 +190,13 @@ export function ChatWidget() {
     setStreaming(true);
     await persist(baseSession);
 
-    const removal = applyCartRemoval(text, useCartStore.getState().items, {
+    const removal = applyCartRemoval(text, session.messages, useCartStore.getState().items, {
       decrease: decreaseCartItem,
       remove: removeCartItem,
+      clear: clearCart,
     });
     if (removal) {
-      const removalActions: RecommendedAction[] = [
+      const removalActions: RecommendedAction[] = removal.actions ?? [
         { label: "View cart", prompt: "Show me my cart.", type: "cart" },
         { label: "Proceed to Checkout", prompt: "Take me to checkout.", type: "checkout" },
       ];
@@ -222,7 +224,7 @@ export function ChatWidget() {
         signal: controller.signal,
         body: JSON.stringify({
           message: text,
-          messages: session.messages.map((message) => ({
+          messages: session.messages.slice(-20).map((message) => ({
             role: message.role,
             content: message.content,
           })),
@@ -420,7 +422,7 @@ export function ChatWidget() {
           ),
         })),
         {
-          id: crypto.randomUUID(),
+          id: randomUUID(),
           role: "assistant",
           content,
           createdAt: now,
@@ -714,7 +716,7 @@ export function ChatWidget() {
           setShowHelpBubble(false);
         }}
         data-chat-button
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-[#159FD3] py-2.5 pl-3 pr-3 text-white shadow-2xl transition hover:bg-[#0B7FAE]"
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-[#159FD3] p-2.5 text-white shadow-2xl transition hover:bg-[#0B7FAE] lg:py-2.5 lg:pl-3 lg:pr-3"
         aria-label="Open AI chat"
       >
         {showHelpBubble && !open ? (
@@ -722,7 +724,7 @@ export function ChatWidget() {
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: "auto" }}
             transition={{ duration: 0.25 }}
-            className="relative h-5 overflow-hidden whitespace-nowrap pl-2 pr-1 text-sm font-bold"
+            className="relative hidden h-5 overflow-hidden whitespace-nowrap pl-2 pr-1 text-sm font-bold lg:block"
           >
             <AnimatePresence mode="wait">
               <motion.span
@@ -738,9 +740,9 @@ export function ChatWidget() {
             </AnimatePresence>
           </motion.span>
         ) : null}
-        <span className="relative grid size-10 shrink-0 place-items-center rounded-full bg-white/20">
-          <Bot className="size-5" />
-          <span className="absolute right-0 top-0 size-3 -translate-y-1/2 translate-x-1/2 rounded-full bg-[#EF4444] ring-2 ring-white">
+        <span className="relative grid size-9 shrink-0 place-items-center rounded-full bg-white/20 md:size-10">
+          <Bot className="size-4 md:size-5" />
+          <span className="absolute right-0 top-0 size-2.5 -translate-y-1/2 translate-x-1/2 rounded-full bg-[#EF4444] ring-2 ring-white md:size-3">
             <span className="absolute inset-0 rounded-full bg-[#EF4444] opacity-60 animate-ping" />
           </span>
         </span>
@@ -1104,10 +1106,20 @@ function getTokenClassName(token: string) {
   return "";
 }
 
+function randomUUID() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 function createSession(): ChatSession {
   const now = new Date().toISOString();
   return {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     title: "New chat",
     createdAt: now,
     updatedAt: now,
@@ -1137,12 +1149,47 @@ function parseSseEvent(event: string) {
 
 function applyCartRemoval(
   text: string,
+  messages: ChatMessage[],
   cartItems: CartItem[],
-  actions: { decrease: (planId: string) => void; remove: (planId: string) => void },
+  actions: { decrease: (planId: string) => void; remove: (planId: string) => void; clear: () => void },
 ) {
   const lower = normalizeText(text);
-  if (!/\b(remove|delete|decrease|minus|take out)\b/.test(lower)) return null;
+  const clearAllPrompt = "Yes, remove all items from my cart.";
+  const wantsRemove = /\b(remove|delete|decrease|minus|take out|clear|empty)\b/.test(lower);
+  if (!wantsRemove && lower !== normalizeText(clearAllPrompt)) return null;
   if (!cartItems.length) return { message: "Your cart is already empty." };
+
+  const lastAssistant = [...messages].reverse().find((message) => message.role === "assistant");
+  const asksToClearCartDirectly = /\b(clear|empty)\b/.test(lower) && /\bcart\b/.test(lower);
+  const isClearConfirmation = lower === normalizeText(clearAllPrompt)
+    || (
+      /\b(remove|delete|clear|empty)\b/.test(lower)
+      && /\b(all|everything|entire|whole)\b/.test(lower)
+      && /\bcart\b/.test(lower)
+    )
+    || asksToClearCartDirectly;
+
+  if (isClearConfirmation) {
+    const needsConfirmation = !lastAssistant?.content.toLowerCase().includes("remove all items from your cart");
+    if (needsConfirmation) {
+      return {
+        message: "Are you sure you want to remove all items from your cart?",
+        actions: [
+          { label: "Yes", prompt: clearAllPrompt, type: "question" },
+          { label: "No", prompt: "No, keep my cart items.", type: "question" },
+        ],
+      };
+    }
+
+    actions.clear();
+    return {
+      message: "Removed all items from your cart.",
+      actions: [
+        { label: "Show plans", prompt: "Show me available plans.", type: "question" },
+        { label: "How to checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+      ],
+    };
+  }
 
   const matches = cartItems.filter((item) => {
     const product = normalizeText(item.productName);
@@ -1154,8 +1201,20 @@ function applyCartRemoval(
     return { message: "I could not find that item in your cart. Use View cart to check the current items." };
   }
 
-  const planMatches = matches.filter((item) => lower.includes(normalizeText(item.planName)));
+  const uniquePlanIds = [...new Set(matches.map((item) => item.planId))];
   const uniqueProducts = new Set(matches.map((item) => item.productName.toLowerCase()));
+  const hasJoiner = /\band\b|,/.test(lower);
+  if (uniquePlanIds.length > 1 && uniqueProducts.size > 1 && hasJoiner) {
+    for (const planId of uniquePlanIds) actions.remove(planId);
+    const labels = matches
+      .map((item) => item.productName)
+      .filter((name, index, names) => names.indexOf(name) === index);
+    return {
+      message: `Removed ${labels.join(" and ")} from your cart.`,
+    };
+  }
+
+  const planMatches = matches.filter((item) => lower.includes(normalizeText(item.planName)));
   if (matches.length > 1 && uniqueProducts.size === 1 && planMatches.length !== 1) {
     return { message: planChoiceMessage(matches) };
   }

@@ -44,8 +44,8 @@ export function ProductModal({
         <Dialog.Content data-lenis-prevent className="plan-drawer-content fixed inset-x-0 bottom-0 z-[999] max-h-[86dvh] overflow-hidden rounded-t-3xl border border-white/40 bg-white/86 shadow-2xl backdrop-blur-xl lg:inset-y-0 lg:right-auto lg:left-0 lg:max-h-none lg:w-[420px] lg:rounded-none lg:rounded-r-3xl">
           <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/50 bg-white/72 px-4 py-4 shadow-sm backdrop-blur-xl">
             <div>
-              <Dialog.Title className="text-lg font-black">{product.name}</Dialog.Title>
-              <Dialog.Description className="mt-1 text-sm text-[#555]">
+              <Dialog.Title className="text-base font-black lg:text-lg">{product.name}</Dialog.Title>
+              <Dialog.Description className="mt-1 text-xs text-[#555] lg:text-sm">
                 Choose a plan and quantity.
               </Dialog.Description>
             </div>

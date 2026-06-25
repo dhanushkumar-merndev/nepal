@@ -26,18 +26,15 @@ export function Footer() {
           <div className="absolute -right-20 -top-20 size-60 rounded-full bg-[#159FD3]/10 blur-3xl" />
           <div className="absolute -bottom-20 -left-20 size-60 rounded-full bg-[#0B7FAE]/10 blur-3xl" />
 
-          <div className="relative mx-auto max-w-7xl grid gap-10 p-8 md:p-12 lg:grid-cols-[1.4fr_0.7fr_0.7fr_1.2fr]">
+          <div className="relative mx-auto max-w-7xl grid gap-6 p-6 md:gap-8 md:p-8 md:grid-cols-2 lg:gap-10 lg:p-10 lg:grid-cols-[1.4fr_0.7fr_0.7fr_1.2fr]">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#159FD3]/20 bg-[#159FD3]/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-[#159FD3]">
-                Since 2025
-              </div>
-              <h2 className="mt-5 text-3xl font-black tracking-tight">
-                Ott<br />Subscription<br />Nepal
+              <h2 className="mt-3 text-2xl font-black tracking-tight md:text-3xl">
+                Ott Subscription<br />Nepal
               </h2>
-              <p className="mt-4 max-w-xs text-sm leading-relaxed text-[#555]">
+              <p className="mt-2 max-w-xs text-sm leading-relaxed text-[#555]">
                 Premium digital subscription activation and renewal support. Fast WhatsApp checkout.
               </p>
-              <div className="mt-6 flex gap-2">
+              <div className="mt-4 flex gap-2">
                 <a href="#" className="grid size-9 place-items-center rounded-xl border border-white/30 bg-white/60 shadow-sm backdrop-blur-sm transition-all hover:bg-[#1877F2] hover:text-white hover:shadow-md">
                   <svg viewBox="0 0 24 24" className="size-4 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                 </a>
@@ -52,7 +49,7 @@ export function Footer() {
 
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">Navigate</h3>
-              <nav className="mt-5 grid gap-3 text-sm">
+              <nav className="mt-3 grid gap-2 text-sm">
                 {links.map((link) => (
                   <Link
                     key={link.href}
@@ -67,7 +64,7 @@ export function Footer() {
 
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">Connect</h3>
-              <nav className="mt-5 grid gap-3 text-sm">
+              <nav className="mt-3 grid gap-2 text-sm">
                 {support.map((s) => (
                   <a
                     key={s.label}
@@ -82,16 +79,16 @@ export function Footer() {
 
             <div className="lg:pl-4 lg:border-l border-white/30">
               <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">Community</h3>
-              <p className="mt-3 text-sm text-[#555]">
+              <p className="mt-2 text-sm text-[#555]">
                 Join our WhatsApp community for updates and support.
               </p>
               <a
-                href="https://wa.me/9779842901942"
+                href="https://chat.whatsapp.com/H3mAuhJlvgKEEXljavLTgx"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 flex items-center gap-3 rounded-2xl border border-white/30 bg-white/40 p-4 backdrop-blur-sm transition hover:bg-[#25D366]/10 hover:border-[#25D366]/30"
+                className="mt-3 flex items-center gap-3 rounded-2xl border border-white/30 bg-white/40 p-3 backdrop-blur-sm transition hover:bg-[#25D366]/10 hover:border-[#25D366]/30"
               >
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#25D366]/10 text-lg">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#25D366]/10 text-lg">
                   💬
                 </span>
                 <div>
@@ -100,7 +97,7 @@ export function Footer() {
                 </div>
               </a>
             </div>
-            <div className="col-span-full  pt-8 mt-8">
+            <div className="col-span-full pt-6 mt-6">
               <div className="flex flex-col items-center justify-center gap-1 text-center text-xs text-[#555] sm:flex-row sm:gap-2">
                 <p>&copy; {new Date().getFullYear()} Ott Subscription Nepal. All rights reserved.</p>
                 <span className="hidden sm:inline">|</span>

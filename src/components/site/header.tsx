@@ -58,18 +58,18 @@ export function Header() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 px-4 transition-all duration-300",
-        scrolled ? "top-2" : "top-4",
+        "sticky top-0 z-40 px-2 transition-all duration-300 sm:px-4",
+        scrolled ? "top-4 sm:top-6" : "top-4 sm:top-6",
       )}
     >
-      <div
+        <div
         className={cn(
-          "mx-auto flex w-full max-w-[90rem] items-center justify-between gap-4 rounded-full border border-white/20 bg-white/40 px-6 shadow-lg backdrop-blur-2xl transition-all duration-300",
+          "mx-auto flex w-full max-w-[90rem] items-center justify-between gap-2 rounded-full border border-black/8 bg-white px-3 shadow-md transition-all duration-300 sm:gap-4 sm:px-6 lg:border-white/20 lg:bg-white/40 lg:shadow-lg lg:backdrop-blur-2xl",
           animateHeader && "header-pill",
-          scrolled ? "py-1.5" : "py-2",
+          scrolled ? "py-1.5 lg:py-1.5" : "py-1.5 lg:py-2",
         )}
       >
-        <Link href="/" className="flex items-center gap-3 leading-none">
+        <Link href="/" className="flex items-center gap-2 leading-none sm:gap-3">
           <img
             src="/header-logo.png"
             alt="Ott Subscription Nepal"
@@ -77,7 +77,7 @@ export function Header() {
             height={160}
             className={cn(
               "shrink-0 object-contain transition-all duration-300",
-              scrolled ? "size-10" : "size-14",
+              scrolled ? "size-9 lg:size-10" : "size-9 lg:size-14",
             )}
           />
         </Link>
@@ -100,7 +100,7 @@ export function Header() {
           <CartSheet />
           <button
             type="button"
-            className="grid size-9 place-items-center rounded-full border border-white/30 bg-white/50 text-[#555] backdrop-blur-sm transition hover:bg-[#159FD3] hover:text-white lg:hidden"
+            className="grid size-8 place-items-center rounded-full border border-black/10 bg-white text-[#555] transition hover:bg-[#159FD3] hover:text-white lg:hidden"
             onClick={() => setMenuOpen(true)}
             aria-label="Open menu"
           >
@@ -111,21 +111,34 @@ export function Header() {
 
       <div
         className={cn(
-          "fixed inset-0 z-50 transition-opacity duration-300 lg:hidden",
-          menuOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+          "fixed inset-0 z-50 lg:hidden",
+          menuOpen ? "pointer-events-auto" : "pointer-events-none",
         )}
       >
         <button
           type="button"
-          className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+          className="absolute inset-0"
           onClick={() => setMenuOpen(false)}
           aria-label="Close menu"
-        />
+        >
+          <span
+            className={cn(
+              "absolute inset-0 bg-black/30 transition-opacity duration-300",
+              menuOpen ? "opacity-100" : "opacity-0",
+            )}
+          />
+          <span
+            className={cn(
+              "absolute inset-0 backdrop-blur-sm transition-opacity duration-300",
+              menuOpen ? "opacity-100" : "opacity-0",
+            )}
+          />
+        </button>
 
         <aside
           className={cn(
-            "absolute right-0 top-0 h-full w-72 border-l border-white/20 bg-white/60 shadow-xl backdrop-blur-2xl transition-transform duration-300",
-            menuOpen ? "translate-x-0" : "translate-x-full",
+            "absolute left-0 top-0 h-full w-72 border-r border-gray-200/60 bg-white shadow-xl transition-transform duration-300 lg:bg-white/95 lg:backdrop-blur-xl",
+            menuOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
           <div className="flex items-center justify-between border-b border-white/30 px-5 py-4">

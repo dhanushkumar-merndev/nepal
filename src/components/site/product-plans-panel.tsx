@@ -126,7 +126,7 @@ export function ProductPlansPanel({
             <div className="mt-3 flex flex-wrap items-end justify-between gap-3 rounded-2xl bg-[#E6F7FD] p-3">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-wide text-[#0B7FAE]">Final price</p>
-                <p className="text-2xl font-black text-[#111]">{formatPrice(getDisplayPrice(plan) * displayQty)}</p>
+                <p className="text-xl font-black text-[#111] lg:text-2xl">{formatPrice(getDisplayPrice(plan) * displayQty)}</p>
               </div>
               {hasOffer(plan) ? (
                 <div className="text-right text-xs">

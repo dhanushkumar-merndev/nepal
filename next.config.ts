@@ -1,5 +1,16 @@
 import type { NextConfig } from "next";
 
+const supabaseHostname = (() => {
+  const value = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!value) return null;
+
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return null;
+  }
+})();
+
 const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
   { key: "X-Frame-Options", value: "DENY" },
@@ -16,15 +27,17 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["192.168.1.10"],
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "*.supabase.co" },
+      { protocol: "https", hostname: "tyesozntactxumlolgwv.supabase.co" },
+      ...(supabaseHostname ? [{ protocol: "https" as const, hostname: supabaseHostname }] : []),
       { protocol: "https", hostname: "www.transparenttextures.com" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
-      { protocol: "https", hostname: "*.googleusercontent.com" },
+      { protocol: "https", hostname: "storage.googleapis.com" },
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
       { protocol: "https", hostname: "api.dicebear.com" },
     ],

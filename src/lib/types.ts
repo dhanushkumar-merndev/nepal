@@ -26,6 +26,7 @@ export type Product = {
   is_best_seller: boolean;
   is_limited?: boolean | null;
   is_active: boolean;
+  is_deleted?: boolean;
   sort_order: number;
   rating?: number;
   review_count?: number;

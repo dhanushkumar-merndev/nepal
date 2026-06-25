@@ -1,8 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const isMobile = useIsMobile();
+
+  if (isMobile) return <>{children}</>;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}

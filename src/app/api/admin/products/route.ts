@@ -75,10 +75,8 @@ export async function DELETE(request: Request) {
   if (!id) return NextResponse.json({ error: "Product id is required." }, { status: 400 });
   const supabase = createAdminClient();
   if (!supabase) return NextResponse.json({ error: "Supabase admin env is missing." }, { status: 503 });
-  const { data: existing } = await supabase.from("products").select("slug").eq("id", id).single();
-  const { error } = await supabase.from("products").delete().eq("id", id);
+  const { error } = await supabase.from("products").update({ is_deleted: true, is_active: false }).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (existing?.slug) await removeProductStorageFolder(existing.slug);
   await invalidateProductContextCache();
   await invalidateAdminDashboardCache();
   return NextResponse.json({ ok: true, message: "Product updated and AI cache refreshed." });

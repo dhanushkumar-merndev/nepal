@@ -1,10 +1,11 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import type * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useMemo, useRef, useState, useTransition } from "react";
 import { ArrowLeftIcon, ClipboardCopyIcon, ImageIcon, PlusIcon, SaveIcon, SearchIcon, Trash2Icon, UploadIcon, WandSparklesIcon, XIcon } from "lucide-react";
 import slugifyPackage from "slugify";
 import { toast } from "sonner";
@@ -104,8 +105,8 @@ function planToDraft(plan: Plan): PlanDraft {
     name: plan.name,
     duration: plan.duration ?? "",
     real_price: String(plan.real_price),
-    offer_price: plan.offer_price ? String(plan.offer_price) : "",
-    actual_price: plan.actual_price ? String(plan.actual_price) : "",
+    offer_price: plan.offer_price != null ? String(plan.offer_price) : "",
+    actual_price: plan.actual_price != null ? String(plan.actual_price) : "",
     stock_status: plan.stock_status,
     features: (plan.features ?? []).join(", "),
     is_active: plan.is_active,
@@ -178,6 +179,138 @@ function ProductToggleCard({
         <span className={cn("size-5 rounded-full bg-white shadow-sm transition", checked && "translate-x-5")} />
       </span>
     </button>
+  );
+}
+
+// ─── Plans Drag-to-Reorder List ───────────────────────────────────────────────
+function PlansDragList({
+  plans,
+  planDraftId,
+  isPending,
+  productSaved,
+  onSelect,
+  onRemove,
+  onReorder,
+}: {
+  plans: Plan[];
+  planDraftId?: string;
+  isPending: boolean;
+  productSaved: boolean;
+  onSelect: (plan: Plan) => void;
+  onRemove: (id: string) => void;
+  onReorder: (plans: Plan[]) => void;
+}) {
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dragSrcId, setDragSrcId] = useState<string | null>(null);
+
+  const handleDragStart = useCallback((id: string, event: React.DragEvent) => {
+    setDragSrcId(id);
+    event.dataTransfer.effectAllowed = "move";
+  }, []);
+
+  const handleDragOver = useCallback((id: string, event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setDragOverId(id);
+  }, []);
+
+  const handleDrop = useCallback(
+    (targetId: string) => {
+      if (!dragSrcId || dragSrcId === targetId) { setDragOverId(null); return; }
+      const next = [...plans];
+      const srcIdx = next.findIndex((p) => p.id === dragSrcId);
+      const tgtIdx = next.findIndex((p) => p.id === targetId);
+      const [moved] = next.splice(srcIdx, 1);
+      next.splice(tgtIdx, 0, moved);
+      onReorder(next);
+      setDragSrcId(null);
+      setDragOverId(null);
+    },
+    [dragSrcId, plans, onReorder]
+  );
+
+  const handleDragEnd = useCallback(() => {
+    setDragSrcId(null);
+    setDragOverId(null);
+  }, []);
+
+  // Horizontal scroll when many plans, fixed-width cards
+  const isOverflow = plans.length > 3;
+
+  if (!productSaved && !plans.length) {
+    return (
+      <div className="rounded-xl border border-white/35 bg-white/15 p-4 text-sm text-muted-foreground">
+        Save the product first to add plans.
+      </div>
+    );
+  }
+
+  if (productSaved && !plans.length) {
+    return (
+      <div className="rounded-xl border border-white/35 bg-white/15 p-4 text-sm text-muted-foreground">
+        No plans yet.
+      </div>
+    );
+  }
+
+  return (
+    /* horizontal scroll container */
+    <div
+      className={cn(
+        "flex gap-3",
+        isOverflow
+          ? "overflow-x-auto pb-2 [scrollbar-width:thin]"
+          : "flex-wrap"
+      )}
+    >
+      {plans.map((plan) => (
+        <div
+          key={plan.id}
+          draggable
+          onDragStart={(e) => handleDragStart(plan.id, e)}
+          onDragOver={(e) => handleDragOver(plan.id, e)}
+          onDrop={() => handleDrop(plan.id)}
+          onDragEnd={handleDragEnd}
+          className={cn(
+            "relative shrink-0 rounded-xl border bg-white/15 shadow-sm backdrop-blur-md transition",
+            isOverflow ? "w-44" : "w-full sm:w-[calc(50%-6px)] xl:w-[calc(33.333%-8px)]",
+            planDraftId === plan.id
+              ? "border-[#159FD3]/70 bg-[#159FD3]/10 ring-2 ring-[#159FD3]/15"
+              : "border-white/35 hover:bg-neutral-200/40",
+            dragOverId === plan.id && dragSrcId !== plan.id
+              ? "border-[#159FD3] ring-2 ring-[#159FD3]/30 scale-[1.02]"
+              : ""
+          )}
+        >
+          <button
+            type="button"
+            onClick={() => onSelect(plan)}
+            className="h-full min-h-28 w-full p-4 pr-12 text-left"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold">{plan.name}</div>
+                <div className="mt-1 truncate text-xs text-muted-foreground">{plan.duration || "No duration"}</div>
+              </div>
+              <span className="mr-8 shrink-0 rounded-full border border-white/40 bg-white/30 px-2 py-0.5 text-[11px] font-semibold">
+                {plan.stock_status}
+              </span>
+            </div>
+            <div className="mt-4 text-lg font-bold">{formatPrice(Number(plan.offer_price ?? plan.real_price))}</div>
+          </button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            disabled={isPending}
+            className="absolute right-2 top-2 bg-white/35 hover:bg-rose-50 hover:text-rose-600"
+            onClick={() => onRemove(plan.id)}
+          >
+            <Trash2Icon />
+          </Button>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -282,11 +415,15 @@ export function ProductDetailManager({ product, categories }: { product: Product
           }
         : null;
 
-    const previewPlans = previewPlan
+    // For the plan preview panel — all plans with the draft merged in
+    const previewPlansAll = previewPlan
       ? planDraft.id
         ? plans.map((plan) => (plan.id === planDraft.id ? previewPlan : plan))
         : [previewPlan, ...plans]
       : plans;
+
+    // For the production preview (ServiceCard) — only the selected/draft plan
+    const previewPlansSingle = previewPlan ? [previewPlan] : plans.length ? [plans[0]] : [];
 
     return {
       id: productDraft.id ?? "preview-product",
@@ -303,8 +440,9 @@ export function ProductDetailManager({ product, categories }: { product: Product
       sort_order: product?.sort_order ?? 0,
       rating: product?.rating ?? 4.8,
       review_count: product?.review_count ?? 128,
-      plans: previewPlans,
-    };
+      plans: previewPlansAll,
+      _singlePlanPreview: previewPlansSingle,
+    } as Product & { _singlePlanPreview: Plan[] };
   }, [planDraft, plans, product, productDraft]);
 
   async function refreshProduct(productId = productDraft.id) {
@@ -339,7 +477,21 @@ export function ProductDetailManager({ product, categories }: { product: Product
       }),
     });
     const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error?.formErrors?.[0] || payload.error || "Unable to save product.");
+    if (!response.ok) {
+      const errPayload = payload.error;
+      let errorMessage = "Unable to save product.";
+      if (typeof errPayload === "string") {
+        errorMessage = errPayload;
+      } else if (errPayload?.formErrors?.[0]) {
+        errorMessage = errPayload.formErrors[0];
+      } else if (errPayload?.fieldErrors) {
+        const firstField = Object.keys(errPayload.fieldErrors)[0];
+        if (firstField && errPayload.fieldErrors[firstField]?.[0]) {
+          errorMessage = `${firstField}: ${errPayload.fieldErrors[firstField][0]}`;
+        }
+      }
+      throw new Error(errorMessage);
+    }
     setProductDraft(productToDraft({ ...payload.data, plans }));
     return payload.data as Product;
   }
@@ -511,8 +663,7 @@ export function ProductDetailManager({ product, categories }: { product: Product
 
     const prompt = [
       `Create a square app-style logo for "${productDraft.name || "the product"}".`,
-      `Reference format image: ${LOGO_FORMAT_REFERENCE_URL}`,
-      `Follow the reference format closely: square canvas, rounded square app icon, thick clean white outer border/frame, and a centered filled logo mark.`,
+      `Format: square canvas, rounded square app icon shape, thick clean white outer border/frame, and a centered filled logo mark. Use the attached reference image for the exact format.`,
       `Use the product's real logo/brand mark if known, but recreate it as a clean original app-style icon in the same format as the reference.`,
       `The main mark must be large, centered, bold, high contrast, and easy to recognize at small size.`,
       `Keep the icon background simple with the brand color or a smooth subtle gradient. Use these colors if helpful: primary ${bannerPrimary}, accent ${bannerSecondary}.`,
@@ -566,8 +717,9 @@ export function ProductDetailManager({ product, categories }: { product: Product
                   className="absolute inset-0"
                   style={{
                     background: `
-                      radial-gradient(circle at 78% 12%, ${bannerPrimary}30 0, transparent 34%),
-                      radial-gradient(circle at 12% 92%, ${bannerSecondary}33 0, transparent 38%),
+                      radial-gradient(circle at 79% 17%, ${bannerPrimary}42 0, transparent 22%),
+                      radial-gradient(circle at 14% 88%, ${bannerSecondary}1f 0, transparent 24%),
+                      radial-gradient(circle at 87% 85%, ${bannerPrimary}1a 0, transparent 16%),
                       linear-gradient(135deg, #ffffff 0%, #E6F7FD 100%)
                     `,
                   }}
@@ -580,12 +732,10 @@ export function ProductDetailManager({ product, categories }: { product: Product
                 </div>
                 <div className="min-w-0">
                   <div className="truncate text-2xl font-bold">{productDraft.name || "New product"}</div>
-                  <div className="truncate text-sm font-medium text-white/80">{productDraft.category || "Category"}</div>
                 </div>
               </div>
             </div>
-
-            <form className="grid gap-3" onSubmit={submitProduct}>
+            <form id="product-form" className="grid gap-4" onSubmit={submitProduct}>
               <div className="grid gap-3 md:grid-cols-2">
                 <Input
                   className={adminInputClass}
@@ -608,49 +758,6 @@ export function ProductDetailManager({ product, categories }: { product: Product
                 <CustomDropdown className="h-10" value={productDraft.stock_status} onChange={(value) => setProductDraft({ ...productDraft, stock_status: value })} options={stockOptions} />
               </div>
               <Input className={adminInputClass} placeholder="Description" value={productDraft.description} onChange={(event) => setProductDraft({ ...productDraft, description: event.target.value })} />
-              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/35 bg-white/10 p-3">
-                <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(event) => uploadProductImage(event.target.files?.[0], "logo")} />
-                <input ref={bannerInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(event) => handleBannerFileSelected(event.target.files?.[0])} />
-                <Button type="button" variant="outline" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={() => setShowLogoUploadDialog(true)}>
-                  <UploadIcon /> Upload logo
-                </Button>
-                <Button type="button" variant="outline" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={() => setShowBannerUploadDialog(true)}>
-                  <UploadIcon /> Upload banner
-                </Button>
-                <label className="flex h-10 items-center gap-2 rounded-lg border border-white/35 bg-white/20 px-3 text-sm shadow-sm backdrop-blur-md">
-                  <span>Banner</span>
-                  <input type="color" value={bannerPrimary} onChange={(event) => setBannerPrimary(event.target.value)} />
-                  <input type="color" value={bannerSecondary} onChange={(event) => setBannerSecondary(event.target.value)} />
-                </label>
-                <Button type="button" variant="outline" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={generateBanner}>
-                  <WandSparklesIcon /> Generate banner
-                </Button>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <ProductToggleCard
-                  label="Best seller"
-                  description="Highlight this product in featured sections."
-                  checked={productDraft.is_best_seller}
-                  onChange={(checked) => setProductDraft({ ...productDraft, is_best_seller: checked })}
-                />
-                <ProductToggleCard
-                  label="Limited"
-                  description="Show a limited availability signal."
-                  checked={productDraft.is_limited}
-                  onChange={(checked) => setProductDraft({ ...productDraft, is_limited: checked })}
-                />
-                <ProductToggleCard
-                  label="Active"
-                  description="Visible to customers when enabled."
-                  checked={productDraft.is_active}
-                  onChange={(checked) => setProductDraft({ ...productDraft, is_active: checked })}
-                />
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button type="submit" disabled={isPending}>
-                  <SaveIcon /> Save product
-                </Button>
-              </div>
             </form>
             {showLogoUploadDialog ? (
               <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/35 px-4">
@@ -659,7 +766,7 @@ export function ProductDetailManager({ product, categories }: { product: Product
                     <div>
                       <p className="text-base font-bold">Upload logo</p>
                       <p className="mt-1 text-sm text-[#555]">
-                        Use a square logo for best results. You can copy the AI image prompt first, then upload the final logo here.
+                        Copy the prompt, then attach the reference image below when asking the AI to generate your logo.
                       </p>
                     </div>
                     <button
@@ -671,10 +778,34 @@ export function ProductDetailManager({ product, categories }: { product: Product
                       <XIcon className="size-4" />
                     </button>
                   </div>
-                  <div className="mt-4 rounded-xl border border-black/10 bg-[#F6FCFF] p-3 text-sm text-[#555]">
-                    <p className="font-semibold text-[#111]">Recommended logo</p>
-                    <p>Square image, centered mark, clean white or transparent background.</p>
-                    <p className="mt-2 text-xs">Accepted: PNG, JPEG, WebP, SVG</p>
+                  {/* Reference image — download and attach to your AI prompt */}
+                  <div className="mt-4 rounded-xl border border-black/10 bg-[#F6FCFF] p-3">
+                    <p className="text-xs font-semibold text-[#111]">Reference format — attach this to your AI prompt</p>
+                    <div className="mt-2 flex items-center gap-3">
+                      <img
+                        src={LOGO_FORMAT_REFERENCE_URL}
+                        alt="Logo format reference"
+                        className="h-20 w-20 shrink-0 rounded-xl border border-black/10 bg-white object-contain p-1 shadow-sm"
+                      />
+                      <div className="min-w-0 text-xs text-[#555]">
+                        <p>Square canvas · rounded app icon shape · thick white border/frame · centered filled logo mark.</p>
+                        <p className="mt-1.5 text-[#777]">Copy the URL and paste it into your AI tool alongside the prompt.</p>
+                        <button
+                          type="button"
+                          className="mt-2 inline-flex items-center gap-1 font-semibold text-[#0B7FAE] underline-offset-2 hover:underline"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(LOGO_FORMAT_REFERENCE_URL);
+                              toast.success("Reference image URL copied");
+                            } catch {
+                              toast.error("Unable to copy URL.");
+                            }
+                          }}
+                        >
+                          <ClipboardCopyIcon className="size-3" /> Copy image URL
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   <div className="mt-5 flex flex-wrap justify-end gap-2">
                     <Button type="button" variant="outline" onClick={copyImagePrompt} disabled={!productDraft.name.trim()}>
@@ -735,8 +866,9 @@ export function ProductDetailManager({ product, categories }: { product: Product
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
-          <CardHeader className="border-b border-white/35 bg-white/10 px-5 py-4">
+        {productDraft.id && (
+          <Card className="overflow-hidden border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
+            <CardHeader className="border-b border-white/35 bg-white/10 px-5 py-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle>Plans</CardTitle>
@@ -748,49 +880,31 @@ export function ProductDetailManager({ product, categories }: { product: Product
             </div>
           </CardHeader>
           <CardContent className="space-y-5 p-5">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {plans.map((plan) => (
-                <div
-                  key={plan.id}
-                  className={cn(
-                    "relative min-h-28 rounded-xl border border-white/35 bg-white/15 shadow-sm backdrop-blur-md transition hover:bg-neutral-200/40",
-                    planDraft.id === plan.id && "border-[#159FD3]/70 bg-[#159FD3]/10 ring-2 ring-[#159FD3]/15"
-                  )}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setPlanDraft(planToDraft(plan))}
-                    className="h-full min-h-28 w-full p-4 pr-12 text-left"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold">{plan.name}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">{plan.duration || "No duration"}</div>
-                      </div>
-                      <span className="mr-8 rounded-full border border-white/40 bg-white/30 px-2 py-0.5 text-[11px] font-semibold">
-                        {plan.stock_status}
-                      </span>
-                    </div>
-                    <div className="mt-4 text-lg font-bold">{formatPrice(Number(plan.offer_price ?? plan.real_price))}</div>
-                  </button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    disabled={isPending}
-                    className="absolute right-2 top-2 bg-white/35 hover:bg-rose-50 hover:text-rose-600"
-                    onClick={() => remove("plans", plan.id)}
-                  >
-                    <Trash2Icon />
-                  </Button>
-                </div>
-              ))}
-              {productDraft.id && !plans.length ? (
-                <div className="col-span-full rounded-xl border border-white/35 bg-white/15 p-4 text-sm text-muted-foreground">
-                  No plans yet.
-                </div>
-              ) : null}
-            </div>
+            <PlansDragList
+              plans={plans}
+              planDraftId={planDraft.id}
+              isPending={isPending}
+              onSelect={(plan) => setPlanDraft(planToDraft(plan))}
+              onRemove={(id) => remove("plans", id)}
+              onReorder={(reordered) => {
+                const updated = reordered.map((p, i) => ({ ...p, sort_order: i }));
+                setPlans(updated);
+                startTransition(async () => {
+                  try {
+                    await fetch("/api/admin/plans/reorder", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(
+                        updated.map((p) => ({ id: p.id, sort_order: p.sort_order }))
+                      ),
+                    });
+                  } catch {
+                    // silent – visual order already updated
+                  }
+                });
+              }}
+              productSaved={Boolean(productDraft.id)}
+            />
 
             <form className="grid gap-3 rounded-xl border border-white/35 bg-white/10 p-4" onSubmit={submitPlan}>
               <div className="flex flex-col gap-1">
@@ -798,18 +912,18 @@ export function ProductDetailManager({ product, categories }: { product: Product
                 <p className="text-xs text-muted-foreground">{productDraft.id ? "Select a card above to edit an existing plan." : "Save the product before adding plans."}</p>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
-                <Input className={adminInputClass} placeholder="Plan name" value={planDraft.name} onChange={(event) => setPlanDraft({ ...planDraft, name: event.target.value })} required disabled={!productDraft.id} />
-                <Input className={adminInputClass} placeholder="Duration" value={planDraft.duration} onChange={(event) => setPlanDraft({ ...planDraft, duration: event.target.value })} disabled={!productDraft.id} />
+                <Input className={adminInputClass} placeholder="Plan name" value={planDraft.name} onChange={(event) => setPlanDraft({ ...planDraft, name: event.target.value })} required />
+                <Input className={adminInputClass} placeholder="Duration" value={planDraft.duration} onChange={(event) => setPlanDraft({ ...planDraft, duration: event.target.value })} />
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
-                <Input className={adminInputClass} placeholder="Price" type="number" value={planDraft.real_price} onChange={(event) => setPlanDraft({ ...planDraft, real_price: event.target.value })} required disabled={!productDraft.id} />
-                <Input className={adminInputClass} placeholder="Offer" type="number" value={planDraft.offer_price} onChange={(event) => setPlanDraft({ ...planDraft, offer_price: event.target.value })} disabled={!productDraft.id} />
-                <Input className={adminInputClass} placeholder="Actual" type="number" value={planDraft.actual_price} onChange={(event) => setPlanDraft({ ...planDraft, actual_price: event.target.value })} disabled={!productDraft.id} />
+                <Input className={adminInputClass} placeholder="Price" type="number" value={planDraft.real_price} onChange={(event) => setPlanDraft({ ...planDraft, real_price: event.target.value })} required />
+                <Input className={adminInputClass} placeholder="Offer" type="number" value={planDraft.offer_price} onChange={(event) => setPlanDraft({ ...planDraft, offer_price: event.target.value })} />
+                <Input className={adminInputClass} placeholder="Actual" type="number" value={planDraft.actual_price} onChange={(event) => setPlanDraft({ ...planDraft, actual_price: event.target.value })} />
               </div>
-              <CustomDropdown value={planDraft.stock_status} onChange={(value) => setPlanDraft({ ...planDraft, stock_status: value })} options={stockOptions} disabled={!productDraft.id} />
-              <Input className={adminInputClass} placeholder="Features separated by commas" value={planDraft.features} onChange={(event) => setPlanDraft({ ...planDraft, features: event.target.value })} disabled={!productDraft.id} />
+              <CustomDropdown value={planDraft.stock_status} onChange={(value) => setPlanDraft({ ...planDraft, stock_status: value })} options={stockOptions} />
+              <Input className={adminInputClass} placeholder="Features separated by commas" value={planDraft.features} onChange={(event) => setPlanDraft({ ...planDraft, features: event.target.value })} />
               <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={planDraft.is_active} onChange={(event) => setPlanDraft({ ...planDraft, is_active: event.target.checked })} disabled={!productDraft.id} />
+                <input type="checkbox" checked={planDraft.is_active} onChange={(event) => setPlanDraft({ ...planDraft, is_active: event.target.checked })} />
                 Active
               </label>
               <div className="flex flex-wrap gap-2">
@@ -825,17 +939,82 @@ export function ProductDetailManager({ product, categories }: { product: Product
             </form>
           </CardContent>
         </Card>
+        )}
         </div>
-
         <aside className="grid min-w-0 gap-4 xl:sticky xl:top-6 xl:self-start">
-          <div className="overflow-hidden rounded-xl border border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
+          <Card className="overflow-hidden border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
+            <CardHeader className="border-b border-white/35 bg-white/10 px-5 py-4">
+              <CardTitle>Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-5 p-5">
+              <div className="grid gap-3">
+                <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(event) => uploadProductImage(event.target.files?.[0], "logo")} />
+                <input ref={bannerInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(event) => handleBannerFileSelected(event.target.files?.[0])} />
+                
+                <div className="flex flex-col gap-2">
+                  <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={() => setShowLogoUploadDialog(true)}>
+                    <UploadIcon /> Upload logo
+                  </Button>
+                  <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={() => setShowBannerUploadDialog(true)}>
+                    <UploadIcon /> Upload banner
+                  </Button>
+                  <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={generateBanner}>
+                    <WandSparklesIcon /> Generate banner
+                  </Button>
+                </div>
+                
+                <label className="mt-2 flex h-10 items-center justify-between rounded-lg border border-white/35 bg-white/20 px-3 text-sm shadow-sm backdrop-blur-md">
+                  <span>Banner Colors</span>
+                  <div className="flex items-center gap-1">
+                    <input type="color" className="size-6 cursor-pointer" value={bannerPrimary} onChange={(event) => setBannerPrimary(event.target.value)} />
+                    <input type="color" className="size-6 cursor-pointer" value={bannerSecondary} onChange={(event) => setBannerSecondary(event.target.value)} />
+                  </div>
+                </label>
+              </div>
+
+              <div className="grid gap-3">
+                <ProductToggleCard
+                  label="Best seller"
+                  description="Highlight this product."
+                  checked={productDraft.is_best_seller}
+                  onChange={(checked) => setProductDraft({ ...productDraft, is_best_seller: checked })}
+                />
+                <ProductToggleCard
+                  label="Limited"
+                  description="Limited availability."
+                  checked={productDraft.is_limited}
+                  onChange={(checked) => setProductDraft({ ...productDraft, is_limited: checked })}
+                />
+                <ProductToggleCard
+                  label="Active"
+                  description="Visible to customers."
+                  checked={productDraft.is_active}
+                  onChange={(checked) => setProductDraft({ ...productDraft, is_active: checked })}
+                />
+              </div>
+
+              <Button type="submit" form="product-form" className="w-full" disabled={isPending}>
+                <SaveIcon /> Save product
+              </Button>
+            </CardContent>
+          </Card>
+
+          {productDraft.id && (
+            <>
+              <div className="overflow-hidden rounded-xl border border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
             <div className="border-b border-white/35 bg-white/10 px-5 py-4">
               <p className="text-base font-semibold leading-none">Production preview</p>
               <p className="mt-1 text-sm text-muted-foreground">Updates as you type</p>
             </div>
-            <div className="flex min-h-[500px] items-center justify-center p-4 xl:min-h-[704px]">
-              <div className="w-full max-w-[302px]">
-                <ServiceCard product={previewProduct} />
+            {/* overflow-y-auto + overscroll-contain: scrollable internally, cursor wheel won't leak to page */}
+            <div
+              className="overflow-y-auto overscroll-contain"
+              style={{ maxHeight: "min(704px, 80svh)" }}
+            >
+              <div className="flex min-h-[500px] items-center justify-center p-4">
+                <div className="w-full max-w-[302px]">
+                  <ServiceCard product={{ ...previewProduct, plans: (previewProduct as Product & { _singlePlanPreview: Plan[] })._singlePlanPreview }} />
+                </div>
               </div>
             </div>
           </div>
@@ -845,27 +1024,30 @@ export function ProductDetailManager({ product, categories }: { product: Product
               <p className="text-base font-semibold leading-none">Plan preview</p>
               <p className="mt-1 text-sm text-muted-foreground">Matches the checkout drawer</p>
             </div>
+            {/* overflow-y-auto + overscroll-contain: independent scroll, no bleed */}
             <div
-              className={cn(
-                "flex items-center justify-center p-4",
-                plans.length ? "min-h-[488px] xl:min-h-[596px]" : "min-h-[420px] xl:min-h-[492px]"
-              )}
+              className="overflow-y-auto overscroll-contain"
+              style={{ maxHeight: "min(596px, 80svh)" }}
             >
-              <div className="mx-auto w-full max-w-[420px] rounded-2xl border border-black/10 bg-white/80 p-3 shadow-sm">
-              <div className="mb-3">
-                <p className="text-sm font-black">{previewProduct.name}</p>
-                <p className="mt-0.5 text-xs text-[#555]">Choose a plan and quantity.</p>
-              </div>
-              {previewProduct.plans.length ? (
-                <ProductPlansPanel product={previewProduct} />
-              ) : (
-                <div className="rounded-2xl border border-dashed border-black/10 bg-white p-4 text-sm text-muted-foreground">
-                  Add a plan to preview plan cards.
+              <div className="flex items-center justify-center p-4">
+                <div className="mx-auto w-full max-w-[420px] rounded-2xl border border-black/10 bg-white/80 p-3 shadow-sm">
+                  <div className="mb-3">
+                    <p className="text-sm font-black">{previewProduct.name}</p>
+                    <p className="mt-0.5 text-xs text-[#555]">Choose a plan and quantity.</p>
+                  </div>
+                  {previewProduct.plans.length ? (
+                    <ProductPlansPanel product={previewProduct} />
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-black/10 bg-white p-4 text-sm text-muted-foreground">
+                      Add a plan to preview plan cards.
+                    </div>
+                  )}
                 </div>
-              )}
               </div>
             </div>
           </div>
+            </>
+          )}
         </aside>
       </div>
       <ConfirmDialog

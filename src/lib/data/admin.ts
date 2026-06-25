@@ -34,6 +34,8 @@ export type AdminDailyOrder = {
 };
 
 type OrderCartItem = {
+  planId?: string;
+  productName?: string;
   finalPrice?: number;
   actualPrice?: number;
   quantity?: number;
@@ -58,15 +60,21 @@ export async function invalidateAdminListCache() {
   if (keys.length) await redis.del(...keys);
 }
 
-export async function getAdminProducts() {
+export async function getAdminProducts({ includeDeleted = false } = {}) {
   const supabase = createAdminClient();
   if (!supabase) return [] as Product[];
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("products")
     .select("*, plans(*)")
     .order("sort_order", { ascending: true })
     .order("sort_order", { referencedTable: "plans", ascending: true });
+
+  if (!includeDeleted) {
+    query = query.eq("is_deleted", false);
+  }
+
+  const { data, error } = await query;
 
   if (error) return [];
   return data as Product[];
@@ -221,19 +229,59 @@ export async function getAdminDashboardData() {
   ]);
 
   const plans = products.flatMap((product) => product.plans ?? []);
+  const validPlanIds = new Set(plans.map(p => p.id));
+  const validProductNames = new Set(products.map(p => p.name));
+
   const completedOrders = orders.filter((order) => order.status === "completed");
-  const revenue = completedOrders.reduce((sum, order) => sum + Number(order.total_amount ?? 0), 0);
-  const grossProfit = completedOrders.reduce((sum, order) => sum + getOrderGrossProfit(order), 0);
+  
+  let revenue = 0;
+  let grossProfit = 0;
+
+  completedOrders.forEach((order) => {
+    if (!Array.isArray(order.cart_items)) return;
+    const validItems = order.cart_items.filter((rawItem) => {
+      if (!rawItem || typeof rawItem !== "object") return false;
+      const item = rawItem as OrderCartItem;
+      return (item.planId && validPlanIds.has(item.planId)) || 
+             (item.productName && validProductNames.has(item.productName));
+    }) as OrderCartItem[];
+
+    revenue += validItems.reduce((sum, item) => sum + (Number(item.finalPrice ?? 0) * Number(item.quantity ?? 1)), 0);
+    grossProfit += validItems.reduce((sum, item) => sum + (Math.max(Number(item.finalPrice ?? 0) - Number(item.actualPrice ?? 0), 0) * Number(item.quantity ?? 1)), 0);
+  });
+
   const daily = new Map<string, AdminDailyOrder>();
   for (const order of orders) {
     const date = new Date(order.created_at).toISOString().slice(0, 10);
     const current = daily.get(date) ?? { date, orders: 0, revenue: 0, productOrders: {} };
-    current.orders += 1;
-    if (order.status === "completed") current.revenue += Number(order.total_amount ?? 0);
-    for (const productName of getOrderProductNames(order)) {
-      current.productOrders[productName] = (current.productOrders[productName] ?? 0) + 1;
+    
+    let isOrderValid = false;
+    let orderRevenue = 0;
+    
+    if (Array.isArray(order.cart_items)) {
+      const validItems = order.cart_items.filter((rawItem) => {
+        if (!rawItem || typeof rawItem !== "object") return false;
+        const item = rawItem as OrderCartItem;
+        return (item.planId && validPlanIds.has(item.planId)) || 
+               (item.productName && validProductNames.has(item.productName));
+      }) as OrderCartItem[];
+      
+      if (validItems.length > 0) {
+        isOrderValid = true;
+        orderRevenue = validItems.reduce((sum, item) => sum + (Number(item.finalPrice ?? 0) * Number(item.quantity ?? 1)), 0);
+        for (const item of validItems) {
+          if (item.productName) {
+            current.productOrders[item.productName] = (current.productOrders[item.productName] ?? 0) + 1;
+          }
+        }
+      }
     }
-    daily.set(date, current);
+
+    if (isOrderValid) {
+      current.orders += 1;
+      if (order.status === "completed") current.revenue += orderRevenue;
+      daily.set(date, current);
+    }
   }
 
   const payload = {

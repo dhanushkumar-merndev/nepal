@@ -9,6 +9,7 @@ import {
   GaugeIcon,
   PackageIcon,
   StarIcon,
+  Trash2Icon,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -28,6 +29,7 @@ import {
 const navItems = [
   { title: "Dashboard", url: "/admin", icon: GaugeIcon },
   { title: "Products", url: "/admin/products", icon: PackageIcon },
+  { title: "Deleted Products", url: "/admin/deleted-products", icon: Trash2Icon },
   { title: "Orders", url: "/admin/orders", icon: ClipboardListIcon },
   { title: "Reviews", url: "/admin/reviews", icon: StarIcon },
 ];
