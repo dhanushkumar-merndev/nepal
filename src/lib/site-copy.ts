@@ -146,7 +146,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
       home: "Home",
       plans: "Plans",
       reviews: "Reviews",
-      faq: "सवाल",
+      faq: "FAQ",
       contact: "Contact",
       menu: "Menu",
       language: "Language",
@@ -212,7 +212,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
       signInHint: "Please sign in with Google to continue checkout.",
     },
     faqPage: {
-      eyebrow: "सवाल",
+      eyebrow: "FAQ",
       title: "Frequently asked questions",
       description: "Everything you need to know about Ott Subscription Nepal.",
       items: [
