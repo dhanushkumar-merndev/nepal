@@ -676,15 +676,33 @@ export function ProductDetailManager({ product, categories }: { product: Product
       return;
     }
 
-    const prompt = [
-      `Create a square app-style logo for "${productDraft.name || "the product"}".`,
-      `Format: square canvas, rounded square app icon shape, thick clean white outer border/frame, and a centered filled logo mark. Use the attached reference image for the exact format.`,
-      `Use the product's real logo/brand mark if known, but recreate it as a clean original app-style icon in the same format as the reference.`,
-      `The main mark must be large, centered, bold, high contrast, and easy to recognize at small size.`,
-      `Keep the icon background simple with the brand color or a smooth subtle gradient. Use these colors if helpful: primary ${bannerPrimary}, accent ${bannerSecondary}.`,
-      `No banner layout, no wide composition, no product name text, no extra labels, no mockup, no 3D scene, no busy details.`,
-      `Final image must be a square logo icon only, with rounded corners, white border/frame, and the centered filled logo mark.`,
-    ].join(" ");
+   const prompt = [
+  `Create a professional square app icon for "${productDraft.name || "the product"}".`,
+
+  `IMPORTANT: Use the attached image ONLY as a layout and formatting reference. Do NOT copy its logo. Identify the official brand logo/mark for "${productDraft.name || "the product"}" and recreate it as a clean, original vector-style icon.`,
+
+  `Canvas: perfect 1:1 square.`,
+
+  `The rounded-square app icon must be FULLY visible inside the canvas. Never crop, zoom, or let any part touch the image edges.`,
+
+  `Leave equal white space on all four sides (approximately 6–8% of the canvas), exactly like the reference image.`,
+
+  `Inside the icon, use a thick, clean white border/frame with uniform thickness on every side.`,
+
+  `Center the logo perfectly both horizontally and vertically.`,
+
+  `The logo should occupy about 65–75% of the inner area, with balanced padding on all sides.`,
+
+  `Use the brand's authentic colors whenever possible. If necessary, create a subtle gradient based on the brand colors. Ignore the provided colors if they don't match the brand identity.`,
+
+  `Keep the background simple, clean, and high contrast.`,
+
+  `The logo mark must be bold, crisp, flat or lightly beveled, instantly recognizable, and optimized for small app icon sizes.`,
+
+  `No text, no product name, no slogans, no labels, no screenshots, no banner layout, no mockups, no devices, no shadows outside the icon, no extra decorations, no background objects.`,
+
+  `The final output must look like a professionally designed mobile app icon from the App Store or Google Play, matching the reference layout exactly with perfect alignment, equal margins, and a fully visible rounded-square icon.`,
+].join(" ");
 
     try {
       await navigator.clipboard.writeText(prompt);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { Suspense, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { User } from "@supabase/supabase-js";
 import { usePathname } from "next/navigation";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
@@ -19,7 +19,7 @@ import { getSiteCopy } from "@/lib/site-copy";
 
 const PENDING_CHECKOUT_KEY = "ott-nepal-pending-checkout";
 
-export default function CartPage() {
+export function CartPage() {
   const [ready, setReady] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState<string | null>(null);
@@ -300,4 +300,12 @@ function readPendingCheckout() {
     sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
     return null;
   }
+}
+
+export default function CartPageWrapper() {
+  return (
+    <Suspense fallback={null}>
+      <CartPage />
+    </Suspense>
+  );
 }

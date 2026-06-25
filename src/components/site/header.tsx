@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { CartSheet } from "@/components/site/cart-sheet";
@@ -103,7 +103,9 @@ export function Header() {
 
         <div className="flex items-center gap-4">
           <div className="hidden lg:block">
-            <LanguageSwitcher />
+            <Suspense fallback={null}>
+              <LanguageSwitcher />
+            </Suspense>
           </div>
           <CartSheet />
           <button
@@ -183,7 +185,9 @@ export function Header() {
               )
             )}
           </nav>
-          <LanguageSwitcher mobile onNavigate={() => setMenuOpen(false)} />
+          <Suspense fallback={null}>
+            <LanguageSwitcher mobile onNavigate={() => setMenuOpen(false)} />
+          </Suspense>
         </aside>
       </div>
     </header>

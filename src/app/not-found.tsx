@@ -1,9 +1,10 @@
+import { Suspense } from "react";
 import { Header } from "@/components/site/header";
 import { Footer } from "@/components/site/footer";
 import { LocaleLink } from "@/components/site/locale-link";
 import { NotFoundLottie } from "@/components/site/not-found-lottie";
 
-export default function NotFound() {
+function NotFoundContent() {
   return (
     <>
       <Header />
@@ -34,5 +35,13 @@ export default function NotFound() {
       </main>
       <Footer />
     </>
+  );
+}
+
+export default function NotFound() {
+  return (
+    <Suspense fallback={null}>
+      <NotFoundContent />
+    </Suspense>
   );
 }
