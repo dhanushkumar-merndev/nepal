@@ -1,8 +1,13 @@
+"use client";
+
 import { MessageCircle, PackageCheck, ShieldCheck, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { LocaleLink } from "@/components/site/locale-link";
 import { FAQItem } from "@/components/site/faq-item";
 import { FadeIn } from "@/components/site/fade-in";
 import { TrustBadges } from "@/components/site/hero";
+import { getLocaleFromPathname } from "@/lib/locale";
+import { getSiteCopy } from "@/lib/site-copy";
 
 export function HowItWorks() {
   const items = [
@@ -28,43 +33,45 @@ export function HowItWorks() {
 }
 
 export function FAQSection() {
-  const items = [
-    ["Are you an official partner?", "No. All trademarks belong to their owners. We provide subscription activation and digital service support."],
-    ["How fast is activation?", "Most available plans are handled quickly through WhatsApp after order confirmation."],
-    ["Can I renew later?", "Yes. We support easy renewal assistance for active services."],
-  ];
+  const pathname = usePathname() || "/";
+  const locale = getLocaleFromPathname(pathname);
+  const copy = getSiteCopy(locale);
 
   return (
     <section id="faq" className="mx-auto max-w-7xl  px-4 pb-10 lg:pb-20">
       <div>
-        <p className="text-xs font-bold uppercase tracking-wide text-[#159FD3]">Have questions?</p>
-        <h2 className="mt-1 text-2xl font-bold">FAQ</h2>
+        <p className="text-xs font-bold uppercase tracking-wide text-[#159FD3]">{copy.faq.eyebrow}</p>
+        <h2 className="mt-1 text-2xl font-bold">{copy.faq.title}</h2>
       </div>
       <div className="mt-4 grid gap-3">
-        {items.map(([question, answer]) => (
+        {copy.faq.items.map(({ question, answer }) => (
           <FAQItem key={question} question={question} answer={answer} />
         ))}
       </div>
-      <Link
+      <LocaleLink
         href="/faq"
         className="mt-5 flex w-full items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-bold text-[#159FD3] shadow-[0_8px_20px_rgba(0,0,0,0.08)] lg:hidden"
       >
-        View all FAQ
-      </Link>
+        {copy.faq.viewAll}
+      </LocaleLink>
     </section>
   );
 }
 
 export function TrustSection({ className = "", showBadges = false }: { className?: string; showBadges?: boolean }) {
+  const pathname = usePathname() || "/";
+  const locale = getLocaleFromPathname(pathname);
+  const copy = getSiteCopy(locale);
+
   return (
     <section className={`mx-auto max-w-7xl px-4 pb-8 pt-3 lg:py-10 ${className}`.trim()}>
       <FadeIn>
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/20 bg-white/40 px-6 py-6 text-center shadow-lg backdrop-blur-2xl md:flex-row md:items-center md:gap-4 md:rounded-full md:px-8 md:py-5 md:text-left">
           <ShieldCheck className="size-9 shrink-0 text-[#16A34A]" />
           <div>
-            <h2 className="text-xl font-bold">Secure, simple checkout</h2>
+            <h2 className="text-xl font-bold">{copy.trustSection.title}</h2>
             <p className="mt-1 text-sm text-[#555]">
-              Add your plans to cart, enter your details, and send a ready-made order message for quick confirmation.
+              {copy.trustSection.description}
             </p>
           </div>
         </div>

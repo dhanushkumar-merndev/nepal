@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { User } from "@supabase/supabase-js";
+import { usePathname } from "next/navigation";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/site/header";
@@ -13,6 +14,8 @@ import { getSaveAmount } from "@/lib/utils/pricing";
 import { buildWhatsAppMessage, getWhatsAppUrl } from "@/lib/utils/whatsapp";
 import { createClient } from "@/lib/supabase/client";
 import { signInWithGoogle } from "@/lib/auth/sign-in-google";
+import { getLocaleFromPathname, localizePath } from "@/lib/locale";
+import { getSiteCopy } from "@/lib/site-copy";
 
 const PENDING_CHECKOUT_KEY = "ott-nepal-pending-checkout";
 
@@ -24,6 +27,9 @@ export default function CartPage() {
   const [submitting, setSubmitting] = useState(false);
   const resumedCheckout = useRef(false);
   const { items, total, increase, decrease, removeItem, clear } = useCartStore();
+  const pathname = usePathname() || "/cart";
+  const locale = getLocaleFromPathname(pathname);
+  const copy = getSiteCopy(locale);
 
   const cartItems = useMemo(() => (ready ? items : []), [ready, items]);
   const cartTotal = ready ? total() : 0;
@@ -113,14 +119,14 @@ export default function CartPage() {
   async function handleCheckout() {
     const trimmedName = customerName.trim();
     if (!trimmedName || !cartItems.length) {
-      toast.error("Please enter your name.");
+      toast.error(copy.cartPage.enterNameError);
       return;
     }
 
     if (!customerEmail) {
       sessionStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify({ customerName: trimmedName, note, createdAt: Date.now() }));
-      toast.info("Please sign in with Google to continue checkout.");
-      await signInWithGoogle("/cart");
+      toast.info(copy.cartPage.signInHint);
+      await signInWithGoogle(localizePath("/cart", locale));
       return;
     }
 
@@ -137,11 +143,11 @@ export default function CartPage() {
       <div className="grid size-20 place-items-center rounded-full bg-[#E6F7FD]">
         <ShoppingCart className="size-8 text-[#0B7FAE]" />
       </div>
-      <h2 className="text-2xl font-bold">Your cart is empty</h2>
-      <p className="max-w-sm text-[#555]">Add plans from the chat or browse our plans page to get started.</p>
+      <h2 className="text-2xl font-bold">{copy.cartPage.emptyTitle}</h2>
+      <p className="max-w-sm text-[#555]">{copy.cartPage.emptyDescription}</p>
       <div className="flex gap-3">
-        <Button onClick={() => window.history.back()}>Go back</Button>
-        <Button variant="secondary" onClick={() => window.location.href = "/plans"}>Browse plans</Button>
+        <Button onClick={() => window.history.back()}>{copy.cartPage.goBack}</Button>
+        <Button variant="secondary" onClick={() => window.location.href = localizePath("/plans", locale)}>{copy.cartPage.browsePlans}</Button>
       </div>
     </div>
   );
@@ -149,18 +155,18 @@ export default function CartPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto flex min-h-[calc(100dvh-10rem)] max-w-6xl flex-col px-4 py-10">
+      <main className="mx-auto flex min-h-[calc(100dvh-10rem)] max-w-6xl flex-col px-4 py-10 lg:pt-16 lg:pb-10">
         {cartItems.length ? (
           <>
-            <h1 className="text-3xl font-black md:text-4xl">Checkout</h1>
-            <p className="mt-2 text-[#555]">Review your items and checkout on WhatsApp.</p>
+            <h1 className="text-3xl font-black md:text-4xl">{copy.cartPage.title}</h1>
+            <p className="mt-2 text-[#555]">{copy.cartPage.subtitle}</p>
           </>
         ) : null}
 
         {!cartItems.length ? emptyState : (
           <div className="mt-8 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
             <section className="space-y-4">
-              <h2 className="text-lg font-bold">Items</h2>
+              <h2 className="text-lg font-bold">{copy.cartPage.items}</h2>
               {cartItems.map((item) => {
                 const save = item.offerPrice ? getSaveAmount({ real_price: item.realPrice, offer_price: item.offerPrice }) : 0;
                 return (
@@ -169,7 +175,7 @@ export default function CartPage() {
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-bold uppercase tracking-wide text-[#159FD3]">{item.productName}</p>
                         <h3 className="mt-1 text-xl font-black">{item.planName}</h3>
-                        <p className="text-sm text-[#555]">Qty: {item.quantity}</p>
+                        <p className="text-sm text-[#555]">{copy.cartPage.qty}: {item.quantity}</p>
                         {item.offerPrice ? (
                           <div className="mt-2 flex items-center gap-2 text-sm">
                             <span className="text-[#737373] line-through">{formatPrice(item.realPrice)}</span>
@@ -197,10 +203,10 @@ export default function CartPage() {
                       </div>
                       <div className="shrink-0 text-right">
                         <p className="text-2xl font-black">{formatPrice(item.finalPrice)}</p>
-                        <p className="text-xs text-[#555]">each</p>
+                        <p className="text-xs text-[#555]">{copy.cartPage.each}</p>
                         {item.quantity > 1 ? (
                           <p className="mt-1 text-sm text-[#737373]">
-                            Sub: {formatPrice(item.finalPrice * item.quantity)}
+                            {copy.cartPage.subTotal}: {formatPrice(item.finalPrice * item.quantity)}
                           </p>
                         ) : null}
                       </div>
@@ -210,13 +216,13 @@ export default function CartPage() {
               })}
               <Button variant="secondary" className="text-sm" onClick={clear}>
                 <Trash2 className="size-4" />
-                Clear all items
+                {copy.cartPage.clearAll}
               </Button>
             </section>
 
             <aside className="lg:sticky lg:top-24 lg:self-start">
               <div className="rounded-3xl border border-black/10 bg-white p-6">
-                <h2 className="text-lg font-bold">Order summary</h2>
+                <h2 className="text-lg font-bold">{copy.cartPage.orderSummary}</h2>
 
                 <div className="mt-5 space-y-3">
                   {cartItems.map((item) => (
@@ -232,23 +238,23 @@ export default function CartPage() {
 
                 <div className="mt-5 border-t border-black/10 pt-4">
                   <div className="flex items-center justify-between text-lg font-black">
-                    <span>Total</span>
+                    <span>{copy.cartPage.total}</span>
                     <span>{formatPrice(cartTotal)}</span>
                   </div>
-                  <p className="mt-1 text-right text-xs text-[#555]">Including all offers and discounts</p>
+                  <p className="mt-1 text-right text-xs text-[#555]">{copy.cartPage.totalHint}</p>
                 </div>
 
                 <div className="mt-6 space-y-3">
                   <input
                     className="w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-[#159FD3]"
-                    placeholder="Your name *"
+                    placeholder={copy.cartPage.namePlaceholder}
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                   />
 
                   <textarea
                     className="w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-[#159FD3]"
-                    placeholder="Optional note"
+                    placeholder={copy.cartPage.notePlaceholder}
                     rows={3}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
@@ -261,10 +267,10 @@ export default function CartPage() {
                   disabled={!customerName || !cartItems.length}
                   onClick={handleCheckout}
                 >
-                  Checkout on WhatsApp
+                  {copy.cartPage.checkoutWhatsapp}
                 </Button>
                 <p className="mt-3 text-center text-xs text-[#555]">
-                  You will be redirected to WhatsApp to confirm your order.
+                  {copy.cartPage.redirectHint}
                 </p>
               </div>
             </aside>

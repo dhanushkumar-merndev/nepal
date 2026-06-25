@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import type { CartItem } from "@/lib/types";
 import type { ChatMessage, ChatSession, RecommendedAction } from "@/lib/chat/types";
 import { deleteSession, getSessions, saveSession } from "@/lib/chat/indexeddb";
+import { getLocaleFromPathname, localizePath, stripLocalePrefix } from "@/lib/locale";
 import { useCartStore } from "@/lib/store/cart-store";
 import { getWhatsAppUrl } from "@/lib/utils/whatsapp";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,11 @@ const launcherMessages = [
 const confirmationPrompts = new Set(["yes", "yeah", "yep", "ok", "okay", "sure", "add it", "add this", "add that", "please add", "do it"]);
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 
+type CartRemovalResult = {
+  message: string;
+  actions?: RecommendedAction[];
+};
+
 export function ChatWidget() {
   const router = useRouter();
   const pathname = usePathname();
@@ -61,6 +67,8 @@ export function ChatWidget() {
   const decreaseCartItem = useCartStore((state) => state.decrease);
   const removeCartItem = useCartStore((state) => state.removeItem);
   const clearCart = useCartStore((state) => state.clear);
+  const locale = getLocaleFromPathname(pathname || "/");
+  const publicPathname = stripLocalePrefix(pathname || "/");
 
   const visibleMessages = useMemo(
     () => session.messages.filter((message) => message.role !== "system"),
@@ -285,7 +293,7 @@ export function ChatWidget() {
           "I could not answer right now. Please try asking about plans, prices, stock, or WhatsApp checkout again.",
           [
             { label: "Show Netflix plans", prompt: "Show me Netflix plans.", type: "question" },
-            { label: "How to checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+            { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
             { label: "Contact support", prompt: "How can I contact support on WhatsApp?", type: "support" },
           ],
         );
@@ -308,7 +316,7 @@ export function ChatWidget() {
     if (action.addKey && usedAddKeys.includes(action.addKey)) {
       toast.info("Already in cart", {
         description: `${action.productName} ${action.planName}`,
-        action: { label: "View Cart", onClick: () => router.push("/cart") },
+        action: { label: "View Cart", onClick: () => router.push(localizePath("/cart", locale)) },
       });
       return;
     }
@@ -328,7 +336,7 @@ export function ChatWidget() {
     const label = qty > 1 ? `${qty}× ${action.planName}` : action.planName;
     toast.success(`${label} added to cart`, {
       description: `${action.productName} - Rs. ${(action.finalPrice ?? action.realPrice ?? 0) * qty}`,
-      action: { label: "View Cart", onClick: () => router.push("/cart") },
+      action: { label: "View Cart", onClick: () => router.push(localizePath("/cart", locale)) },
     });
     if (!options.skipAssistantMessage) {
       // Suggest remaining items that were mentioned but not in cart
@@ -390,7 +398,7 @@ export function ChatWidget() {
     if (!newItems.length) {
       toast.info("Already in cart", {
         description: "Selected plans are already added.",
-        action: { label: "View Cart", onClick: () => router.push("/cart") },
+        action: { label: "View Cart", onClick: () => router.push(localizePath("/cart", locale)) },
       });
       return;
     }
@@ -399,7 +407,7 @@ export function ChatWidget() {
     const totalQty = newItems.reduce((sum, item) => sum + item.quantity, 0);
     toast.success(`${totalQty} subscription${totalQty > 1 ? "s" : ""} added to cart`, {
       description: `${newItems.length} selected plan${newItems.length > 1 ? "s" : ""}`,
-      action: { label: "View Cart", onClick: () => router.push("/cart") },
+      action: { label: "View Cart", onClick: () => router.push(localizePath("/cart", locale)) },
     });
     const summary = newItems.map((item) => `${item.quantity}x ${item.productName} ${item.planName}`).join(", ");
     await appendAssistant(`Added to cart: ${summary}.`);
@@ -439,11 +447,11 @@ export function ChatWidget() {
       return;
     }
     if (action.type === "checkout") {
-      router.push("/cart");
+      router.push(localizePath("/cart", locale));
       return;
     }
     if (action.type === "cart" && action.label.toLowerCase().includes("view")) {
-      router.push("/cart");
+      router.push(localizePath("/cart", locale));
       return;
     }
     if (action.type === "support") {
@@ -516,7 +524,7 @@ export function ChatWidget() {
                     setOpen(false);
                   }
                   setExpanded(false);
-                  router.push("/cart");
+                  router.push(localizePath("/cart", locale));
                 }}
                 className="relative rounded-full border border-white/20 bg-white/40 p-2.5 backdrop-blur-xl"
                 aria-label="Open cart"
@@ -684,7 +692,7 @@ export function ChatWidget() {
     </>
   );
 
-  if (pathname?.startsWith("/admin") || (pathname !== "/" && pathname !== "/plans")) return null;
+  if (publicPathname.startsWith("/admin") || (publicPathname !== "/" && publicPathname !== "/plans")) return null;
 
   return (
     <>
@@ -1152,7 +1160,7 @@ function applyCartRemoval(
   messages: ChatMessage[],
   cartItems: CartItem[],
   actions: { decrease: (planId: string) => void; remove: (planId: string) => void; clear: () => void },
-) {
+): CartRemovalResult | null {
   const lower = normalizeText(text);
   const clearAllPrompt = "Yes, remove all items from my cart.";
   const wantsRemove = /\b(remove|delete|decrease|minus|take out|clear|empty)\b/.test(lower);
@@ -1186,7 +1194,7 @@ function applyCartRemoval(
       message: "Removed all items from your cart.",
       actions: [
         { label: "Show plans", prompt: "Show me available plans.", type: "question" },
-        { label: "How to checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+        { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
       ],
     };
   }

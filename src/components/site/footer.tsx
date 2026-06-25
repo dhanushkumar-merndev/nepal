@@ -1,15 +1,9 @@
 "use client";
 
-import Link from "next/link";
-
-const links = [
-  { label: "Plans", href: "/plans" },
-  { label: "Services", href: "/services" },
-  { label: "Reviews", href: "/reviews" },
-  { label: "FAQ", href: "/#faq" },
-  { label: "Contact", href: "/contact" },
-  { label: "Privacy", href: "/privacy" },
-];
+import { usePathname } from "next/navigation";
+import { LocaleLink } from "@/components/site/locale-link";
+import { getLocaleFromPathname } from "@/lib/locale";
+import { getSiteCopy } from "@/lib/site-copy";
 
 const support = [
   { label: "WhatsApp", href: "https://wa.me/9779842901942" },
@@ -17,6 +11,18 @@ const support = [
 ];
 
 export function Footer() {
+  const pathname = usePathname() || "/";
+  const locale = getLocaleFromPathname(pathname);
+  const copy = getSiteCopy(locale);
+  const links = [
+    { label: copy.footer.links.plans, href: "/plans" },
+    { label: copy.footer.links.services, href: "/services" },
+    { label: copy.footer.links.reviews, href: "/reviews" },
+    { label: copy.footer.links.faq, href: "/#faq" },
+    { label: copy.footer.links.contact, href: "/contact" },
+    { label: copy.footer.links.privacy, href: "/privacy" },
+  ];
+
   return (
     <footer id="contact" className="relative mt-auto flex flex-col">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#E6F7FD]/30 to-[#159FD3]/10" />
@@ -32,7 +38,7 @@ export function Footer() {
                 Ott Subscription<br />Nepal
               </h2>
               <p className="mt-2 max-w-xs text-sm leading-relaxed text-[#555]">
-                Premium digital subscription activation and renewal support. Fast WhatsApp checkout.
+                {copy.footer.brandDescription}
               </p>
               <div className="mt-4 flex gap-2">
                 <a href="#" className="grid size-9 place-items-center rounded-xl border border-white/30 bg-white/60 shadow-sm backdrop-blur-sm transition-all hover:bg-[#1877F2] hover:text-white hover:shadow-md">
@@ -48,22 +54,22 @@ export function Footer() {
             </div>
 
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">Navigate</h3>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">{copy.footer.navigate}</h3>
               <nav className="mt-3 grid gap-2 text-sm">
                 {links.map((link) => (
-                  <Link
+                  <LocaleLink
                     key={link.href}
                     href={link.href}
                     className="text-[#555] transition hover:text-[#159FD3]"
                   >
                     {link.label}
-                  </Link>
+                  </LocaleLink>
                 ))}
               </nav>
             </div>
 
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">Connect</h3>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">{copy.footer.connect}</h3>
               <nav className="mt-3 grid gap-2 text-sm">
                 {support.map((s) => (
                   <a
@@ -78,9 +84,9 @@ export function Footer() {
             </div>
 
             <div className="lg:pl-4 lg:border-l border-white/30">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">Community</h3>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">{copy.footer.community}</h3>
               <p className="mt-2 text-sm text-[#555]">
-                Join our WhatsApp community for updates and support.
+                {copy.footer.communityDescription}
               </p>
               <a
                 href="https://chat.whatsapp.com/H3mAuhJlvgKEEXljavLTgx"
@@ -92,16 +98,16 @@ export function Footer() {
                   💬
                 </span>
                 <div>
-                  <p className="text-xs font-bold">Join WhatsApp</p>
-                  <p className="text-xs text-[#555]">Community group</p>
+                  <p className="text-xs font-bold">{copy.footer.joinWhatsapp}</p>
+                  <p className="text-xs text-[#555]">{copy.footer.communityGroup}</p>
                 </div>
               </a>
             </div>
             <div className="col-span-full pt-6 mt-6">
               <div className="flex flex-col items-center justify-center gap-1 text-center text-xs text-[#555] sm:flex-row sm:gap-2">
-                <p>&copy; {new Date().getFullYear()} Ott Subscription Nepal. All rights reserved.</p>
+                <p>&copy; {new Date().getFullYear()} {copy.footer.rights}</p>
                 <span className="hidden sm:inline">|</span>
-                <p>Subscription activation &amp; digital service support</p>
+                <p>{copy.footer.supportTagline}</p>
               </div>
             </div>
           </div>

@@ -115,15 +115,17 @@ export async function sendReviewAppreciationEmail(input: ReviewResponseEmailInpu
 export async function sendReviewFollowUpEmail(input: ReviewResponseEmailInput) {
   return sendBrevoEmail({
     to: [{ email: input.to, name: input.name }],
-    subject: "We would like to improve your experience",
+    subject: "We are sorry about your experience",
     htmlContent: layoutTemplate({
-      title: "Thank you for your honest feedback",
-      preheader: "We would like to make this better.",
+      title: "We are sorry, and we want to improve",
+      preheader: "Thank you for your honest feedback.",
       body: `
         <p>Hi ${escapeHtml(input.name)},</p>
-        <p>Thank you for reviewing ${escapeHtml(input.productName)}. We are sorry your experience was not perfect.</p>
+        <p>Thank you for reviewing ${escapeHtml(input.productName)}.</p>
+        <p>We are sorry that your experience was not good. Your feedback is important to us, and we will use it to improve our service.</p>
         <div class="quote">${escapeHtml(input.reviewText)}</div>
-        <p>Please reply to this email with what went wrong, and our team will try to help you as soon as possible.</p>
+        <p>If you would like, please reply to this email and tell us what went wrong in more detail. Our team will review it carefully and do our best to fix the issue and improve your experience.</p>
+        <p>Thank you for helping us do better.</p>
       `,
     }),
     logContext: "review-follow-up",

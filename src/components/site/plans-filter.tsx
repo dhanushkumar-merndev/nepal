@@ -2,13 +2,19 @@
 
 import { useMemo, useRef, useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { ServiceCard } from "@/components/site/service-card";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getLocaleFromPathname } from "@/lib/locale";
+import { getSiteCopy } from "@/lib/site-copy";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export function PlansFilter({ products }: { products: Product[] }) {
   const isMobile = useIsMobile();
+  const pathname = usePathname() || "/";
+  const locale = getLocaleFromPathname(pathname);
+  const copy = getSiteCopy(locale);
   const [activeCategory, setActiveCategory] = useState("All");
   const [maxHeight, setMaxHeight] = useState(0);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -90,7 +96,7 @@ export function PlansFilter({ products }: { products: Product[] }) {
             )}
             onClick={() => setActiveCategory(category)}
           >
-            <span>{category}</span>
+            <span>{category === "All" ? copy.plansPage.categories.all : category}</span>
             <span
               className={cn(
                 "ml-2 inline-flex min-w-6 justify-center rounded-full px-1.5 py-0.5 text-xs font-black",
@@ -135,7 +141,7 @@ export function PlansFilter({ products }: { products: Product[] }) {
       )}
       <div className="mt-8 flex justify-center lg:hidden">
         <span className="inline-flex items-center rounded-full border border-[#159FD3]/20 bg-[#E6F7FD] px-4 py-2 text-sm font-semibold text-[#0B7FAE]">
-          Press a service to view plans
+          {copy.plansPage.pressService}
         </span>
       </div>
     </>

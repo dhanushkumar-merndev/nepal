@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import {
   Avatar,
   AvatarFallback,
@@ -22,7 +23,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { signOut } from "@/lib/auth/sign-out"
-import { EllipsisVerticalIcon, LogOutIcon } from "lucide-react"
+import { EllipsisVerticalIcon, LogOutIcon, Trash2Icon } from "lucide-react"
 
 export function NavUser({
   user,
@@ -96,6 +97,10 @@ export function NavUser({
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            <DropdownMenuItem render={<Link href="/admin/deleted-products" />}>
+              <Trash2Icon />
+              Deleted Products
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleSignOut}>
               <LogOutIcon />
               Log out

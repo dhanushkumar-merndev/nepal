@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getLocaleFromPathname } from "@/lib/locale";
+import { getSiteCopy, translateStockStatus } from "@/lib/site-copy";
 import type { Product } from "@/lib/types";
 import { useCartStore } from "@/lib/store/cart-store";
 import { canBuy, getDisplayPrice, getSaveAmount, hasOffer } from "@/lib/utils/pricing";
@@ -21,6 +24,9 @@ export function ProductPlansPanel({
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [pendingConfirm, setPendingConfirm] = useState<Product["plans"][number] | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const pathname = usePathname() || "/";
+  const locale = getLocaleFromPathname(pathname);
+  const copy = getSiteCopy(locale);
   const cartItems = useCartStore((state) => state.items);
   const usedAddKeys = useCartStore((state) => state.usedAddKeys ?? []);
   const addItem = useCartStore((state) => state.addItem);
@@ -114,10 +120,10 @@ export function ProductPlansPanel({
                 ) : null}
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <Badge className="px-2 py-0.5 text-[10px]">{plan.stock_status}</Badge>
+                <Badge className="px-2 py-0.5 text-[10px]">{translateStockStatus(plan.stock_status, locale)}</Badge>
                 {cartQuantity > 0 ? (
                   <span className="rounded-full bg-[#DCFCE7] px-2 py-0.5 text-[10px] font-black text-[#15803D]">
-                    In cart x{cartQuantity}
+                    {copy.productUi.inCart} x{cartQuantity}
                   </span>
                 ) : null}
               </div>
@@ -125,13 +131,13 @@ export function ProductPlansPanel({
 
             <div className="mt-3 flex flex-wrap items-end justify-between gap-3 rounded-2xl bg-[#E6F7FD] p-3">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-wide text-[#0B7FAE]">Final price</p>
+                <p className="text-[10px] font-black uppercase tracking-wide text-[#0B7FAE]">{copy.productUi.finalPrice}</p>
                 <p className="text-xl font-black text-[#111] lg:text-2xl">{formatPrice(getDisplayPrice(plan) * displayQty)}</p>
               </div>
               {hasOffer(plan) ? (
                 <div className="text-right text-xs">
                   <p className="text-[#737373] line-through">{formatPrice(Number(plan.real_price) * displayQty)}</p>
-                  <p className="font-bold text-[#16A34A]">Save {formatPrice(getSaveAmount(plan) * displayQty)}</p>
+                  <p className="font-bold text-[#16A34A]">{copy.productUi.save} {formatPrice(getSaveAmount(plan) * displayQty)}</p>
                 </div>
               ) : null}
             </div>
@@ -193,14 +199,14 @@ export function ProductPlansPanel({
                   onClick={() => addPlan(plan)}
                 >
                   <ShoppingCart className="size-3.5" />
-                  Add
+                  {copy.productUi.add}
                 </Button>
               </div>
             )}
             {isPending ? (
               <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3">
                 <p className="text-xs font-bold text-amber-900">
-                  Are you sure you need quantity {quantity}?
+                  {copy.productUi.areYouSureQty} {quantity}?
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button
@@ -208,14 +214,14 @@ export function ProductPlansPanel({
                     className="rounded-full bg-[#16A34A] px-3 py-1.5 text-xs font-black text-white"
                     onClick={() => addPlan(plan, true)}
                   >
-                    Yes
+                    {copy.productUi.yes}
                   </button>
                   <button
                     type="button"
                     className="rounded-full border border-amber-300 bg-white px-3 py-1.5 text-xs font-black text-amber-900"
                     onClick={declineLargeQuantity}
                   >
-                    No
+                    {copy.productUi.no}
                   </button>
                 </div>
               </div>
@@ -232,7 +238,7 @@ export function ProductPlansPanel({
                       setShowSuggestions(false);
                     }}
                   >
-                    Qty {suggestion}
+                    {copy.productUi.qty} {suggestion}
                   </button>
                 ))}
               </div>

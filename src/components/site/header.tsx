@@ -1,19 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { CartSheet } from "@/components/site/cart-sheet";
+import { LanguageSwitcher } from "@/components/site/language-switcher";
+import { LocaleLink } from "@/components/site/locale-link";
+import { getLocaleFromPathname, stripLocalePrefix } from "@/lib/locale";
+import { getSiteCopy } from "@/lib/site-copy";
 import { cn } from "@/lib/utils";
-
-const nav: [string, string, boolean][] = [
-  ["Home", "/", false],
-  ["Plans", "/plans", false],
-  ["Reviews", "/reviews", false],
-  ["FAQ", "/faq", false],
-  ["Contact", "", true],
-];
 
 let headerAnimated = false;
 
@@ -23,12 +18,22 @@ export function Header() {
   const [animateHeader] = useState(() => !headerAnimated);
   const pathname = usePathname();
   const scrollRef = useRef(false);
+  const locale = getLocaleFromPathname(pathname || "/");
+  const copy = getSiteCopy(locale);
+  const nav: [string, string, boolean][] = [
+    [copy.nav.home, "/", false],
+    [copy.nav.plans, "/plans", false],
+    [copy.nav.reviews, "/reviews", false],
+    [copy.nav.faq, "/faq", false],
+    [copy.nav.contact, "", true],
+  ];
 
   const contactHref = `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "9779842901942"}?text=${encodeURIComponent("Hello Ott Subscription Nepal,\n\nI have some query.")}`;
+  const publicPathname = stripLocalePrefix(pathname || "/");
 
   const isActive = (href: string) => {
-    if (href.startsWith("/#")) return pathname === "/";
-    return pathname === href;
+    if (href.startsWith("/#")) return publicPathname === "/";
+    return publicPathname === href;
   };
 
   useEffect(() => {
@@ -69,7 +74,7 @@ export function Header() {
           scrolled ? "py-1.5 lg:py-1.5" : "py-1.5 lg:py-2",
         )}
       >
-        <Link href="/" className="flex items-center gap-2 leading-none sm:gap-3">
+        <LocaleLink href="/" className="flex items-center gap-2 leading-none sm:gap-3">
           <img
             src="/header-logo.png"
             alt="Ott Subscription Nepal"
@@ -80,7 +85,7 @@ export function Header() {
               scrolled ? "size-9 lg:size-10" : "size-9 lg:size-14",
             )}
           />
-        </Link>
+        </LocaleLink>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-[#555] lg:flex">
           {nav.map(([label, href, external]) =>
@@ -89,14 +94,17 @@ export function Header() {
                 {label}
               </a>
             ) : (
-              <Link key={label} href={href} className={cn("transition-colors", isActive(href) ? "text-[#159FD3]" : "text-[#555] hover:text-[#159FD3]")}>
+              <LocaleLink key={label} href={href} className={cn("transition-colors", isActive(href) ? "text-[#159FD3]" : "text-[#555] hover:text-[#159FD3]")}>
                 {label}
-              </Link>
+              </LocaleLink>
             )
           )}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <div className="hidden lg:block">
+            <LanguageSwitcher />
+          </div>
           <CartSheet />
           <button
             type="button"
@@ -142,8 +150,8 @@ export function Header() {
           )}
         >
           <div className="flex items-center justify-between border-b border-white/30 px-5 py-4">
-            <span className="text-sm font-bold">Menu</span>
-            <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+            <span className="text-sm font-bold">{copy.nav.menu}</span>
+            <button type="button" onClick={() => setMenuOpen(false)} aria-label={copy.nav.closeMenu}>
               <X className="size-5 text-[#555]" />
             </button>
           </div>
@@ -161,7 +169,7 @@ export function Header() {
                   {label}
                 </a>
               ) : (
-                <Link
+                <LocaleLink
                   key={label}
                   href={href}
                   className={cn(
@@ -171,10 +179,11 @@ export function Header() {
                   onClick={() => setMenuOpen(false)}
                 >
                   {label}
-                </Link>
+                </LocaleLink>
               )
             )}
           </nav>
+          <LanguageSwitcher mobile onNavigate={() => setMenuOpen(false)} />
         </aside>
       </div>
     </header>

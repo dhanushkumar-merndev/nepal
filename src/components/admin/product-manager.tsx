@@ -24,7 +24,7 @@ import { formatPrice } from "@/lib/utils/format";
 const stockOptions = ["In Stock", "Low Stock", "Out of Stock", "Coming Soon"];
 const BANNER_WIDTH = 1200;
 const BANNER_HEIGHT = 720;
-const LOGO_FORMAT_REFERENCE_URL = "https://tyesozntactxumlolgwv.supabase.co/storage/v1/object/public/product-images/products/_references/logo-format-reference.svg";
+const LOGO_FORMAT_REFERENCE_URL = "https://tyesozntactxumlolgwv.supabase.co/storage/v1/object/public/product-images/products/_references/logo-format-reference.png";
 const adminInputClass =
   "h-10 rounded-lg border-white/40 bg-white/20 shadow-sm backdrop-blur-md transition-all placeholder:text-muted-foreground/70 focus:border-[#159FD3]/50 focus:bg-white/30 focus:ring-2 focus:ring-[#159FD3]/20 disabled:bg-white/10 disabled:text-muted-foreground";
 
@@ -120,6 +120,26 @@ function toSlug(value: string) {
 function toPrice(value: string, fallback = 0) {
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
+}
+
+async function copyImageToClipboard(imageUrl: string) {
+  const response = await fetch(imageUrl);
+  if (!response.ok) throw new Error("Failed to fetch image");
+
+  const blob = await response.blob();
+  const clipboard = navigator.clipboard as typeof navigator.clipboard & {
+    write?: (items: ClipboardItem[]) => Promise<void>;
+  };
+
+  if (!clipboard.write || typeof ClipboardItem === "undefined") {
+    throw new Error("Clipboard image copy is not supported");
+  }
+
+  await clipboard.write([
+    new ClipboardItem({
+      [blob.type || "image/png"]: blob,
+    }),
+  ]);
 }
 
 function featuresFromDraft(value: string) {
@@ -377,6 +397,7 @@ export function ProductListManager({ products }: { products: Product[] }) {
 }
 
 export function ProductDetailManager({ product, categories }: { product: Product | null; categories: string[] }) {
+  const isNewProductPage = !product;
   const router = useRouter();
   const [productDraft, setProductDraft] = useState<ProductDraft>(product ? productToDraft(product) : emptyProduct);
   const [plans, setPlans] = useState<Plan[]>(product?.plans ?? []);
@@ -415,15 +436,9 @@ export function ProductDetailManager({ product, categories }: { product: Product
           }
         : null;
 
-    // For the plan preview panel — all plans with the draft merged in
-    const previewPlansAll = previewPlan
-      ? planDraft.id
-        ? plans.map((plan) => (plan.id === planDraft.id ? previewPlan : plan))
-        : [previewPlan, ...plans]
-      : plans;
-
-    // For the production preview (ServiceCard) — only the selected/draft plan
-    const previewPlansSingle = previewPlan ? [previewPlan] : plans.length ? [plans[0]] : [];
+    const selectedExistingPlan = planDraft.id ? plans.find((plan) => plan.id === planDraft.id) ?? null : null;
+    const fallbackPlan = selectedExistingPlan ?? plans[0] ?? null;
+    const previewPlansSingle = previewPlan ? [previewPlan] : fallbackPlan ? [fallbackPlan] : [];
 
     return {
       id: productDraft.id ?? "preview-product",
@@ -440,7 +455,7 @@ export function ProductDetailManager({ product, categories }: { product: Product
       sort_order: product?.sort_order ?? 0,
       rating: product?.rating ?? 4.8,
       review_count: product?.review_count ?? 128,
-      plans: previewPlansAll,
+      plans: previewPlansSingle,
       _singlePlanPreview: previewPlansSingle,
     } as Product & { _singlePlanPreview: Plan[] };
   }, [planDraft, plans, product, productDraft]);
@@ -759,6 +774,64 @@ export function ProductDetailManager({ product, categories }: { product: Product
               </div>
               <Input className={adminInputClass} placeholder="Description" value={productDraft.description} onChange={(event) => setProductDraft({ ...productDraft, description: event.target.value })} />
             </form>
+            {!isNewProductPage ? (
+              <div className="grid gap-5 rounded-xl border border-white/35 bg-white/10 p-4">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-semibold">Settings</p>
+                <p className="text-xs text-muted-foreground">Uploads, banner colors, product flags, and save action.</p>
+              </div>
+
+              <div className="grid gap-3">
+                <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(event) => uploadProductImage(event.target.files?.[0], "logo")} />
+                <input ref={bannerInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(event) => handleBannerFileSelected(event.target.files?.[0])} />
+
+                <div className="grid gap-2 md:grid-cols-3">
+                  <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={() => setShowLogoUploadDialog(true)}>
+                    <UploadIcon /> Upload logo
+                  </Button>
+                  <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={() => setShowBannerUploadDialog(true)}>
+                    <UploadIcon /> Upload banner
+                  </Button>
+                  <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={generateBanner}>
+                    <WandSparklesIcon /> Generate banner
+                  </Button>
+                </div>
+
+                <label className="flex h-10 items-center justify-between rounded-lg border border-white/35 bg-white/20 px-3 text-sm shadow-sm backdrop-blur-md">
+                  <span>Banner Colors</span>
+                  <div className="flex items-center gap-1">
+                    <input type="color" className="size-6 cursor-pointer" value={bannerPrimary} onChange={(event) => setBannerPrimary(event.target.value)} />
+                    <input type="color" className="size-6 cursor-pointer" value={bannerSecondary} onChange={(event) => setBannerSecondary(event.target.value)} />
+                  </div>
+                </label>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-3">
+                <ProductToggleCard
+                  label="Best seller"
+                  description="Highlight this product."
+                  checked={productDraft.is_best_seller}
+                  onChange={(checked) => setProductDraft({ ...productDraft, is_best_seller: checked })}
+                />
+                <ProductToggleCard
+                  label="Limited"
+                  description="Limited availability."
+                  checked={productDraft.is_limited}
+                  onChange={(checked) => setProductDraft({ ...productDraft, is_limited: checked })}
+                />
+                <ProductToggleCard
+                  label="Active"
+                  description="Visible to customers."
+                  checked={productDraft.is_active}
+                  onChange={(checked) => setProductDraft({ ...productDraft, is_active: checked })}
+                />
+              </div>
+
+              <Button type="submit" form="product-form" className="w-full md:w-auto" disabled={isPending}>
+                <SaveIcon /> Save product
+              </Button>
+              </div>
+            ) : null}
             {showLogoUploadDialog ? (
               <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/35 px-4">
                 <div className="w-full max-w-md rounded-2xl border border-white/40 bg-white p-5 shadow-2xl">
@@ -778,32 +851,30 @@ export function ProductDetailManager({ product, categories }: { product: Product
                       <XIcon className="size-4" />
                     </button>
                   </div>
-                  {/* Reference image — download and attach to your AI prompt */}
                   <div className="mt-4 rounded-xl border border-black/10 bg-[#F6FCFF] p-3">
-                    <p className="text-xs font-semibold text-[#111]">Reference format — attach this to your AI prompt</p>
-                    <div className="mt-2 flex items-center gap-3">
+                    <div className="flex items-center gap-3">
                       <img
                         src={LOGO_FORMAT_REFERENCE_URL}
                         alt="Logo format reference"
                         className="h-20 w-20 shrink-0 rounded-xl border border-black/10 bg-white object-contain p-1 shadow-sm"
                       />
-                      <div className="min-w-0 text-xs text-[#555]">
-                        <p>Square canvas · rounded app icon shape · thick white border/frame · centered filled logo mark.</p>
-                        <p className="mt-1.5 text-[#777]">Copy the URL and paste it into your AI tool alongside the prompt.</p>
-                        <button
+                      <div className="ml-auto flex shrink-0">
+                        <Button
                           type="button"
-                          className="mt-2 inline-flex items-center gap-1 font-semibold text-[#0B7FAE] underline-offset-2 hover:underline"
+                          variant="outline"
+                          className="h-10 rounded-full"
                           onClick={async () => {
                             try {
-                              await navigator.clipboard.writeText(LOGO_FORMAT_REFERENCE_URL);
-                              toast.success("Reference image URL copied");
+                              await copyImageToClipboard(LOGO_FORMAT_REFERENCE_URL);
+                              toast.success("Reference image copied");
                             } catch {
-                              toast.error("Unable to copy URL.");
+                              window.open(LOGO_FORMAT_REFERENCE_URL, "_blank", "noopener,noreferrer");
+                              toast.info("Image opened in a new tab. Save or copy it from there.");
                             }
                           }}
                         >
-                          <ClipboardCopyIcon className="size-3" /> Copy image URL
-                        </button>
+                          <ClipboardCopyIcon className="size-4" /> Copy image
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -866,7 +937,7 @@ export function ProductDetailManager({ product, categories }: { product: Product
           </CardContent>
         </Card>
 
-        {productDraft.id && (
+        {!isNewProductPage && productDraft.id && (
           <Card className="overflow-hidden border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
             <CardHeader className="border-b border-white/35 bg-white/10 px-5 py-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -942,64 +1013,66 @@ export function ProductDetailManager({ product, categories }: { product: Product
         )}
         </div>
         <aside className="grid min-w-0 gap-4 xl:sticky xl:top-6 xl:self-start">
-          <Card className="overflow-hidden border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
-            <CardHeader className="border-b border-white/35 bg-white/10 px-5 py-4">
-              <CardTitle>Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-5 p-5">
-              <div className="grid gap-3">
-                <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(event) => uploadProductImage(event.target.files?.[0], "logo")} />
-                <input ref={bannerInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(event) => handleBannerFileSelected(event.target.files?.[0])} />
-                
-                <div className="flex flex-col gap-2">
-                  <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={() => setShowLogoUploadDialog(true)}>
-                    <UploadIcon /> Upload logo
-                  </Button>
-                  <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={() => setShowBannerUploadDialog(true)}>
-                    <UploadIcon /> Upload banner
-                  </Button>
-                  <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={generateBanner}>
-                    <WandSparklesIcon /> Generate banner
-                  </Button>
-                </div>
-                
-                <label className="mt-2 flex h-10 items-center justify-between rounded-lg border border-white/35 bg-white/20 px-3 text-sm shadow-sm backdrop-blur-md">
-                  <span>Banner Colors</span>
-                  <div className="flex items-center gap-1">
-                    <input type="color" className="size-6 cursor-pointer" value={bannerPrimary} onChange={(event) => setBannerPrimary(event.target.value)} />
-                    <input type="color" className="size-6 cursor-pointer" value={bannerSecondary} onChange={(event) => setBannerSecondary(event.target.value)} />
+          {isNewProductPage ? (
+            <Card className="overflow-hidden border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
+              <CardHeader className="border-b border-white/35 bg-white/10 px-5 py-4">
+                <CardTitle>Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-5 p-5">
+                <div className="grid gap-3">
+                  <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(event) => uploadProductImage(event.target.files?.[0], "logo")} />
+                  <input ref={bannerInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(event) => handleBannerFileSelected(event.target.files?.[0])} />
+
+                  <div className="flex flex-col gap-2">
+                    <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={() => setShowLogoUploadDialog(true)}>
+                      <UploadIcon /> Upload logo
+                    </Button>
+                    <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={() => setShowBannerUploadDialog(true)}>
+                      <UploadIcon /> Upload banner
+                    </Button>
+                    <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={generateBanner}>
+                      <WandSparklesIcon /> Generate banner
+                    </Button>
                   </div>
-                </label>
-              </div>
 
-              <div className="grid gap-3">
-                <ProductToggleCard
-                  label="Best seller"
-                  description="Highlight this product."
-                  checked={productDraft.is_best_seller}
-                  onChange={(checked) => setProductDraft({ ...productDraft, is_best_seller: checked })}
-                />
-                <ProductToggleCard
-                  label="Limited"
-                  description="Limited availability."
-                  checked={productDraft.is_limited}
-                  onChange={(checked) => setProductDraft({ ...productDraft, is_limited: checked })}
-                />
-                <ProductToggleCard
-                  label="Active"
-                  description="Visible to customers."
-                  checked={productDraft.is_active}
-                  onChange={(checked) => setProductDraft({ ...productDraft, is_active: checked })}
-                />
-              </div>
+                  <label className="mt-2 flex h-10 items-center justify-between rounded-lg border border-white/35 bg-white/20 px-3 text-sm shadow-sm backdrop-blur-md">
+                    <span>Banner Colors</span>
+                    <div className="flex items-center gap-1">
+                      <input type="color" className="size-6 cursor-pointer" value={bannerPrimary} onChange={(event) => setBannerPrimary(event.target.value)} />
+                      <input type="color" className="size-6 cursor-pointer" value={bannerSecondary} onChange={(event) => setBannerSecondary(event.target.value)} />
+                    </div>
+                  </label>
+                </div>
 
-              <Button type="submit" form="product-form" className="w-full" disabled={isPending}>
-                <SaveIcon /> Save product
-              </Button>
-            </CardContent>
-          </Card>
+                <div className="grid gap-3">
+                  <ProductToggleCard
+                    label="Best seller"
+                    description="Highlight this product."
+                    checked={productDraft.is_best_seller}
+                    onChange={(checked) => setProductDraft({ ...productDraft, is_best_seller: checked })}
+                  />
+                  <ProductToggleCard
+                    label="Limited"
+                    description="Limited availability."
+                    checked={productDraft.is_limited}
+                    onChange={(checked) => setProductDraft({ ...productDraft, is_limited: checked })}
+                  />
+                  <ProductToggleCard
+                    label="Active"
+                    description="Visible to customers."
+                    checked={productDraft.is_active}
+                    onChange={(checked) => setProductDraft({ ...productDraft, is_active: checked })}
+                  />
+                </div>
 
-          {productDraft.id && (
+                <Button type="submit" form="product-form" className="w-full" disabled={isPending}>
+                  <SaveIcon /> Save product
+                </Button>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {!isNewProductPage && productDraft.id && (
             <>
               <div className="overflow-hidden rounded-xl border border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
             <div className="border-b border-white/35 bg-white/10 px-5 py-4">

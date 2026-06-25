@@ -1,12 +1,20 @@
-import Link from "next/link";
+"use client";
+
 import { Quote, Star } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { LocaleLink } from "@/components/site/locale-link";
 import type { Review } from "@/lib/types";
+import { getLocaleFromPathname } from "@/lib/locale";
+import { getSiteCopy } from "@/lib/site-copy";
 import { Stars } from "@/components/site/stars";
 import { initials } from "@/lib/utils/format";
 
 export function TopReviews({ reviews }: { reviews: Review[] }) {
   const topReviews = reviews.slice(0, 6);
   const compactReviews = reviews.slice(0, 4);
+  const pathname = usePathname() || "/";
+  const locale = getLocaleFromPathname(pathname);
+  const copy = getSiteCopy(locale);
 
   return (
     <section className="mx-auto max-w-7xl px-4 pb-8 pt-3 lg:pb-16 lg:pt-10">
@@ -24,26 +32,26 @@ export function TopReviews({ reviews }: { reviews: Review[] }) {
             />
             <div className="relative">
               <p className="inline-flex rounded-full bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-wide text-[#9BE3FF]">
-                Top reviews
+                {copy.reviews.eyebrow}
               </p>
               <h2 className="mt-5 text-4xl font-black leading-tight">
-                Fresh customer reviews
+                {copy.reviews.title}
               </h2>
               <p className="mt-4 text-sm leading-6 text-white/70">
-                Recent customer stories and top-rated experiences from people who used our OTT and digital services.
+                {copy.reviews.description}
               </p>
               <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-white/80">
                 <span className="grid size-9 place-items-center rounded-full bg-[#159FD3]">
                   <Star className="size-4 fill-white" />
                 </span>
-                Latest and highest-rated picks
+                {copy.reviews.latestPicks}
               </div>
-              <Link
+              <LocaleLink
                 href="/reviews"
                 className="mt-8 inline-flex rounded-full bg-white px-5 py-3 text-sm font-bold text-[#111]"
               >
-                View all reviews
-              </Link>
+                {copy.reviews.viewAll}
+              </LocaleLink>
             </div>
           </div>
           <div className="hidden grid-cols-2 gap-4 bg-white/40 p-6 backdrop-blur-2xl lg:grid">
@@ -51,9 +59,9 @@ export function TopReviews({ reviews }: { reviews: Review[] }) {
               topReviews.map((review) => <HomeReviewCard key={review.id} review={review} />)
             ) : (
               <div className="rounded-3xl border border-white/20 bg-white/60 p-6 backdrop-blur-2xl md:col-span-2">
-                <p className="text-sm font-semibold text-[#111]">No approved reviews yet.</p>
+                <p className="text-sm font-semibold text-[#111]">{copy.reviews.emptyTitle}</p>
                 <p className="mt-2 text-sm text-[#555]">
-                  Customer highlights will appear here once reviews are available.
+                  {copy.reviews.emptyDescription}
                 </p>
               </div>
             )}
@@ -62,8 +70,8 @@ export function TopReviews({ reviews }: { reviews: Review[] }) {
       </div>
       <div className="lg:hidden">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-[#159FD3]">Top reviews</p>
-          <h2 className="mt-1 whitespace-nowrap text-xl font-bold text-[#111] sm:text-2xl">Fresh customer reviews</h2>
+          <p className="text-xs font-bold uppercase tracking-wide text-[#159FD3]">{copy.reviews.eyebrow}</p>
+          <h2 className="mt-1 whitespace-nowrap text-xl font-bold text-[#111] sm:text-2xl">{copy.reviews.title}</h2>
         </div>
       </div>
       <div className="mt-6 lg:hidden">
@@ -72,21 +80,21 @@ export function TopReviews({ reviews }: { reviews: Review[] }) {
             compactReviews.map((review) => <CompactHomeReviewCard key={review.id} review={review} />)
           ) : (
             <div className="rounded-2xl border border-black/8 bg-[#FAFCFD] p-4 sm:col-span-2">
-              <p className="text-sm font-semibold text-[#111]">No approved reviews yet.</p>
+              <p className="text-sm font-semibold text-[#111]">{copy.reviews.emptyTitle}</p>
               <p className="mt-1 text-sm text-[#555]">
-                Customer highlights will appear here once reviews are available.
+                {copy.reviews.emptyDescription}
               </p>
             </div>
           )}
         </div>
-        <Link
-          href="/reviews"
-          className="mt-5 flex w-full items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-bold text-[#159FD3] shadow-[0_8px_20px_rgba(0,0,0,0.08)]"
-        >
-          View all reviews
-        </Link>
-      </div>
-    </section>
+        <LocaleLink
+        href="/reviews"
+        className="mt-5 flex w-full items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-bold text-[#159FD3] shadow-[0_8px_20px_rgba(0,0,0,0.08)]"
+      >
+        {copy.reviews.viewAll}
+      </LocaleLink>
+    </div>
+  </section>
   );
 }
 

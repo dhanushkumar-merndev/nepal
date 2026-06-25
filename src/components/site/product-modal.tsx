@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
+import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { ProductPlansPanel } from "@/components/site/product-plans-panel";
+import { getLocaleFromPathname } from "@/lib/locale";
+import { getSiteCopy } from "@/lib/site-copy";
 
 export function ProductModal({
   product,
@@ -18,6 +21,9 @@ export function ProductModal({
   showTrigger?: boolean;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const pathname = usePathname() || "/";
+  const locale = getLocaleFromPathname(pathname);
+  const copy = getSiteCopy(locale);
   const isOpen = open ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
 
@@ -35,8 +41,8 @@ export function ProductModal({
   return (
     <Dialog.Root open={isOpen} onOpenChange={setOpen}>
       {showTrigger ? (
-        <Dialog.Trigger className="inline-flex w-full items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-bold text-black transition hover:bg-[#E6F7FD]">
-          View plans
+      <Dialog.Trigger className="inline-flex w-full items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-bold text-black transition hover:bg-[#E6F7FD]">
+          {copy.productUi.viewPlans}
         </Dialog.Trigger>
       ) : null}
       <Dialog.Portal>
@@ -46,7 +52,7 @@ export function ProductModal({
             <div>
               <Dialog.Title className="text-base font-black lg:text-lg">{product.name}</Dialog.Title>
               <Dialog.Description className="mt-1 text-xs text-[#555] lg:text-sm">
-                Choose a plan and quantity.
+                {copy.productUi.choosePlanAndQuantity}
               </Dialog.Description>
             </div>
             <Dialog.Close className="grid size-9 shrink-0 place-items-center rounded-full bg-[#E6F7FD] text-[#0B7FAE]" aria-label="Close">

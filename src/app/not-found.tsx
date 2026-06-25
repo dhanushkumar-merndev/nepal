@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { Header } from "@/components/site/header";
 import { Footer } from "@/components/site/footer";
+import { LocaleLink } from "@/components/site/locale-link";
 import { NotFoundLottie } from "@/components/site/not-found-lottie";
 
 export default function NotFound() {
@@ -20,15 +20,15 @@ export default function NotFound() {
             The link may be broken or the plan may have moved. You can return home or browse all active plans.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link className="primary-btn px-5 py-3 text-sm font-bold" href="/">
+            <LocaleLink className="primary-btn px-5 py-3 text-sm font-bold" href="/">
               Go home
-            </Link>
-            <Link
+            </LocaleLink>
+            <LocaleLink
               className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-bold text-[#0B7FAE]"
               href="/plans"
             >
               Browse plans
-            </Link>
+            </LocaleLink>
           </div>
         </section>
       </main>

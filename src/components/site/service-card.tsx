@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { ShoppingCart, Tv } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -8,6 +9,8 @@ import { ProductArt } from "@/components/site/product-art";
 import { Stars } from "@/components/site/stars";
 import { ProductModal } from "@/components/site/product-modal";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getLocaleFromPathname } from "@/lib/locale";
+import { getSiteCopy, translateStockStatus } from "@/lib/site-copy";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/store/cart-store";
@@ -17,6 +20,9 @@ import { formatPrice } from "@/lib/utils/format";
 export function ServiceCard({ product }: { product: Product }) {
   const isMobile = useIsMobile();
   const [modalOpen, setModalOpen] = useState(false);
+  const pathname = usePathname() || "/";
+  const locale = getLocaleFromPathname(pathname);
+  const copy = getSiteCopy(locale);
   const startingPlan = getStartingPlan(product);
   const cart = useCartStore();
   const inCartQty = product.plans.reduce((sum, plan) => {
@@ -97,16 +103,16 @@ export function ServiceCard({ product }: { product: Product }) {
               <div className="flex flex-wrap gap-1.5">
                 <Badge className="text-[10px]">{product.category}</Badge>
                 <Badge className={cn("text-[10px]", product.stock_status === "In Stock" ? "text-[#16A34A]" : "text-[#F59E0B]")}>
-                  {product.stock_status}
+                  {translateStockStatus(product.stock_status, locale)}
                 </Badge>
-                {product.is_best_seller ? <Badge className="bg-[#E6F7FD] text-[10px] text-[#0B7FAE]">Best Seller</Badge> : null}
-                {product.is_limited ? <Badge className="bg-amber-50 text-[10px] text-amber-700">Limited</Badge> : null}
+                {product.is_best_seller ? <Badge className="bg-[#E6F7FD] text-[10px] text-[#0B7FAE]">{copy.productUi.bestSeller}</Badge> : null}
+                {product.is_limited ? <Badge className="bg-amber-50 text-[10px] text-amber-700">{copy.productUi.limited}</Badge> : null}
               </div>
               <h3 className="mt-1.5 text-base font-bold">{product.name}</h3>
               <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#555]">{product.description}</p>
               {startingPlan ? (
                 <div className="mt-1.5">
-                  <p className="text-xs text-[#737373]">From</p>
+                  <p className="text-xs text-[#737373]">{copy.productUi.from}</p>
                   <div className="flex items-end gap-2">
                     <span className="text-lg font-bold">{formatPrice(getDisplayPrice(startingPlan))}</span>
                     {hasOffer(startingPlan) ? (
@@ -117,7 +123,7 @@ export function ServiceCard({ product }: { product: Product }) {
                   </div>
                   {hasOffer(startingPlan) ? (
                     <p className="mt-0 text-[10px] font-semibold text-[#16A34A]">
-                      Save {formatPrice(getSaveAmount(startingPlan))}
+                      {copy.productUi.save} {formatPrice(getSaveAmount(startingPlan))}
                     </p>
                   ) : null}
                 </div>
@@ -129,7 +135,7 @@ export function ServiceCard({ product }: { product: Product }) {
               </div>
               <div className="mt-2 pb-1">
                 <span className="inline-flex w-full items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-bold text-black transition group-hover/card:bg-[#E6F7FD]">
-                  View plans
+                  {copy.productUi.viewPlans}
                 </span>
               </div>
             </div>

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import type { Review } from "@/lib/types";
 import { type SimpleDateRange } from "@/components/admin/date-picker-range";
 import { DatePickerWithRange } from "@/components/admin/date-picker-range";
@@ -38,6 +39,8 @@ export function ApprovalManager({
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [emailingId, setEmailingId] = useState<string | null>(null);
+  const [pendingStatus, setPendingStatus] = useState<{ id: string; status: string; customerName?: string } | null>(null);
+  const [pendingEmail, setPendingEmail] = useState<{ id: string; type: "appreciation" | "follow_up"; email?: string | null } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -107,11 +110,12 @@ export function ApprovalManager({
 
   function update(id: string, status: string) {
     const review = items.find((item) => item.id === id);
-    const confirmed = window.confirm(
-      `Change review status${review?.customer_name ? ` for ${review.customer_name}` : ""} to "${status}"?`,
-    );
-    if (!confirmed) return;
+    setPendingStatus({ id, status, customerName: review?.customer_name });
+  }
 
+  function confirmStatusUpdate() {
+    if (!pendingStatus) return;
+    const { id, status } = pendingStatus;
     const previous = items;
     setUpdatingId(id);
     setItems((current) => current.map((item) => (item.id === id ? { ...item, status: status as Review["status"] } : item)));
@@ -126,6 +130,7 @@ export function ApprovalManager({
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error || "Unable to update.");
         setItems((current) => current.map((item) => (item.id === id ? (payload.data as Review) : item)));
+        setPendingStatus(null);
         router.refresh();
         toast.success("Status updated");
       } catch (error) {
@@ -139,12 +144,12 @@ export function ApprovalManager({
 
   async function sendReviewEmail(id: string, type: "appreciation" | "follow_up") {
     const review = items.find((item) => item.id === id);
-    const label = type === "appreciation" ? "appreciation email" : "follow-up email";
-    const confirmed = window.confirm(
-      `Send ${label}${review?.customer_email ? ` to ${review.customer_email}` : ""}?`,
-    );
-    if (!confirmed) return;
+    setPendingEmail({ id, type, email: review?.customer_email });
+  }
 
+  async function confirmSendReviewEmail() {
+    if (!pendingEmail) return;
+    const { id, type } = pendingEmail;
     setEmailingId(`${id}:${type}`);
     try {
       const response = await fetch("/api/admin/reviews", {
@@ -154,6 +159,7 @@ export function ApprovalManager({
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Unable to send email.");
+      setPendingEmail(null);
       toast.success(type === "appreciation" ? "Appreciation email sent" : "Follow-up email sent");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to send email.");
@@ -401,6 +407,28 @@ export function ApprovalManager({
           </CardContent>
         </Card>
       )}
+      <ConfirmDialog
+        open={Boolean(pendingStatus)}
+        onOpenChange={(open) => {
+          if (!open) setPendingStatus(null);
+        }}
+        title="Change review status?"
+        description={`Change review status${pendingStatus?.customerName ? ` for ${pendingStatus.customerName}` : ""} to "${pendingStatus?.status ?? ""}"?`}
+        confirmLabel="Update review"
+        disabled={isPending || Boolean(updatingId)}
+        onConfirm={confirmStatusUpdate}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingEmail)}
+        onOpenChange={(open) => {
+          if (!open) setPendingEmail(null);
+        }}
+        title="Send email?"
+        description={`Send ${pendingEmail?.type === "appreciation" ? "appreciation email" : "follow-up email"}${pendingEmail?.email ? ` to ${pendingEmail.email}` : ""}?`}
+        confirmLabel="Send email"
+        disabled={Boolean(emailingId)}
+        onConfirm={confirmSendReviewEmail}
+      />
     </div>
   );
 }

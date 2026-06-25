@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { signInWithGoogle } from "@/lib/auth/sign-in-google";
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AnimatedStars } from "@/components/site/animated-stars";
 import { CustomSelect } from "@/components/site/custom-select";
+import { getLocaleFromPathname, localizePath } from "@/lib/locale";
 
 type Product = { id: string; name: string; logo_url?: string | null };
 const REVIEW_FORM_SEEN_COOKIE = "review_form_seen";
@@ -30,6 +32,8 @@ export function ReviewForm({ products }: { products: Product[] }) {
   const [submitting, setSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [firstVisitReveal] = useState(() => !hasCookie(REVIEW_FORM_SEEN_COOKIE));
+  const pathname = usePathname() || "/reviews";
+  const locale = getLocaleFromPathname(pathname);
 
   useEffect(() => {
     if (!firstVisitReveal) return;
@@ -102,7 +106,7 @@ export function ReviewForm({ products }: { products: Product[] }) {
       {!user ? (
         <div className="mt-4">
           <p className="text-sm text-[#555]">Sign in with Google to leave a review.</p>
-          <Button className="mt-3" onClick={() => signInWithGoogle("/reviews")}>
+          <Button className="mt-3" onClick={() => signInWithGoogle(localizePath("/reviews", locale))}>
             Sign in with Google
           </Button>
         </div>

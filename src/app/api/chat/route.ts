@@ -169,6 +169,11 @@ const supportAction: RecommendedAction = {
   type: "support",
 };
 
+type LocalChatResponse = {
+  text: string;
+  actions: RecommendedAction[];
+};
+
 export async function POST(request: Request) {
   const limit = await rateLimit(`ai-chat:${getIp(request)}`);
   const chatLimit = Number(process.env.AI_CHAT_RATE_LIMIT_REQUESTS_PER_MINUTE ?? 30);
@@ -438,13 +443,19 @@ function localProductResponse(
   message: string,
   products: Product[],
   messages: { role: string; content: string }[] = [],
-) {
+): LocalChatResponse | null {
   const lower = message.toLowerCase().replace(/\s+/g, " ").trim();
   const rejection = rejectionResponse(lower, messages);
   if (rejection) return rejection;
 
   const confirmation = confirmationResponse(lower, products, messages);
   if (confirmation) return confirmation;
+
+  const support = supportResponse(lower);
+  if (support) return support;
+
+  const checkout = checkoutResponse(lower);
+  if (checkout) return checkout;
 
   const cheapest = cheapestPlanResponse(lower, products);
   if (cheapest) return cheapest;
@@ -535,7 +546,7 @@ function localProductResponse(
       text: explainProduct(product),
       actions: [
         planSelectionAction([product], lower),
-        { label: "How to checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+        { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
       ],
     };
   }
@@ -587,6 +598,33 @@ function rejectionResponse(message: string, messages: { role: string; content: s
   return {
     text: "Okay, I won't add it to cart.",
     actions: defaultActions(),
+  };
+}
+
+function supportResponse(message: string): LocalChatResponse | null {
+  if (!/\b(contact|support|help|whatsapp)\b/.test(message)) return null;
+  if (!/\b(contact|support)\b/.test(message)) return null;
+
+  return {
+    text: "You can contact support on WhatsApp for plans, activation, renewal, payment, and checkout help.",
+    actions: [
+      supportAction,
+      { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+      { label: "Show plans", prompt: "Show me available plans.", type: "question" },
+    ],
+  };
+}
+
+function checkoutResponse(message: string): LocalChatResponse | null {
+  if (!/\b(checkout|pay|payment|order)\b/.test(message)) return null;
+
+  return {
+    text: "Choose your plans, add them to cart, then open checkout. We will prepare the full WhatsApp order message automatically for you.",
+    actions: [
+      { label: "View cart", prompt: "Show me my cart.", type: "cart" },
+      { label: "Show plans", prompt: "Show me available plans.", type: "question" },
+      supportAction,
+    ],
   };
 }
 
@@ -646,7 +684,7 @@ function cheapestPlanResponse(message: string, products: Product[]) {
   };
 }
 
-function servicesOverviewResponse(message: string, products: Product[]) {
+function servicesOverviewResponse(message: string, products: Product[]): LocalChatResponse | null {
   const asksServices =
     /\b(what|which|show|list|tell)\b/.test(message) &&
     /\b(service|services|product|products|plans)\b/.test(message);
@@ -978,7 +1016,7 @@ function actionsForMessage(message: string, products: Product[]): RecommendedAct
   if (lower.includes("contact") || lower.includes("support") || lower.includes("enquiry") || lower.includes("inquiry")) {
     return [
       supportAction,
-      { label: "How to checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+      { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
       { label: "View all plans", prompt: "Show me available plans.", type: "question" },
     ];
   }
@@ -1010,7 +1048,7 @@ function actionsForMessage(message: string, products: Product[]): RecommendedAct
       actions.push(
         planSelectionAction(mentionedProducts, lower),
         ...(hasMultiplePlans ? [{ label: "Compare plans" as const, prompt: `Compare ${mentionedProducts.length === 1 ? mentionedProducts[0].name + " plans" : "these plans"}.`, type: "question" as const }] : []),
-        { label: "How to checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+        { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
       );
     }
 
@@ -1037,7 +1075,7 @@ function defaultActions(products: Product[] = []): RecommendedAction[] {
   const fallback: RecommendedAction[] = [
     { label: "Show cheapest OTT plan", prompt: "Show me the cheapest OTT plan available.", type: "question" },
     { label: "Compare Spotify and YouTube", prompt: "Compare Spotify Premium and YouTube Premium.", type: "question" },
-    { label: "How to checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+    { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
   ];
   return shuffle([...productPrompts, ...fallback]).slice(0, 4);
 }
@@ -1046,7 +1084,7 @@ function questionActionsForProducts(products: Product[]): RecommendedAction[] {
   const hasMultiplePlans = products.length > 1 || products.some((p) => p.plans.filter((pl) => pl.is_active).length > 1);
   return [
     ...(hasMultiplePlans ? [{ label: "Compare plans" as const, prompt: `Compare ${products.length === 1 ? products[0].name + " plans" : "these plans"}.`, type: "question" as const }] : []),
-    { label: "How to checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+    { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
   ];
 }
 

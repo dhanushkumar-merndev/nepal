@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { LocaleLink } from "@/components/site/locale-link";
 import { ShoppingCart } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
 
@@ -17,7 +17,7 @@ export function CartSheet() {
   const cartCount = ready ? items.reduce((sum, item) => sum + item.quantity, 0) : 0;
 
   return (
-    <Link
+    <LocaleLink
       href="/cart"
       className="relative rounded-full border border-white/20 bg-white/40 p-3 backdrop-blur-xl"
       aria-label="Open cart"
@@ -28,6 +28,6 @@ export function CartSheet() {
           {cartCount}
         </span>
       ) : null}
-    </Link>
+    </LocaleLink>
   );
 }
