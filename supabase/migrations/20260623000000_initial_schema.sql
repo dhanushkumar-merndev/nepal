@@ -28,6 +28,7 @@ create table if not exists plans (
   duration text,
   real_price numeric not null,
   offer_price numeric,
+  actual_price numeric default 0,
   features jsonb default '[]'::jsonb,
   stock_status text default 'In Stock',
   is_active boolean default true,
@@ -39,6 +40,7 @@ create table if not exists plans (
 create table if not exists orders (
   id uuid primary key default gen_random_uuid(),
   customer_name text not null,
+  customer_email text,
   phone text not null,
   payment_method text,
   note text,
@@ -64,16 +66,6 @@ create table if not exists reviews (
   updated_at timestamptz default now()
 );
 
-create table if not exists feedback (
-  id uuid primary key default gen_random_uuid(),
-  name text,
-  contact text,
-  message text not null,
-  status text default 'new',
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
 create table if not exists settings (
   id uuid primary key default gen_random_uuid(),
   key text unique not null,
@@ -87,7 +79,6 @@ alter table products enable row level security;
 alter table plans enable row level security;
 alter table orders enable row level security;
 alter table reviews enable row level security;
-alter table feedback enable row level security;
 alter table settings enable row level security;
 
 create policy "Public can read active products" on products for select using (is_active = true);
@@ -96,7 +87,6 @@ create policy "Public can read approved reviews" on reviews for select using (st
 create policy "Authenticated users can insert own pending reviews" on reviews for insert to authenticated
 with check (auth.uid() = user_id and status = 'pending');
 create policy "Users can read own reviews" on reviews for select to authenticated using (auth.uid() = user_id);
-create policy "Public can insert feedback" on feedback for insert with check (true);
 create policy "Public can insert orders" on orders for insert with check (true);
 create policy "Admins can read own admin user" on admin_users for select to authenticated using (id = auth.uid());
 
@@ -113,10 +103,6 @@ using (exists (select 1 from admin_users where admin_users.id = auth.uid()))
 with check (exists (select 1 from admin_users where admin_users.id = auth.uid()));
 
 create policy "Admins can manage reviews" on reviews for all to authenticated
-using (exists (select 1 from admin_users where admin_users.id = auth.uid()))
-with check (exists (select 1 from admin_users where admin_users.id = auth.uid()));
-
-create policy "Admins can manage feedback" on feedback for all to authenticated
 using (exists (select 1 from admin_users where admin_users.id = auth.uid()))
 with check (exists (select 1 from admin_users where admin_users.id = auth.uid()));
 

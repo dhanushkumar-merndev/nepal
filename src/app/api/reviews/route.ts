@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getIp, rateLimit } from "@/lib/rate-limit";
 import { reviewSchema } from "@/lib/validators/review";
+import { invalidateAdminDashboardCache, invalidateAdminListCache } from "@/lib/data/admin";
 
 export async function POST(request: Request) {
   const limit = await rateLimit(`reviews:${getIp(request)}`);
@@ -35,5 +36,7 @@ export async function POST(request: Request) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await invalidateAdminDashboardCache();
+  await invalidateAdminListCache();
   return NextResponse.json({ ok: true, message: "Review submitted. It will appear after approval." });
 }

@@ -7,6 +7,7 @@ export type Plan = {
   duration: string | null;
   real_price: number;
   offer_price: number | null;
+  actual_price?: number | null;
   features: string[];
   stock_status: StockStatus;
   is_active: boolean;
@@ -23,6 +24,7 @@ export type Product = {
   image_url: string | null;
   stock_status: StockStatus;
   is_best_seller: boolean;
+  is_limited?: boolean | null;
   is_active: boolean;
   sort_order: number;
   rating?: number;
@@ -53,4 +55,5 @@ export type CartItem = {
   finalPrice: number;
   quantity: number;
   imageUrl?: string | null;
+  addKey?: string;
 };

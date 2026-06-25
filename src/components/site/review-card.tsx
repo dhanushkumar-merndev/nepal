@@ -1,5 +1,5 @@
-import { Star } from "lucide-react";
 import type { Review } from "@/lib/types";
+import { Stars } from "@/components/site/stars";
 import { initials } from "@/lib/utils/format";
 
 export function ReviewCard({ review }: { review: Review }) {
@@ -20,10 +20,9 @@ export function ReviewCard({ review }: { review: Review }) {
         )}
         <div>
           <h3 className="font-semibold">{review.customer_name}</h3>
-          <div className="flex text-[#F59E0B]">
-            {Array.from({ length: review.rating }).map((_, index) => (
-              <Star key={index} className="size-4 fill-current" />
-            ))}
+          <div className="flex items-center gap-1">
+            <Stars rating={review.rating} size="md" />
+            <span className="text-xs font-bold text-[#555]">{review.rating}</span>
           </div>
         </div>
       </div>

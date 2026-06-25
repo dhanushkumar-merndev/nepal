@@ -9,5 +9,6 @@ export const productSchema = z.object({
   image_url: z.string().optional().nullable(),
   stock_status: z.string().min(1),
   is_best_seller: z.boolean().default(false),
+  is_limited: z.boolean().default(false),
   is_active: z.boolean().default(true),
 });

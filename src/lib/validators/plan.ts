@@ -6,6 +6,7 @@ export const planSchema = z.object({
   duration: z.string().optional().nullable(),
   real_price: z.coerce.number().min(1),
   offer_price: z.coerce.number().optional().nullable(),
+  actual_price: z.coerce.number().min(0).optional().nullable(),
   stock_status: z.string().min(1),
   features: z.array(z.string()).default([]),
   is_active: z.boolean().default(true),

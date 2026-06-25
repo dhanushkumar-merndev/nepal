@@ -36,7 +36,8 @@ export async function POST(request: Request) {
   }
 
   const svg = makeBannerSvg(parsed.data);
-  const path = `products/${parsed.data.slug}/banner-${Date.now()}.svg`;
+  await removeBannerFiles(parsed.data.slug);
+  const path = `products/${parsed.data.slug}/banner.svg`;
   const { error: uploadError } = await supabase.storage.from(bucket).upload(path, svg, {
     upsert: true,
     contentType: "image/svg+xml",
@@ -56,4 +57,15 @@ export async function POST(request: Request) {
 
   await invalidateProductContextCache();
   return NextResponse.json({ data, imageUrl, message: "Banner generated and product updated." });
+}
+
+async function removeBannerFiles(slug: string) {
+  const supabase = createAdminClient();
+  if (!supabase) return;
+  const folder = `products/${slug}`;
+  const { data } = await supabase.storage.from(bucket).list(folder);
+  const files = (data ?? [])
+    .filter((item) => item.name.startsWith("banner"))
+    .map((item) => `${folder}/${item.name}`);
+  if (files.length) await supabase.storage.from(bucket).remove(files);
 }

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const orderSchema = z.object({
   customer_name: z.string().min(2),
+  customer_email: z.email().optional(),
   phone: z.string().min(6),
   payment_method: z.string().optional(),
   note: z.string().optional(),

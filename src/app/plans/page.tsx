@@ -9,7 +9,7 @@ export default async function PlansPage() {
   return (
     <>
       <Header />
-      <main className="flex-1">
+      <main className="flex-1" style={{ minHeight: "calc(100dvh - 10rem)" }}>
         <section className="mx-auto w-full max-w-7xl px-4 py-12">
           <p className="text-sm font-bold uppercase tracking-wide text-[#159FD3]">All plans</p>
           <h1 className="mt-2 max-w-3xl text-4xl font-black md:text-6xl">

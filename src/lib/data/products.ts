@@ -9,7 +9,21 @@ export async function getProducts() {
 
   const { data, error } = await supabase
     .from("products")
-    .select("*, plans(*)")
+    .select(`
+      *,
+      plans(
+        id,
+        product_id,
+        name,
+        duration,
+        real_price,
+        offer_price,
+        features,
+        stock_status,
+        is_active,
+        sort_order
+      )
+    `)
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("sort_order", { referencedTable: "plans", ascending: true });

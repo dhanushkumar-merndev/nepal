@@ -1,82 +1,97 @@
 "use client";
 
-import { ShoppingCart, Star } from "lucide-react";
+import { useState } from "react";
+import { ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ProductArt } from "@/components/site/product-art";
+import { Stars } from "@/components/site/stars";
 import { ProductModal } from "@/components/site/product-modal";
 import type { Product } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/store/cart-store";
-import { canBuy, getDisplayPrice, getSaveAmount, getStartingPlan, hasOffer } from "@/lib/utils/pricing";
+import { getDisplayPrice, getSaveAmount, getStartingPlan, hasOffer } from "@/lib/utils/pricing";
 import { formatPrice } from "@/lib/utils/format";
 
 export function ServiceCard({ product }: { product: Product }) {
-  const addItem = useCartStore((state) => state.addItem);
+  const [modalOpen, setModalOpen] = useState(false);
   const startingPlan = getStartingPlan(product);
-  const disabled = !startingPlan || !canBuy(product.stock_status) || !canBuy(startingPlan.stock_status);
-
-  function addToCart() {
-    if (!startingPlan || disabled) return;
-    addItem({
-      productId: product.id,
-      productName: product.name,
-      planId: startingPlan.id,
-      planName: startingPlan.name,
-      realPrice: Number(startingPlan.real_price),
-      offerPrice: startingPlan.offer_price,
-      finalPrice: getDisplayPrice(startingPlan),
-      quantity: 1,
-      imageUrl: product.image_url,
-    });
-  }
+  const cart = useCartStore();
+  const inCartQty = product.plans.reduce((sum, plan) => {
+    const item = cart.items.find((ci) => ci.planId === plan.id);
+    return sum + (item?.quantity ?? 0);
+  }, 0);
 
   return (
-    <Card className="flex h-full min-h-[560px] flex-col overflow-hidden p-0">
-      <div className="h-44 overflow-hidden">
-        <ProductArt name={product.name} imageUrl={product.image_url} logoUrl={product.logo_url} />
-      </div>
-      <div className="flex flex-1 flex-col p-5">
-        <div className="flex min-h-[64px] content-start flex-wrap gap-2">
-          <Badge>{product.category}</Badge>
-          <Badge className={product.stock_status === "In Stock" ? "text-[#16A34A]" : "text-[#F59E0B]"}>
-            {product.stock_status}
-          </Badge>
-          {product.is_best_seller ? <Badge className="bg-[#E6F7FD] text-[#0B7FAE]">Best Seller</Badge> : null}
+    <>
+      <Card
+        role="button"
+        tabIndex={0}
+        aria-label={`View ${product.name} plans`}
+        className="h-[405px] cursor-pointer gap-0 overflow-hidden border border-black/5 bg-white/92 p-0 shadow-[0_10px_30px_rgba(17,17,17,0.06)] ring-0 transition hover:-translate-y-0.5 hover:border-[#159FD3]/20 hover:shadow-[0_16px_42px_rgba(17,17,17,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#159FD3] focus-visible:ring-offset-2"
+        onClick={() => setModalOpen(true)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setModalOpen(true);
+          }
+        }}
+      >
+        <div className="relative h-40 overflow-hidden">
+          <ProductArt name={product.name} imageUrl={product.image_url} logoUrl={product.logo_url} />
+          {inCartQty > 0 ? (
+            <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-red-500 shadow-sm">
+              <ShoppingCart className="size-3" />
+              {inCartQty}
+            </span>
+          ) : null}
         </div>
-        <h3 className="mt-4 min-h-[56px] text-xl font-bold leading-7">{product.name}</h3>
-        <p className="mt-2 min-h-[66px] text-sm leading-6 text-[#555]">{product.description}</p>
-        {startingPlan ? (
-          <div className="mt-4 min-h-[92px]">
-            <p className="text-sm text-[#737373]">From</p>
-            <div className="flex items-end gap-2">
-              <span className="text-2xl font-bold">{formatPrice(getDisplayPrice(startingPlan))}</span>
-              {hasOffer(startingPlan) ? (
-                <span className="pb-1 text-sm text-[#737373] line-through">
-                  {formatPrice(startingPlan.real_price)}
-                </span>
+        <div className="relative h-[245px]">
+          <div className="flex h-full flex-col bg-white">
+            <div className="flex flex-1 flex-col p-3">
+              <div className="flex flex-wrap gap-1.5">
+                <Badge className="text-[10px]">{product.category}</Badge>
+                <Badge className={cn("text-[10px]", product.stock_status === "In Stock" ? "text-[#16A34A]" : "text-[#F59E0B]")}>
+                  {product.stock_status}
+                </Badge>
+                {product.is_best_seller ? <Badge className="bg-[#E6F7FD] text-[10px] text-[#0B7FAE]">Best Seller</Badge> : null}
+                {product.is_limited ? <Badge className="bg-amber-50 text-[10px] text-amber-700">Limited</Badge> : null}
+              </div>
+              <h3 className="mt-1.5 text-base font-bold">{product.name}</h3>
+              <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#555]">{product.description}</p>
+              {startingPlan ? (
+                <div className="mt-1.5">
+                  <p className="text-xs text-[#737373]">From</p>
+                  <div className="flex items-end gap-2">
+                    <span className="text-lg font-bold">{formatPrice(getDisplayPrice(startingPlan))}</span>
+                    {hasOffer(startingPlan) ? (
+                      <span className="pb-0 text-[10px] text-[#737373] line-through">
+                        {formatPrice(startingPlan.real_price)}
+                      </span>
+                    ) : null}
+                  </div>
+                  {hasOffer(startingPlan) ? (
+                    <p className="mt-0 text-[10px] font-semibold text-[#16A34A]">
+                      Save {formatPrice(getSaveAmount(startingPlan))}
+                    </p>
+                  ) : null}
+                </div>
               ) : null}
+              <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[#555]">
+                <Stars rating={product.rating ?? 4.8} />
+                <span>{product.rating ?? 4.8}</span>
+                {product.review_count ? <span>({product.review_count})</span> : null}
+              </div>
+              <div className="mt-2 pb-1">
+                <span className="inline-flex w-full items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-bold text-black transition group-hover/card:bg-[#E6F7FD]">
+                  View plans
+                </span>
+              </div>
             </div>
-            {hasOffer(startingPlan) ? (
-              <p className="mt-1 text-sm font-semibold text-[#16A34A]">
-                Save {formatPrice(getSaveAmount(startingPlan))}
-              </p>
-            ) : null}
           </div>
-        ) : null}
-        <div className="mt-4 flex items-center gap-1 text-sm text-[#555]">
-          <Star className="size-4 fill-[#F59E0B] text-[#F59E0B]" />
-          <span>{product.rating ?? 4.8}</span>
-          <span>({product.review_count ?? 0} reviews)</span>
         </div>
-        <div className="mt-auto grid grid-cols-2 gap-2 pt-5">
-          <ProductModal product={product} />
-          <Button onClick={addToCart} disabled={disabled}>
-            <ShoppingCart className="size-4" />
-            Add
-          </Button>
-        </div>
-      </div>
-    </Card>
+      </Card>
+      <ProductModal product={product} open={modalOpen} onOpenChange={setModalOpen} showTrigger={false} />
+    </>
   );
 }

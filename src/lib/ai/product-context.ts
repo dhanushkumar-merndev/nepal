@@ -20,7 +20,8 @@ export async function getProductContext() {
         .filter((plan) => plan.is_active)
         .map((plan) => {
           const offer = plan.offer_price ? formatPrice(Number(plan.offer_price)) : "None";
-          return `- ${plan.name}${plan.duration ? ` (${plan.duration})` : ""}: Real ${formatPrice(Number(plan.real_price))}, Offer ${offer}, Final ${formatPrice(getDisplayPrice(plan))}, Stock: ${plan.stock_status}`;
+          const features = plan.features?.length ? `, Features: ${plan.features.join(", ")}` : "";
+          return `- ${plan.name}${plan.duration ? ` (${plan.duration})` : ""}: Real ${formatPrice(Number(plan.real_price))}, Offer ${offer}, Final ${formatPrice(getDisplayPrice(plan))}, Stock: ${plan.stock_status}${features}`;
         })
         .join("\n");
 
@@ -29,6 +30,7 @@ Category: ${product.category}
 Description: ${product.description ?? "Digital service support."}
 Product Stock: ${product.stock_status}
 Best Seller: ${product.is_best_seller ? "Yes" : "No"}
+Limited: ${product.is_limited ? "Yes" : "No"}
 Plans:
 ${plans}`;
     }),

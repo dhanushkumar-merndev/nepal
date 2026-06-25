@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 loadEnv(".env.local");
@@ -158,14 +158,18 @@ async function clearDemoData() {
 }
 
 async function uploadLogo(item) {
-  const body = readFileSync(join(process.cwd(), "public", "services", `${item.slug}-logo.svg`), "utf8");
-  const path = `products/${item.slug}/logo.svg`;
-  const { error } = await supabase.storage.from(bucket).upload(path, body, {
+  // Remove old SVG logo from storage
+  await supabase.storage.from(bucket).remove([`products/${item.slug}/logo.svg`]);
+
+  const filePath = join(process.cwd(), "public", "services", `${item.slug}-logo.png`);
+  const body = readFileSync(filePath);
+  const storagePath = `products/${item.slug}/logo.png`;
+  const { error } = await supabase.storage.from(bucket).upload(storagePath, body, {
     upsert: true,
-    contentType: "image/svg+xml",
+    contentType: "image/png",
   });
   if (error) throw error;
-  return publicUrl(path);
+  return publicUrl(storagePath);
 }
 
 async function uploadBanner(item) {

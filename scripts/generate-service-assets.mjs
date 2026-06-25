@@ -1,7 +1,8 @@
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { copyFileSync, existsSync, mkdirSync, writeFileSync, readdirSync } from "node:fs";
+import { join, extname } from "node:path";
 
 const outDir = join(process.cwd(), "public", "services");
+const logoSourceDir = join(process.cwd(), "public", "logo", "service_logo_pieces_final_fixed3");
 mkdirSync(outDir, { recursive: true });
 
 const services = [
@@ -19,27 +20,25 @@ const services = [
 ];
 
 for (const [name, slug, color, initials] of services) {
-  writeFileSync(join(outDir, `${slug}-logo.svg`), logoSvg(name, color, initials));
   writeFileSync(join(outDir, `${slug}-banner.svg`), bannerSvg(name, color));
 }
 
-console.log(`Generated ${services.length * 2} service assets in public/services.`);
-
-function logoSvg(name, color, initials) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="${escapeXml(name)} logo">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="${color}"/>
-      <stop offset="1" stop-color="#159FD3"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="116" fill="#ffffff"/>
-  <rect x="34" y="34" width="444" height="444" rx="96" fill="url(#g)"/>
-  <circle cx="384" cy="126" r="74" fill="#ffffff" opacity=".16"/>
-  <circle cx="126" cy="384" r="96" fill="#ffffff" opacity=".12"/>
-  <text x="256" y="276" text-anchor="middle" dominant-baseline="middle" font-family="Arial, Helvetica, sans-serif" font-size="${initials.length > 1 ? 112 : 164}" font-weight="900" fill="#ffffff">${escapeXml(initials)}</text>
-</svg>`;
+// Copy PNG logos from source folder, mapping display names to kebab-case slugs
+for (const [name, slug] of services) {
+  const pngFiles = readdirSync(logoSourceDir).filter(
+    (f) => f.toLowerCase().startsWith(name.toLowerCase()) && extname(f).toLowerCase() === ".png",
+  );
+  const srcFile = pngFiles[0];
+  if (srcFile) {
+    copyFileSync(join(logoSourceDir, srcFile), join(outDir, `${slug}-logo.png`));
+  }
 }
+
+const pngCount = services.filter(([name, slug]) =>
+  existsSync(join(outDir, `${slug}-logo.png`)),
+).length;
+
+console.log(`Generated ${services.length} banners (SVG) and ${pngCount} logos (PNG) in public/services.`);
 
 function bannerSvg(name, color) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-label="${escapeXml(name)} banner background">

@@ -27,20 +27,19 @@ export function ProductArt({ name, imageUrl, logoUrl, className }: ProductArtPro
       ) : null}
       <div className="absolute inset-0 bg-white/25" />
       <div className="relative text-center">
-        <div className="mx-auto mb-3 grid size-16 place-items-center overflow-hidden rounded-3xl border border-black/10 bg-white shadow-sm">
+        <div className="mx-auto grid size-16 place-items-center overflow-hidden rounded-lg border border-black/10 bg-white">
           {logoUrl ? (
             <img
               src={logoUrl}
               alt={`${name} logo`}
-              width={48}
-              height={48}
-              className="size-11 object-contain"
+              width={64}
+              height={64}
+              className="size-15 object-contain"
             />
           ) : (
-            <Tv className="size-9" />
+            <Tv className="size-8" />
           )}
         </div>
-        <p className="px-4 text-lg font-bold text-[#111]">{name}</p>
       </div>
     </div>
   );

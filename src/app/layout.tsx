@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { LenisProvider } from "@/components/site/lenis-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -48,9 +50,12 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <LenisProvider />
-        {children}
-        <ChatWidget />
+        <TooltipProvider>
+          <LenisProvider />
+          {children}
+          <ChatWidget />
+          <Toaster />
+        </TooltipProvider>
       </body>
     </html>
   );

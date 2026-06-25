@@ -6,15 +6,10 @@ export async function getHomeReviews() {
   const supabase = createAdminClient();
   if (!supabase) return getApprovedReviews();
 
-  const { data: settings } = await supabase
-    .from("settings")
-    .select("key,value")
-    .in("key", ["home_reviews_mode", "home_review_ids"]);
-
-  const mode = settings?.find((item) => item.key === "home_reviews_mode")?.value ?? "auto";
-  const ids: string[] = (settings?.find((item) => item.key === "home_review_ids")?.value ?? "")
+  const mode = process.env.HOME_REVIEWS_MODE ?? "auto";
+  const ids = (process.env.HOME_REVIEW_IDS ?? "")
     .split(",")
-    .map((id: string) => id.trim())
+    .map((id) => id.trim())
     .filter(Boolean);
 
   if (mode === "manual" && ids.length) {
@@ -25,12 +20,27 @@ export async function getHomeReviews() {
       .in("id", ids);
 
     if (!error && data?.length) {
-      const order = new Map(ids.map((id: string, index: number) => [id, index]));
+      const order = new Map(ids.map((id, index) => [id, index]));
       return data
         .map((review) => ({ ...review, product_name: review.products?.name }) as Review)
         .sort((a, b) => (order.get(a.id) ?? 999) - (order.get(b.id) ?? 999));
     }
   }
 
-  return getApprovedReviews();
+  const { data: highlights } = await supabase
+    .from("reviews")
+    .select("*, products(name)")
+    .eq("status", "approved")
+    .order("rating", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(6);
+
+  if (highlights?.length) {
+    return highlights.map((review) => ({
+      ...review,
+      product_name: review.products?.name,
+    })) as Review[];
+  }
+
+  return [];
 }
