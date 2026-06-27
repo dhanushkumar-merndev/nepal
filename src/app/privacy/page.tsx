@@ -1,15 +1,9 @@
 import type { Metadata } from "next";
 import { Footer } from "@/components/site/footer";
 import { Header } from "@/components/site/header";
+import { buildStaticPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
-  description:
-    "Read the privacy policy for Ott Subscription Nepal, including what data we collect and how we use it.",
-  alternates: {
-    canonical: "/privacy",
-  },
-};
+export const metadata: Metadata = buildStaticPageMetadata("privacy");
 
 export default function PrivacyPage() {
   return (
@@ -77,6 +71,15 @@ export default function PrivacyPage() {
             <p className="mt-2">
               For privacy-related inquiries, reach out via WhatsApp or email us at
               support@ottsubscriptionnepal.com.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-bold text-[#111]">8. Trademark Notice</h2>
+            <p className="mt-2">
+              Brand names, logos, and service marks shown on this website belong to their respective owners.
+              We use them only to identify the relevant products or services offered to customers.
+              Their presence does not by itself mean endorsement, sponsorship, or official partnership.
             </p>
           </section>
         </div>

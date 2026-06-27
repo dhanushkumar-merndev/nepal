@@ -112,6 +112,9 @@ export async function getAdminOrders(filters: AdminOrderFilters = {}) {
 
   const query = filters.query?.trim();
   if (query) builder = builder.or(`customer_name.ilike.%${query}%,status.ilike.%${query}%`);
+  if ("product" in filters && filters.product) {
+    builder = builder.filter("cart_items", "cs", JSON.stringify([{ productName: filters.product }]));
+  }
   if (filters.from) builder = builder.gte("created_at", `${filters.from}T00:00:00.000Z`);
   if (filters.to) builder = builder.lte("created_at", `${filters.to}T23:59:59.999Z`);
 
@@ -144,6 +147,9 @@ export async function getAdminOrdersPage(filters: AdminListPageFilters = {}): Pr
 
   const query = filters.query?.trim();
   if (query) builder = builder.or(`customer_name.ilike.%${query}%,status.ilike.%${query}%`);
+  if (filters.product) {
+    builder = builder.filter("cart_items", "cs", JSON.stringify([{ productName: filters.product }]));
+  }
   if (filters.from) builder = builder.gte("created_at", `${filters.from}T00:00:00.000Z`);
   if (filters.to) builder = builder.lte("created_at", `${filters.to}T23:59:59.999Z`);
 
@@ -197,6 +203,11 @@ export async function getAdminReviewsPage(filters: AdminListPageFilters = {}): P
 
   const query = filters.query?.trim();
   if (query) builder = builder.or(`customer_name.ilike.%${query}%,customer_email.ilike.%${query}%,comment.ilike.%${query}%,status.ilike.%${query}%`);
+  if (filters.product) {
+    const productIds = await findProductIdsByName(filters.product);
+    if (!productIds.length) return { data: [], totalCount: 0 };
+    builder = builder.in("product_id", productIds);
+  }
   if (filters.status) builder = builder.eq("status", filters.status);
   if (filters.from) builder = builder.gte("created_at", `${filters.from}T00:00:00.000Z`);
   if (filters.to) builder = builder.lte("created_at", `${filters.to}T23:59:59.999Z`);
@@ -346,4 +357,17 @@ function adminListPageCacheKey(prefix: string, filters: AdminListPageFilters = {
 
 function clampPageSize(value: number | undefined) {
   return Math.max(1, Math.min(value ?? 9, 100));
+}
+
+async function findProductIdsByName(productName: string) {
+  const supabase = createAdminClient();
+  if (!supabase) return [] as string[];
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("id")
+    .eq("name", productName);
+
+  if (error) return [] as string[];
+  return (data ?? []).map((product) => product.id);
 }

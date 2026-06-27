@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono, Noto_Sans_Devanagari } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ChatWidget } from "@/components/chat/chat-widget";
-import { HtmlLangSync } from "@/components/site/html-lang-sync";
 import { LenisProvider } from "@/components/site/lenis-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { getLocaleFromPathname } from "@/lib/locale";
 import { absoluteUrl, getSiteUrlObject } from "@/lib/site-url";
 import "./globals.css";
 
@@ -82,11 +83,13 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = (await headers()).get("x-current-pathname") || "/";
+  const htmlLang = getLocaleFromPathname(pathname);
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -109,7 +112,7 @@ export default function RootLayout({
 
   return (
     <html
-      lang="en"
+      lang={htmlLang}
       className={`${geistSans.variable} ${geistMono.variable} ${notoSansDevanagari.variable} h-full antialiased`}
       suppressHydrationWarning
     >
@@ -119,7 +122,6 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
         <TooltipProvider>
-          <HtmlLangSync />
           <LenisProvider />
           {children}
           <ChatWidget />

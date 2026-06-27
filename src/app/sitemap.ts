@@ -3,7 +3,7 @@ import { getProducts } from "@/lib/data/products";
 import { defaultLocale, locales, localizePath } from "@/lib/locale";
 import { absoluteUrl } from "@/lib/site-url";
 
-const staticRoutes = ["/", "/about", "/plans", "/reviews", "/faq", "/privacy"];
+const staticRoutes = ["/", "/about", "/plans", "/reviews", "/faq", "/privacy", "/terms"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();

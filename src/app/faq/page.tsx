@@ -2,15 +2,9 @@ import type { Metadata } from "next";
 import { Header } from "@/components/site/header";
 import { Footer } from "@/components/site/footer";
 import { FAQPageCopy } from "@/components/site/faq-page-copy";
+import { buildStaticPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "FAQ",
-  description:
-    "Find answers about activation, renewals, support, and how Ott Subscription Nepal works.",
-  alternates: {
-    canonical: "/faq",
-  },
-};
+export const metadata: Metadata = buildStaticPageMetadata("faq");
 
 export default function FAQPage() {
   return (

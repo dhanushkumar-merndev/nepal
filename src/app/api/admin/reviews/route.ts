@@ -8,12 +8,13 @@ export async function GET(request: Request) {
   if (!(await isAdminRequest())) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q")?.trim();
+  const product = searchParams.get("product");
   const from = searchParams.get("from");
   const to = searchParams.get("to");
   const status = searchParams.get("status");
   const page = Number(searchParams.get("page") ?? 1);
   const pageSize = Number(searchParams.get("pageSize") ?? 9);
-  const payload = await getAdminReviewsPage({ query, from, to, status, page, pageSize });
+  const payload = await getAdminReviewsPage({ query, product, from, to, status, page, pageSize });
   return NextResponse.json(payload);
 }
 

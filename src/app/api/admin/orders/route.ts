@@ -10,12 +10,13 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q")?.trim();
+  const product = searchParams.get("product");
   const from = searchParams.get("from");
   const to = searchParams.get("to");
   const page = Number(searchParams.get("page") ?? 1);
   const pageSize = Number(searchParams.get("pageSize") ?? 9);
 
-  const payload = await getAdminOrdersPage({ query, from, to, page, pageSize });
+  const payload = await getAdminOrdersPage({ query, product, from, to, page, pageSize });
   return NextResponse.json(payload);
 }
 

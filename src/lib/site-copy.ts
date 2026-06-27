@@ -135,6 +135,7 @@ type SiteCopy = {
       faq: string;
       contact: string;
       privacy: string;
+      terms: string;
     };
   };
 };
@@ -316,6 +317,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
         faq: "FAQ",
         contact: "Contact",
         privacy: "Privacy",
+        terms: "Terms",
       },
     },
   },
@@ -495,6 +497,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
         faq: "सवाल",
         contact: "संपर्क",
         privacy: "प्राइवेसी",
+        terms: "शर्तें",
       },
     },
   },
@@ -674,6 +677,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
         faq: "प्रश्न",
         contact: "सम्पर्क",
         privacy: "प्राइभेसी",
+        terms: "सर्तहरू",
       },
     },
   },

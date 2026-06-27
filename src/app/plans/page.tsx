@@ -4,15 +4,9 @@ import { Header } from "@/components/site/header";
 import { PlansFilter } from "@/components/site/plans-filter";
 import { PlansPageCopy } from "@/components/site/plans-page-copy";
 import { getProducts } from "@/lib/data/products";
+import { buildStaticPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "OTT Plans and Digital Services",
-  description:
-    "Browse active OTT and digital service plans in Nepal, compare prices and offers, and checkout through WhatsApp.",
-  alternates: {
-    canonical: "/plans",
-  },
-};
+export const metadata: Metadata = buildStaticPageMetadata("plans");
 
 export default async function PlansPage() {
   const products = await getProducts();

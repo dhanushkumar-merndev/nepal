@@ -21,6 +21,7 @@ export function Footer() {
     { label: copy.footer.links.contact, href: "/#contact" },
     { label: "About Us", href: "/about" },
     { label: copy.footer.links.privacy, href: "/privacy" },
+    { label: copy.footer.links.terms, href: "/terms" },
   ];
 
   return (

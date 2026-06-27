@@ -5,6 +5,7 @@ import { Footer } from "@/components/site/footer";
 import { LocaleLink } from "@/components/site/locale-link";
 import { ProductPlanCheckout } from "@/components/site/product-plan-checkout";
 import { getProductBySlug } from "@/lib/data/products";
+import { buildProductMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -20,15 +21,11 @@ export async function generateMetadata({
     };
   }
 
-  return {
-    title: `${product.name} Plans`,
-    description:
-      product.description ??
-      `View ${product.name} plans, pricing, and checkout details on Ott Subscription Nepal.`,
-    alternates: {
-      canonical: `/plans/${product.slug}`,
-    },
-  };
+  return buildProductMetadata({
+    slug: product.slug,
+    productName: product.name,
+    description: product.description,
+  });
 }
 
 export default async function ProductPlansPage({

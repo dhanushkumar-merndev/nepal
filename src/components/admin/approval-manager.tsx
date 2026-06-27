@@ -49,6 +49,7 @@ export function ApprovalManager({
   useEffect(() => {
     const params = new URLSearchParams();
     if (debouncedQuery) params.set("q", debouncedQuery);
+    if (productFilter !== ALL_PRODUCTS) params.set("product", productFilter);
     if (statusFilter !== ALL_STATUSES) params.set("status", statusFilter);
     if (dateRange?.from) params.set("from", dateRange.from);
     if (dateRange?.to) params.set("to", dateRange.to);
@@ -71,7 +72,7 @@ export function ApprovalManager({
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery, statusFilter, dateRange, currentPage]);
+  }, [debouncedQuery, productFilter, statusFilter, dateRange, currentPage]);
 
   const productOptions = useMemo(() => {
     const names = Array.from(new Set(initialItems.map((item) => item.product_name).filter((name): name is string => Boolean(name)))).sort((a, b) =>
@@ -83,28 +84,18 @@ export function ApprovalManager({
     ];
   }, [initialItems]);
 
-  const filtered = useMemo(() => {
-    let result = items;
-
-    if (productFilter !== ALL_PRODUCTS) {
-      result = result.filter((item) => item.product_name === productFilter);
-    }
-
-    return result;
-  }, [items, productFilter]);
-
   const totals = useMemo(
     () => ({
-      count: productFilter === ALL_PRODUCTS ? totalCount : filtered.length,
-      pending: filtered.filter((item) => item.status === "pending").length,
+      count: totalCount,
+      pending: items.filter((item) => item.status === "pending").length,
     }),
-    [filtered, productFilter, totalCount]
+    [items, totalCount]
   );
 
-  const totalPages = Math.ceil((productFilter === ALL_PRODUCTS ? totalCount : filtered.length) / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   const clampedPage = Math.max(1, Math.min(currentPage, totalPages || 1));
 
-  const paginatedItems = filtered;
+  const paginatedItems = items;
 
   function update(id: string, status: string) {
     const review = items.find((item) => item.id === id);
@@ -282,7 +273,7 @@ export function ApprovalManager({
                     </TableRow>
                   );
                 })}
-                {!filtered.length ? (
+                {!items.length ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                       No records found.

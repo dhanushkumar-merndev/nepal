@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { buildStaticPageMetadata, normalizeSiteLocale } from "@/lib/seo";
 
-export { default } from "../page";
+export { default } from "../../terms/page";
 
 export async function generateMetadata({
   params,
@@ -9,5 +9,5 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  return buildStaticPageMetadata("home", normalizeSiteLocale(locale));
+  return buildStaticPageMetadata("terms", normalizeSiteLocale(locale));
 }

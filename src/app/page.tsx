@@ -9,15 +9,9 @@ import { SlideIn } from "@/components/site/slide-in";
 import { getHomeReviews } from "@/lib/data/home-reviews";
 import { getProducts } from "@/lib/data/products";
 import { HomePopularPlansHeader } from "@/components/site/home-popular-plans-header";
+import { buildStaticPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Premium OTT Subscriptions in Nepal",
-  description:
-    "Shop Netflix, Spotify, Prime Video, YouTube Premium and more in Nepal with fast activation, real customer reviews, and WhatsApp checkout.",
-  alternates: {
-    canonical: "/",
-  },
-};
+export const metadata: Metadata = buildStaticPageMetadata("home");
 
 export default async function Home() {
   const [products, reviews] = await Promise.all([getProducts(), getHomeReviews()]);

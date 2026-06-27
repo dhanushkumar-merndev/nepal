@@ -6,15 +6,9 @@ import { ReviewCard } from "@/components/site/review-card";
 import { ReviewForm } from "@/components/site/review-form";
 import { SlideIn } from "@/components/site/slide-in";
 import { ReviewPagerLabel, ReviewsPageIntro, ReviewsPageStats, ReviewsPaginationCopy, ReviewsShowingCopy } from "@/components/site/reviews-page-copy";
+import { buildStaticPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Customer Reviews",
-  description:
-    "Read real customer reviews about Ott Subscription Nepal and our OTT and digital service support.",
-  alternates: {
-    canonical: "/reviews",
-  },
-};
+export const metadata: Metadata = buildStaticPageMetadata("reviews");
 
 export default async function ReviewsPage({
   searchParams,

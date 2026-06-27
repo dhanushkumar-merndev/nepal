@@ -56,6 +56,7 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   await invalidateProductContextCache();
+  await invalidatePublicProductsCache();
   return NextResponse.json({ data, imageUrl, message: "Banner generated and product updated." });
 }
 

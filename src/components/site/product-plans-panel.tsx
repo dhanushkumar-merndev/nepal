@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -34,20 +34,9 @@ export function ProductPlansPanel({
   const decrease = useCartStore((state) => state.decrease);
   const removeItem = useCartStore((state) => state.removeItem);
 
-  useEffect(() => {
-    setQuantities((current) => {
-      const next = { ...current };
-      cartItems.forEach((item) => {
-        if (!(item.planId in next)) {
-          next[item.planId] = item.quantity;
-        }
-      });
-      return next;
-    });
-  }, [cartItems]);
-
   function quantityFor(planId: string) {
-    return quantities[planId] ?? 1;
+    const cartItem = cartItems.find((item) => item.planId === planId);
+    return cartItem?.quantity ?? quantities[planId] ?? 1;
   }
 
   function changeQuantity(planId: string, direction: 1 | -1) {

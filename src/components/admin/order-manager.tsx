@@ -67,6 +67,7 @@ export function OrderManager({ initialOrders, initialTotalCount }: { initialOrde
   useEffect(() => {
     const params = new URLSearchParams();
     if (debouncedQuery) params.set("q", debouncedQuery);
+    if (productFilter !== ALL_PRODUCTS) params.set("product", productFilter);
     if (dateRange?.from) params.set("from", dateRange.from);
     if (dateRange?.to) params.set("to", dateRange.to);
     params.set("page", String(currentPage));
@@ -88,7 +89,7 @@ export function OrderManager({ initialOrders, initialTotalCount }: { initialOrde
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery, dateRange, currentPage]);
+  }, [debouncedQuery, productFilter, dateRange, currentPage]);
 
   const productOptions = useMemo(() => {
     const names = Array.from(new Set(initialOrders.flatMap(getProductNames))).sort((a, b) => a.localeCompare(b));
@@ -98,22 +99,17 @@ export function OrderManager({ initialOrders, initialTotalCount }: { initialOrde
     ];
   }, [initialOrders]);
 
-  const visibleOrders = useMemo(() => {
-    if (productFilter === ALL_PRODUCTS) return orders;
-    return orders.filter((order) => getProductNames(order).includes(productFilter));
-  }, [orders, productFilter]);
-
   const totals = useMemo(
     () => ({
-      count: productFilter === ALL_PRODUCTS ? totalCount : visibleOrders.length,
-      revenue: visibleOrders.reduce((sum, order) => sum + Number(order.total_amount ?? 0), 0),
+      count: totalCount,
+      revenue: orders.reduce((sum, order) => sum + Number(order.total_amount ?? 0), 0),
     }),
-    [productFilter, totalCount, visibleOrders]
+    [orders, totalCount]
   );
 
-  const totalPages = Math.ceil((productFilter === ALL_PRODUCTS ? totalCount : visibleOrders.length) / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   const clampedPage = Math.max(1, Math.min(currentPage, totalPages || 1));
-  const paginatedOrders = visibleOrders;
+  const paginatedOrders = orders;
 
   function updateStatus(id: string, status: string) {
     const order = orders.find((item) => item.id === id);
@@ -249,7 +245,7 @@ export function OrderManager({ initialOrders, initialTotalCount }: { initialOrde
                     </TableCell>
                   </TableRow>
                 ))}
-                {!visibleOrders.length ? (
+                {!orders.length ? (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                       No orders match these filters.
