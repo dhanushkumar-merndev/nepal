@@ -1,13 +1,12 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import gsap from "gsap";
 import { CheckCircle2, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LocaleLink } from "@/components/site/locale-link";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { getLocaleFromPathname } from "@/lib/locale";
 import { getSiteCopy } from "@/lib/site-copy";
 import type { Product } from "@/lib/types";
@@ -38,15 +37,12 @@ export function TrustBadges({ className = "" }: { className?: string }) {
 export function Hero({ services }: { services: Pick<Product, "name" | "logo_url" | "stock_status">[] }) {
   const heroServices = services.slice(0, 4);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const isMobile = useIsMobile();
   const pathname = usePathname() || "/";
   const locale = getLocaleFromPathname(pathname);
   const copy = getSiteCopy(locale);
-  const shouldSplitHeading = locale === "en" && !isMobile;
+  const headingLines = useMemo(() => copy.hero.heading.split("\n"), [copy.hero.heading]);
 
   useEffect(() => {
-    if (isMobile) return;
-
     const el = headingRef.current;
     if (!el) return;
     const chars = el.querySelectorAll<HTMLElement>(".gsap-char");
@@ -55,69 +51,67 @@ export function Hero({ services }: { services: Pick<Product, "name" | "logo_url"
     const animation = gsap.fromTo(
       chars,
       { opacity: 0, y: 40, rotateX: -90 },
-      { opacity: 1, y: 0, rotateX: 0, duration: 0.6, stagger: 0.04, ease: "back.out(1.7)" }
+      { opacity: 1, y: 0, rotateX: 0, duration: 0.6, stagger: 0.04, ease: "back.out(1.7)" },
     );
 
     return () => {
       animation.kill();
     };
-  }, [isMobile]);
-
-  const heading = copy.hero.heading;
-  const mobileDelay = isMobile ? 0 : undefined;
+  }, []);
 
   return (
     <section className="mx-auto grid max-w-7xl items-center gap-6 px-4 pb-10 pt-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 lg:py-24">
       <div>
+        <div className="hidden sm:inline-flex lg:hidden">
+          <Badge className="border border-[#159FD3]/40 bg-white/60 text-[#159FD3] shadow-sm backdrop-blur-xl">{copy.hero.badge}</Badge>
+        </div>
         <motion.div
-          className="hidden sm:inline-flex"
+          className="hidden lg:inline-flex"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.35, delay: 0.08, ease: "easeOut" }}
         >
           <Badge className="border border-[#159FD3]/40 bg-white/60 text-[#159FD3] shadow-sm backdrop-blur-xl">{copy.hero.badge}</Badge>
         </motion.div>
-        <h1
-          ref={headingRef}
-          className="mt-3 max-w-3xl break-words text-4xl font-black tracking-tight text-[#111] md:text-5xl lg:text-7xl"
-        >
-          {heading.split("\n").map((line, li) => (
-            <span
-              key={li}
-              className={shouldSplitHeading ? undefined : "block"}
-            >
-              {shouldSplitHeading && li > 0 ? <br /> : null}
-              {shouldSplitHeading ? (
-                line.split("").map((char, ci) => (
-                  <span
-                    key={`${li}-${ci}`}
-                    className="gsap-char inline-block opacity-0"
-                    style={char === " " ? { width: "0.35em" } : undefined}
-                  >
-                    {char === " " ? "\u00A0" : char}
-                  </span>
-                ))
-              ) : (
-                <motion.span
-                  className="block"
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: mobileDelay ?? (0.08 + li * 0.08), ease: "easeOut" }}
-                >
-                  {line}
-                </motion.span>
-              )}
+
+        <h1 className="mt-3 max-w-3xl break-words text-4xl font-black tracking-tight text-[#111] md:text-5xl lg:hidden">
+          {headingLines.map((line, index) => (
+            <span key={`${line}-${index}`} className="block">
+              {line}
             </span>
           ))}
         </h1>
+        <h1
+          ref={headingRef}
+          className="mt-3 hidden max-w-3xl break-words text-4xl font-black tracking-tight text-[#111] md:text-5xl lg:block lg:text-7xl"
+        >
+          {headingLines.map((line, index) => (
+            <span key={`${line}-${index}`} className="block">
+              {line.split("").map((char, charIndex) => (
+                <span
+                  key={`${index}-${charIndex}`}
+                  className="gsap-char inline-block opacity-0"
+                  style={char === " " ? { width: "0.35em" } : undefined}
+                >
+                  {char === " " ? "\u00A0" : char}
+                </span>
+              ))}
+            </span>
+          ))}
+        </h1>
+
+        <p className="mt-4 max-w-2xl text-base leading-7 text-[#555] lg:hidden lg:mt-6 lg:text-lg lg:leading-8">
+          {copy.hero.description}
+        </p>
         <motion.p
-          className="mt-4 max-w-2xl text-base leading-7 text-[#555] lg:mt-6 lg:text-lg lg:leading-8"
+          className="mt-4 hidden max-w-2xl text-base leading-7 text-[#555] lg:block lg:mt-6 lg:text-lg lg:leading-8"
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: mobileDelay ?? 0.25, ease: "easeOut" }}
+          transition={{ duration: 0.45, delay: 0.25, ease: "easeOut" }}
         >
           {copy.hero.description}
         </motion.p>
+
         <motion.div
           className="mt-6 hidden flex-wrap justify-center gap-3 sm:justify-start lg:mt-8 lg:flex"
           initial={{ opacity: 0, y: 18 }}
@@ -149,35 +143,37 @@ export function Hero({ services }: { services: Pick<Product, "name" | "logo_url"
         </div>
       </div>
       <motion.div
-        className="hidden gap-2 rounded-3xl border border-white/20 bg-white/30 p-3 shadow-lg backdrop-blur-2xl md:gap-4 md:p-5 lg:grid"
+        className="hidden gap-2 rounded-3xl border border-white/20 bg-white/30 p-3 shadow-lg backdrop-blur-2xl lg:grid lg:gap-4 lg:p-5"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
       >
         {heroServices.map((service, index) => (
-          <div key={service.name} className="flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/50 p-3 shadow-sm backdrop-blur-xl md:gap-4 md:p-5">
-            <div className="flex min-w-0 items-center gap-2 md:gap-4">
-              <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-md md:size-14">
+          <div key={service.name} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/50 p-5 shadow-sm backdrop-blur-xl">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-md">
                 {service.logo_url ? (
                   <img
                     src={service.logo_url}
                     alt={service.name}
                     width={48}
                     height={48}
-                    className="size-8 rounded-md object-contain md:size-11"
+                    className="size-11 rounded-md object-contain"
                   />
                 ) : (
-                  <Tv className="size-5 text-[#0B7FAE] md:size-7" />
+                  <Tv className="size-7 text-[#0B7FAE]" />
                 )}
               </div>
               <div className="min-w-0">
                 <motion.p
-                  className="text-[10px] font-semibold uppercase tracking-wide text-[#159FD3] md:text-xs"
+                  className="text-xs font-semibold uppercase tracking-wide text-[#159FD3]"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.3 + index * 0.12, ease: "easeOut" }}
-                >{copy.hero.popularLabel} #{index + 1}</motion.p>
-                <h2 className="truncate text-sm font-bold md:text-xl">{service.name}</h2>
+                >
+                  {copy.hero.popularLabel} #{index + 1}
+                </motion.p>
+                <h2 className="truncate text-xl font-bold">{service.name}</h2>
               </div>
             </div>
             <Badge className="shrink-0">{service.stock_status === "Coming Soon" ? copy.hero.soon : copy.hero.available}</Badge>

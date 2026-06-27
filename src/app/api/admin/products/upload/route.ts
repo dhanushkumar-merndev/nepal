@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   });
   if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 });
 
-  const publicUrl = supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+  const publicUrl = `${supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
   const column = assetType === "banner" ? "image_url" : "logo_url";
   const { data, error } = await supabase.from("products").update({ [column]: publicUrl }).eq("id", productId).select().single();
 

@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   });
   if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 });
 
-  const imageUrl = supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+  const imageUrl = `${supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
   const { data, error } = await supabase
     .from("products")
     .update({ image_url: imageUrl })

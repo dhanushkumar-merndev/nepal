@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:brevo": "node scripts/test-brevo-email.mjs",
     "generate:assets": "node scripts/generate-service-assets.mjs",
     "seed": "node scripts/generate-service-assets.mjs && node scripts/seed-demo-data.mjs"
   },

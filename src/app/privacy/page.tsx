@@ -25,7 +25,7 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-bold text-[#111]">1. Information We Collect</h2>
             <p className="mt-2">
               We collect only the information you provide when placing an order or submitting a review:
-              your name, email address, phone number, and order details. If you sign in with Google,
+              your name, email address, and order details. If you sign in with Google,
               we receive your name, email, and avatar URL from your Google profile.
             </p>
           </section>

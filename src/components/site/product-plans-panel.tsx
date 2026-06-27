@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getLocaleFromPathname } from "@/lib/locale";
+import { getLocaleFromPathname, localizePath } from "@/lib/locale";
 import { getSiteCopy, translateStockStatus } from "@/lib/site-copy";
 import type { Product } from "@/lib/types";
 import { useCartStore } from "@/lib/store/cart-store";
@@ -33,6 +33,18 @@ export function ProductPlansPanel({
   const increase = useCartStore((state) => state.increase);
   const decrease = useCartStore((state) => state.decrease);
   const removeItem = useCartStore((state) => state.removeItem);
+
+  useEffect(() => {
+    setQuantities((current) => {
+      const next = { ...current };
+      cartItems.forEach((item) => {
+        if (!(item.planId in next)) {
+          next[item.planId] = item.quantity;
+        }
+      });
+      return next;
+    });
+  }, [cartItems]);
 
   function quantityFor(planId: string) {
     return quantities[planId] ?? 1;
@@ -73,8 +85,20 @@ export function ProductPlansPanel({
       imageUrl: product.image_url,
       addKey,
     });
-    toast.success("Added to cart", {
-      description: `${product.name} ${plan.name} x${quantity}`,
+    const label = quantity > 1 ? `${quantity}× ${plan.name}` : plan.name;
+    toast.success(`${label} added to cart`, {
+      description: `${product.name} - Rs. ${(getDisplayPrice(plan) ?? Number(plan.real_price) ?? 0) * quantity}`,
+      action: (
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = localizePath("/cart", locale);
+          }}
+          className="font-semibold text-[#159FD3] hover:text-[#0B7FAE]"
+        >
+          View Cart
+        </button>
+      ),
     });
     setPendingConfirm(null);
     setShowSuggestions(false);
@@ -199,7 +223,7 @@ export function ProductPlansPanel({
                   onClick={() => addPlan(plan)}
                 >
                   <ShoppingCart className="size-3.5" />
-                  {copy.productUi.add}
+                  {alreadyAdded ? copy.productUi.inCart : cartQuantity > 0 ? copy.productUi.addMore : copy.productUi.addToCart}
                 </Button>
               </div>
             )}

@@ -225,9 +225,6 @@ async function seedOrders(rows) {
     const finalPrice = Number(planRow.offer_price ?? planRow.real_price);
     const { error } = await supabase.from("orders").insert({
       customer_name: ["Demo Customer", "Sagar M.", "Anita P."][index],
-      phone: ["9800000001", "9800000002", "9800000003"][index],
-      payment_method: ["eSewa", "Khalti", "Manual Confirmation"][index],
-      note: "Demo order for admin preview.",
       cart_items: [
         {
           productId: productRow.id,

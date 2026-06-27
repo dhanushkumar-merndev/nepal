@@ -112,7 +112,7 @@ textarea {
 }
 
 .mobile-cta-enter {
-  animation: mobile-cta-enter 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation: none;
 }
 
 @media (min-width: 1024px) {

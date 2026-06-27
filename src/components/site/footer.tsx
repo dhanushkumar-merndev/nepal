@@ -7,7 +7,6 @@ import { getSiteCopy } from "@/lib/site-copy";
 
 const support = [
   { label: "WhatsApp", href: "https://wa.me/9779842901942" },
-  { label: "Email", href: "mailto:support@example.com" },
 ];
 
 export function Footer() {
@@ -70,7 +69,7 @@ export function Footer() {
 
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">{copy.footer.navigate}</h3>
-              <nav className="mt-3 grid gap-2 text-sm">
+              <nav className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm lg:grid-cols-1">
                 {links.map((link) => (
                   <LocaleLink
                     key={link.href}
@@ -118,7 +117,7 @@ export function Footer() {
                 </div>
               </a>
             </div>
-            <div className="col-span-full pt-6 mt-6">
+            <div className="col-span-full mt-4 pt-4 md:mt-5 md:pt-5 lg:mt-6 lg:pt-6">
               <div className="flex flex-col items-center justify-center gap-1 text-center text-xs text-[#555] sm:flex-row sm:gap-2">
                 <p>&copy; {new Date().getFullYear()} {copy.footer.rights}</p>
                 <span className="hidden sm:inline">|</span>

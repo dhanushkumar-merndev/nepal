@@ -10,7 +10,7 @@ export function makeBannerSvg({
   backgroundColor?: string;
 }) {
   const primary = sanitizeColor(primaryColor);
-  const secondary = sanitizeColor(secondaryColor);
+  const secondary = normalizeSecondaryColor(primary, secondaryColor);
   const background = sanitizeColor(backgroundColor);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-label="${escapeXml(name)} banner background">
@@ -35,6 +35,11 @@ export function makeBannerSvg({
 
 function sanitizeColor(value: string) {
   return /^#[0-9A-Fa-f]{6}$/.test(value) ? value : "#159FD3";
+}
+
+function normalizeSecondaryColor(primary: string, secondary: string) {
+  const safeSecondary = sanitizeColor(secondary);
+  return safeSecondary.toLowerCase() === primary.toLowerCase() ? "#159FD3" : safeSecondary;
 }
 
 function escapeXml(value: string) {

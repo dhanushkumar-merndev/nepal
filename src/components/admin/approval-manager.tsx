@@ -38,9 +38,7 @@ export function ApprovalManager({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [emailingId, setEmailingId] = useState<string | null>(null);
   const [pendingStatus, setPendingStatus] = useState<{ id: string; status: string; customerName?: string } | null>(null);
-  const [pendingEmail, setPendingEmail] = useState<{ id: string; type: "appreciation" | "follow_up"; email?: string | null } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -142,32 +140,6 @@ export function ApprovalManager({
     });
   }
 
-  async function sendReviewEmail(id: string, type: "appreciation" | "follow_up") {
-    const review = items.find((item) => item.id === id);
-    setPendingEmail({ id, type, email: review?.customer_email });
-  }
-
-  async function confirmSendReviewEmail() {
-    if (!pendingEmail) return;
-    const { id, type } = pendingEmail;
-    setEmailingId(`${id}:${type}`);
-    try {
-      const response = await fetch("/api/admin/reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, type }),
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Unable to send email.");
-      setPendingEmail(null);
-      toast.success(type === "appreciation" ? "Appreciation email sent" : "Follow-up email sent");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to send email.");
-    } finally {
-      setEmailingId(null);
-    }
-  }
-
   return (
     <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       <div className="grid gap-4 md:grid-cols-2">
@@ -260,7 +232,6 @@ export function ApprovalManager({
                   <TableHead className="px-4 py-3 font-semibold text-foreground/80">Message</TableHead>
                   <TableHead className="px-4 py-3 font-semibold text-foreground/80">Created</TableHead>
                   <TableHead className="px-4 py-3 font-semibold text-foreground/80">Status</TableHead>
-                  <TableHead className="px-4 py-3 font-semibold text-foreground/80">Email</TableHead>
                   <TableHead className="px-4 py-3 text-right font-semibold text-foreground/80">Update status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -281,7 +252,7 @@ export function ApprovalManager({
                     <TableRow key={item.id} className="border-b border-white/10 transition-colors duration-200 hover:bg-white/20">
                       <TableCell className="px-4 py-3">
                         <div className="font-semibold text-foreground/90">{item.customer_name}</div>
-                        <div className="text-xs text-muted-foreground">{item.customer_email || item.product_name}</div>
+                        <div className="text-xs text-muted-foreground">{item.product_name}</div>
                       </TableCell>
                       <TableCell className="max-w-xl whitespace-normal px-4 py-3 text-sm text-foreground/80">{item.comment}</TableCell>
                       <TableCell className="px-4 py-3 text-foreground/80">{new Date(item.created_at).toLocaleDateString()}</TableCell>
@@ -298,30 +269,6 @@ export function ApprovalManager({
                           {item.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="px-4 py-3">
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={!item.customer_email || emailingId === `${item.id}:appreciation`}
-                            onClick={() => sendReviewEmail(item.id, "appreciation")}
-                            className="h-8 border-emerald-500/20 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15"
-                          >
-                            Send thanks
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={!item.customer_email || emailingId === `${item.id}:follow_up`}
-                            onClick={() => sendReviewEmail(item.id, "follow_up")}
-                            className="h-8 border-amber-500/20 bg-amber-500/10 text-amber-700 hover:bg-amber-500/15"
-                          >
-                            Follow up
-                          </Button>
-                        </div>
-                      </TableCell>
                       <TableCell className="px-4 py-3 text-right">
                         <div className="inline-block w-32 text-left">
                           <CustomDropdown
@@ -337,7 +284,7 @@ export function ApprovalManager({
                 })}
                 {!filtered.length ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                       No records found.
                     </TableCell>
                   </TableRow>
@@ -417,17 +364,6 @@ export function ApprovalManager({
         confirmLabel="Update review"
         disabled={isPending || Boolean(updatingId)}
         onConfirm={confirmStatusUpdate}
-      />
-      <ConfirmDialog
-        open={Boolean(pendingEmail)}
-        onOpenChange={(open) => {
-          if (!open) setPendingEmail(null);
-        }}
-        title="Send email?"
-        description={`Send ${pendingEmail?.type === "appreciation" ? "appreciation email" : "follow-up email"}${pendingEmail?.email ? ` to ${pendingEmail.email}` : ""}?`}
-        confirmLabel="Send email"
-        disabled={Boolean(emailingId)}
-        onConfirm={confirmSendReviewEmail}
       />
     </div>
   );

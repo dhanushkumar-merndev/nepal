@@ -162,7 +162,7 @@ export function OrderManager({ initialOrders, initialTotalCount }: { initialOrde
       <Card className="overflow-visible">
         <CardHeader>
           <CardTitle>Orders</CardTitle>
-          <CardDescription>Search by customer, phone, or status. Filter by product and created date.</CardDescription>
+          <CardDescription>Search by customer or status. Filter by product and created date.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 overflow-visible">
           <div className="relative z-20 grid items-center gap-3 rounded-xl border border-white/40 bg-white/15 p-3 shadow-sm backdrop-blur-md md:grid-cols-[minmax(260px,1fr)_220px_280px_auto]">
@@ -217,7 +217,6 @@ export function OrderManager({ initialOrders, initialTotalCount }: { initialOrde
                   <TableRow key={order.id} className="border-b border-white/10 transition-colors duration-200 hover:bg-white/20">
                     <TableCell className="px-4 py-3">
                       <div className="font-semibold text-foreground/90">{order.customer_name}</div>
-                      <div className="text-xs text-muted-foreground">{order.phone}</div>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-foreground/80">{new Date(order.created_at).toLocaleString()}</TableCell>
                     <TableCell className="max-w-72 truncate px-4 py-3 text-xs text-muted-foreground">

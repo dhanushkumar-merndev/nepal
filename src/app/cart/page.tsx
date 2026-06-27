@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useRef, useCallback, useMemo } from "react";
-import type { User } from "@supabase/supabase-js";
+import { Suspense, useState, useEffect, useCallback, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -12,20 +11,13 @@ import { useCartStore } from "@/lib/store/cart-store";
 import { formatPrice } from "@/lib/utils/format";
 import { getSaveAmount } from "@/lib/utils/pricing";
 import { buildWhatsAppMessage, getWhatsAppUrl } from "@/lib/utils/whatsapp";
-import { createClient } from "@/lib/supabase/client";
-import { signInWithGoogle } from "@/lib/auth/sign-in-google";
 import { getLocaleFromPathname, localizePath } from "@/lib/locale";
 import { getSiteCopy } from "@/lib/site-copy";
-
-const PENDING_CHECKOUT_KEY = "ott-nepal-pending-checkout";
 
 export function CartPage() {
   const [ready, setReady] = useState(false);
   const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState<string | null>(null);
-  const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const resumedCheckout = useRef(false);
   const { items, total, increase, decrease, removeItem, clear } = useCartStore();
   const pathname = usePathname() || "/cart";
   const locale = getLocaleFromPathname(pathname);
@@ -34,30 +26,17 @@ export function CartPage() {
   const cartItems = useMemo(() => (ready ? items : []), [ready, items]);
   const cartTotal = ready ? total() : 0;
 
-  const applyAuthUser = useCallback((user: User | null) => {
-    setCustomerEmail(user?.email ?? null);
-    const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name;
-    if (displayName) setCustomerName((current) => current || displayName);
-  }, []);
-
   const completeCheckout = useCallback(async ({
     name,
-    email,
-    orderNote,
     redirectToWhatsApp,
   }: {
     name: string;
-    email: string;
-    orderNote: string;
     redirectToWhatsApp: boolean;
   }) => {
     setSubmitting(true);
 
     const payload = {
       customer_name: name,
-      customer_email: email,
-      phone: "whatsapp",
-      note: orderNote,
       cart_items: cartItems,
       total_amount: cartTotal,
       whatsapp_sent: true,
@@ -69,9 +48,10 @@ export function CartPage() {
       body: JSON.stringify(payload),
     }).catch(() => null);
 
+    setTimeout(clear, 3000);
+
     const message = buildWhatsAppMessage({
       customerName: name,
-      note: orderNote,
       items: cartItems,
     });
     const whatsappUrl = getWhatsAppUrl(message);
@@ -85,55 +65,16 @@ export function CartPage() {
     return () => cancelAnimationFrame(id);
   }, []);
 
-  useEffect(() => {
-    const supabase = createClient();
-    if (!supabase) return;
-
-    supabase.auth.getUser().then(({ data }) => applyAuthUser(data.user ?? null));
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      applyAuthUser(session?.user ?? null);
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, [applyAuthUser]);
-
-  useEffect(() => {
-    if (!ready || !customerEmail || !cartItems.length || resumedCheckout.current) return;
-    const pending = readPendingCheckout();
-    if (!pending) return;
-
-    resumedCheckout.current = true;
-    sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
-    const timer = window.setTimeout(() => {
-      void completeCheckout({
-        name: pending.customerName,
-        email: customerEmail,
-        orderNote: pending.note,
-        redirectToWhatsApp: true,
-      });
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [ready, customerEmail, cartItems.length, completeCheckout]);
-
   async function handleCheckout() {
     const trimmedName = customerName.trim();
+
     if (!trimmedName || !cartItems.length) {
       toast.error(copy.cartPage.enterNameError);
       return;
     }
 
-    if (!customerEmail) {
-      sessionStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify({ customerName: trimmedName, note, createdAt: Date.now() }));
-      toast.info(copy.cartPage.signInHint);
-      await signInWithGoogle(localizePath("/cart", locale));
-      return;
-    }
-
     await completeCheckout({
       name: trimmedName,
-      email: customerEmail,
-      orderNote: note,
       redirectToWhatsApp: true,
     });
   }
@@ -155,7 +96,8 @@ export function CartPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto flex min-h-[calc(100dvh-10rem)] max-w-6xl flex-col px-4 py-10 lg:pt-16 lg:pb-10">
+      <main className={`flex-1 ${!cartItems.length ? "flex flex-col items-center justify-center" : ""}`} style={{ minHeight: "calc(100dvh - 10rem)" }}>
+        <div className="mx-auto w-full max-w-7xl px-4 py-12">
         {cartItems.length ? (
           <>
             <h1 className="text-3xl font-black md:text-4xl">{copy.cartPage.title}</h1>
@@ -251,14 +193,6 @@ export function CartPage() {
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                   />
-
-                  <textarea
-                    className="w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-[#159FD3]"
-                    placeholder={copy.cartPage.notePlaceholder}
-                    rows={3}
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                  />
                 </div>
 
                 <Button
@@ -276,30 +210,11 @@ export function CartPage() {
             </aside>
           </div>
         )}
+        </div>
       </main>
       <Footer />
     </>
   );
-}
-
-function readPendingCheckout() {
-  try {
-    const raw = sessionStorage.getItem(PENDING_CHECKOUT_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { customerName?: unknown; note?: unknown; createdAt?: unknown };
-    if (typeof parsed.createdAt === "number" && Date.now() - parsed.createdAt > 10 * 60 * 1000) {
-      sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
-      return null;
-    }
-    if (typeof parsed.customerName !== "string" || !parsed.customerName.trim()) return null;
-    return {
-      customerName: parsed.customerName.trim(),
-      note: typeof parsed.note === "string" ? parsed.note : "",
-    };
-  } catch {
-    sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
-    return null;
-  }
 }
 
 export default function CartPageWrapper() {

@@ -3,7 +3,6 @@ import { formatPrice } from "@/lib/utils/format";
 
 type CheckoutInput = {
   customerName: string;
-  note?: string;
   items: CartItem[];
 };
 
@@ -16,15 +15,13 @@ export function buildWhatsAppMessage(input: CheckoutInput) {
     ...input.items.flatMap((item, index) => [
       `${index + 1}. ${item.productName}`,
       `Plan: ${item.planName}`,
-      `Real Price: ${formatPrice(item.realPrice)}`,
-      `Offer Price: ${item.offerPrice ? formatPrice(item.offerPrice) : "N/A"}`,
+      `Price: ${formatPrice(item.offerPrice ?? item.realPrice)}`,
       `Qty: ${item.quantity}`,
       "",
     ]),
     `Total: ${formatPrice(input.items.reduce((sum, item) => sum + item.finalPrice * item.quantity, 0))}`,
     "",
     `Customer Name: ${input.customerName}`,
-    `Note: ${input.note || "N/A"}`,
     "",
     "Please confirm availability.",
   ];

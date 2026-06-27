@@ -6,9 +6,6 @@ export type AdminOrder = {
   id: string;
   customer_name: string;
   customer_email?: string | null;
-  phone: string;
-  payment_method: string | null;
-  note: string | null;
   cart_items: unknown;
   total_amount: number | null;
   whatsapp_sent: boolean | null;
@@ -114,7 +111,7 @@ export async function getAdminOrders(filters: AdminOrderFilters = {}) {
     .limit(250);
 
   const query = filters.query?.trim();
-  if (query) builder = builder.or(`customer_name.ilike.%${query}%,phone.ilike.%${query}%,status.ilike.%${query}%`);
+  if (query) builder = builder.or(`customer_name.ilike.%${query}%,status.ilike.%${query}%`);
   if (filters.from) builder = builder.gte("created_at", `${filters.from}T00:00:00.000Z`);
   if (filters.to) builder = builder.lte("created_at", `${filters.to}T23:59:59.999Z`);
 
@@ -146,7 +143,7 @@ export async function getAdminOrdersPage(filters: AdminListPageFilters = {}): Pr
     .range(fromIndex, toIndex);
 
   const query = filters.query?.trim();
-  if (query) builder = builder.or(`customer_name.ilike.%${query}%,phone.ilike.%${query}%,status.ilike.%${query}%`);
+  if (query) builder = builder.or(`customer_name.ilike.%${query}%,status.ilike.%${query}%`);
   if (filters.from) builder = builder.gte("created_at", `${filters.from}T00:00:00.000Z`);
   if (filters.to) builder = builder.lte("created_at", `${filters.to}T23:59:59.999Z`);
 

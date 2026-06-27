@@ -47,8 +47,17 @@ export function ProductModal({
       ) : null}
       <Dialog.Portal>
         <Dialog.Overlay className="plan-drawer-overlay fixed inset-0 z-[999] bg-black/40 backdrop-blur-sm" />
-        <Dialog.Content data-lenis-prevent className="plan-drawer-content fixed inset-x-0 bottom-0 z-[999] max-h-[86dvh] overflow-hidden rounded-t-3xl border border-white/40 bg-white/86 shadow-2xl backdrop-blur-xl lg:inset-y-0 lg:right-auto lg:left-0 lg:max-h-none lg:w-[420px] lg:rounded-none lg:rounded-r-3xl">
-          <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/50 bg-white/72 px-4 py-4 shadow-sm backdrop-blur-xl">
+        <Dialog.Content
+          data-lenis-prevent
+          onInteractOutside={(event) => {
+            const target = event.target as HTMLElement;
+            if (target.closest("[data-sonner-toaster]")) {
+              event.preventDefault();
+            }
+          }}
+          className="plan-drawer-content fixed inset-x-0 bottom-0 z-[999] max-h-[86dvh] overflow-hidden rounded-t-3xl border border-black/5 bg-white shadow-2xl lg:inset-y-0 lg:right-auto lg:left-0 lg:max-h-none lg:w-[420px] lg:rounded-none lg:rounded-r-3xl lg:border-white/40 lg:bg-white/86 lg:backdrop-blur-xl lg:flex lg:flex-col"
+        >
+          <div className="shrink-0 z-10 flex items-start justify-between gap-4 border-b border-black/5 bg-white px-4 py-4 shadow-sm lg:border-white/50 lg:bg-white/72 lg:backdrop-blur-xl">
             <div>
               <Dialog.Title className="text-base font-black lg:text-lg">{product.name}</Dialog.Title>
               <Dialog.Description className="mt-1 text-xs text-[#555] lg:text-sm">
@@ -59,7 +68,7 @@ export function ProductModal({
               <X className="size-4" />
             </Dialog.Close>
           </div>
-          <div data-lenis-prevent className="max-h-[calc(86dvh-5.5rem)] touch-pan-y overflow-y-auto overscroll-contain px-4 py-4">
+          <div data-lenis-prevent className="touch-pan-y overflow-y-auto overscroll-contain px-4 py-4 max-h-[calc(86dvh-5.5rem)] lg:max-h-none lg:flex-1 lg:[scrollbar-width:thin] lg:[scrollbar-color:#CBD5E1_transparent]">
             <ProductPlansPanel product={product} />
           </div>
         </Dialog.Content>

@@ -69,7 +69,6 @@ type SiteCopy = {
     total: string;
     totalHint: string;
     namePlaceholder: string;
-    notePlaceholder: string;
     checkoutWhatsapp: string;
     redirectHint: string;
     enterNameError: string;
@@ -154,7 +153,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
     },
     hero: {
       badge: "Premium digital services in Nepal",
-      heading: "Ott subscription\nNepal",
+      heading: "Ott Subscription\nNepal",
       description:
         "Netflix, Spotify, Prime Video, YouTube Premium and more - easy activation, fast support, and simple WhatsApp checkout.",
       viewAllPlans: "View All Plans",
@@ -205,7 +204,6 @@ const copy: Record<SiteLocale, SiteCopy> = {
       total: "Total",
       totalHint: "Including all offers and discounts",
       namePlaceholder: "Your name *",
-      notePlaceholder: "Optional note",
       checkoutWhatsapp: "Checkout on WhatsApp",
       redirectHint: "You will be redirected to WhatsApp to confirm your order.",
       enterNameError: "Please enter your name.",
@@ -385,7 +383,6 @@ const copy: Record<SiteLocale, SiteCopy> = {
       total: "कुल",
       totalHint: "सभी ऑफर और छूट शामिल हैं",
       namePlaceholder: "आपका नाम *",
-      notePlaceholder: "वैकल्पिक नोट",
       checkoutWhatsapp: "WhatsApp पर checkout",
       redirectHint: "ऑर्डर की पुष्टि के लिए आपको WhatsApp पर भेजा जाएगा।",
       enterNameError: "कृपया अपना नाम दर्ज करें।",
@@ -565,7 +562,6 @@ const copy: Record<SiteLocale, SiteCopy> = {
       total: "जम्मा",
       totalHint: "सबै अफर र छुट समावेश छन्",
       namePlaceholder: "तपाईंको नाम *",
-      notePlaceholder: "वैकल्पिक नोट",
       checkoutWhatsapp: "WhatsApp मा checkout",
       redirectHint: "अर्डर पुष्टि गर्न तपाईंलाई WhatsApp मा पठाइनेछ।",
       enterNameError: "कृपया आफ्नो नाम लेख्नुहोस्।",

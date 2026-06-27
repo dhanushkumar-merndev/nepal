@@ -208,6 +208,7 @@ function PlansDragList({
   planDraftId,
   isPending,
   productSaved,
+  isNewPlan,
   onSelect,
   onRemove,
   onReorder,
@@ -216,6 +217,7 @@ function PlansDragList({
   planDraftId?: string;
   isPending: boolean;
   productSaved: boolean;
+  isNewPlan: boolean;
   onSelect: (plan: Plan) => void;
   onRemove: (id: string) => void;
   onReorder: (plans: Plan[]) => void;
@@ -330,6 +332,19 @@ function PlansDragList({
           </Button>
         </div>
       ))}
+      {isNewPlan ? (
+        <div
+          className={cn(
+            "relative shrink-0 rounded-xl border-2 border-dashed bg-white/10 shadow-sm backdrop-blur-md transition",
+            isOverflow ? "w-44" : "w-full sm:w-[calc(50%-6px)] xl:w-[calc(33.333%-8px)]"
+          )}
+        >
+          <div className="flex h-full min-h-28 w-full flex-col items-center justify-center gap-1 p-4 text-center">
+            <PlusIcon className="size-5 text-[#159FD3]" />
+            <span className="text-xs font-semibold text-muted-foreground">New plan</span>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -712,6 +727,46 @@ export function ProductDetailManager({ product, categories }: { product: Product
     }
   }
 
+  const productionPreviewCard =
+    !isNewProductPage && productDraft.id ? (
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
+        <div className="border-b border-white/35 bg-white/10 px-5 py-4">
+          <p className="text-base font-semibold leading-none">Production preview</p>
+          <p className="mt-1 text-sm text-muted-foreground">Updates as you type</p>
+        </div>
+        <div className="flex flex-1 items-center justify-center p-4">
+          <div className="w-full max-w-[302px]">
+            <ServiceCard product={{ ...previewProduct, plans: (previewProduct as Product & { _singlePlanPreview: Plan[] })._singlePlanPreview }} />
+          </div>
+        </div>
+      </div>
+    ) : null;
+
+  const planPreviewCard =
+    !isNewProductPage && productDraft.id ? (
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
+        <div className="border-b border-white/35 bg-white/10 px-5 py-4">
+          <p className="text-base font-semibold leading-none">Plan preview</p>
+          <p className="mt-1 text-sm text-muted-foreground">Matches the checkout drawer</p>
+        </div>
+        <div className="flex flex-1 items-center justify-center p-4">
+          <div className="mx-auto w-full max-w-[420px] rounded-2xl border border-black/10 bg-white/80 p-3 shadow-sm">
+              <div className="mb-3">
+                <p className="text-sm font-black">{previewProduct.name}</p>
+                <p className="mt-0.5 text-xs text-[#555]">Choose a plan and quantity.</p>
+              </div>
+              {previewProduct.plans.length ? (
+                <ProductPlansPanel product={previewProduct} />
+              ) : (
+                <div className="rounded-2xl border border-dashed border-black/10 bg-white p-4 text-sm text-muted-foreground">
+                  Add a plan to preview plan cards.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+    ) : null;
+
   return (
     <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       <div className="flex items-center justify-between gap-3">
@@ -720,8 +775,9 @@ export function ProductDetailManager({ product, categories }: { product: Product
         </Link>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_460px]">
-        <div className="grid min-w-0 gap-4">
+      {isNewProductPage ? (
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_460px]">
+          <div className="grid min-w-0 gap-4">
         <Card className="overflow-hidden border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
           <CardHeader className="border-b border-white/35 bg-white/10 px-5 py-4">
             <div className="flex items-start justify-between gap-3">
@@ -954,84 +1010,8 @@ export function ProductDetailManager({ product, categories }: { product: Product
             ) : null}
           </CardContent>
         </Card>
-
-        {!isNewProductPage && productDraft.id && (
-          <Card className="overflow-hidden border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
-            <CardHeader className="border-b border-white/35 bg-white/10 px-5 py-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle>Plans</CardTitle>
-                <CardDescription>{productDraft.id ? `${plans.length} plans` : "Save product first"}</CardDescription>
-              </div>
-              <Button type="button" size="sm" onClick={() => setPlanDraft(emptyPlan(productDraft.id ?? ""))} disabled={!productDraft.id}>
-                <PlusIcon /> Add plan
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-5 p-5">
-            <PlansDragList
-              plans={plans}
-              planDraftId={planDraft.id}
-              isPending={isPending}
-              onSelect={(plan) => setPlanDraft(planToDraft(plan))}
-              onRemove={(id) => remove("plans", id)}
-              onReorder={(reordered) => {
-                const updated = reordered.map((p, i) => ({ ...p, sort_order: i }));
-                setPlans(updated);
-                startTransition(async () => {
-                  try {
-                    await fetch("/api/admin/plans/reorder", {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(
-                        updated.map((p) => ({ id: p.id, sort_order: p.sort_order }))
-                      ),
-                    });
-                  } catch {
-                    // silent – visual order already updated
-                  }
-                });
-              }}
-              productSaved={Boolean(productDraft.id)}
-            />
-
-            <form className="grid gap-3 rounded-xl border border-white/35 bg-white/10 p-4" onSubmit={submitPlan}>
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-semibold">{planDraft.id ? "Edit plan" : "Create plan"}</p>
-                <p className="text-xs text-muted-foreground">{productDraft.id ? "Select a card above to edit an existing plan." : "Save the product before adding plans."}</p>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                <Input className={adminInputClass} placeholder="Plan name" value={planDraft.name} onChange={(event) => setPlanDraft({ ...planDraft, name: event.target.value })} required />
-                <Input className={adminInputClass} placeholder="Duration" value={planDraft.duration} onChange={(event) => setPlanDraft({ ...planDraft, duration: event.target.value })} />
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Input className={adminInputClass} placeholder="Price" type="number" value={planDraft.real_price} onChange={(event) => setPlanDraft({ ...planDraft, real_price: event.target.value })} required />
-                <Input className={adminInputClass} placeholder="Offer" type="number" value={planDraft.offer_price} onChange={(event) => setPlanDraft({ ...planDraft, offer_price: event.target.value })} />
-                <Input className={adminInputClass} placeholder="Actual" type="number" value={planDraft.actual_price} onChange={(event) => setPlanDraft({ ...planDraft, actual_price: event.target.value })} />
-              </div>
-              <CustomDropdown value={planDraft.stock_status} onChange={(value) => setPlanDraft({ ...planDraft, stock_status: value })} options={stockOptions} />
-              <Input className={adminInputClass} placeholder="Features separated by commas" value={planDraft.features} onChange={(event) => setPlanDraft({ ...planDraft, features: event.target.value })} />
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={planDraft.is_active} onChange={(event) => setPlanDraft({ ...planDraft, is_active: event.target.checked })} />
-                Active
-              </label>
-              <div className="flex flex-wrap gap-2">
-                <Button type="submit" disabled={isPending || !productDraft.id}>
-                  <SaveIcon /> {planDraft.id ? "Save plan" : "Create plan"}
-                </Button>
-                {planDraft.id ? (
-                  <Button type="button" variant="outline" disabled={isPending} onClick={() => remove("plans", planDraft.id!)}>
-                    <Trash2Icon /> Delete
-                  </Button>
-                ) : null}
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-        )}
-        </div>
-        <aside className="grid min-w-0 gap-4 xl:sticky xl:top-6 xl:self-start">
-          {isNewProductPage ? (
+          </div>
+          <aside className="grid min-w-0 gap-4 xl:self-start">
             <Card className="overflow-hidden border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
               <CardHeader className="border-b border-white/35 bg-white/10 px-5 py-4">
                 <CardTitle>Settings</CardTitle>
@@ -1088,59 +1068,332 @@ export function ProductDetailManager({ product, categories }: { product: Product
                 </Button>
               </CardContent>
             </Card>
-          ) : null}
-
-          {!isNewProductPage && productDraft.id && (
-            <>
-              <div className="overflow-hidden rounded-xl border border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
-            <div className="border-b border-white/35 bg-white/10 px-5 py-4">
-              <p className="text-base font-semibold leading-none">Production preview</p>
-              <p className="mt-1 text-sm text-muted-foreground">Updates as you type</p>
-            </div>
-            {/* overflow-y-auto + overscroll-contain: scrollable internally, cursor wheel won't leak to page */}
-            <div
-              className="overflow-y-auto overscroll-contain"
-              style={{ maxHeight: "min(704px, 80svh)" }}
-            >
-              <div className="flex min-h-[500px] items-center justify-center p-4">
-                <div className="w-full max-w-[302px]">
-                  <ServiceCard product={{ ...previewProduct, plans: (previewProduct as Product & { _singlePlanPreview: Plan[] })._singlePlanPreview }} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-xl border border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
-            <div className="border-b border-white/35 bg-white/10 px-5 py-4">
-              <p className="text-base font-semibold leading-none">Plan preview</p>
-              <p className="mt-1 text-sm text-muted-foreground">Matches the checkout drawer</p>
-            </div>
-            {/* overflow-y-auto + overscroll-contain: independent scroll, no bleed */}
-            <div
-              className="overflow-y-auto overscroll-contain"
-              style={{ maxHeight: "min(596px, 80svh)" }}
-            >
-              <div className="flex items-center justify-center p-4">
-                <div className="mx-auto w-full max-w-[420px] rounded-2xl border border-black/10 bg-white/80 p-3 shadow-sm">
-                  <div className="mb-3">
-                    <p className="text-sm font-black">{previewProduct.name}</p>
-                    <p className="mt-0.5 text-xs text-[#555]">Choose a plan and quantity.</p>
-                  </div>
-                  {previewProduct.plans.length ? (
-                    <ProductPlansPanel product={previewProduct} />
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-black/10 bg-white p-4 text-sm text-muted-foreground">
-                      Add a plan to preview plan cards.
+          </aside>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_460px] xl:items-stretch">
+            <div className="min-w-0">
+              <Card className="overflow-hidden border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
+                <CardHeader className="border-b border-white/35 bg-white/10 px-5 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <CardTitle>{productDraft.id ? productDraft.name || "Product detail" : "Create product"}</CardTitle>
+                      <CardDescription>{productDraft.category || "Product detail"}</CardDescription>
                     </div>
-                  )}
-                </div>
-              </div>
+                    {productDraft.id ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isPending}
+                        className="border-rose-500/20 bg-rose-500/10 text-rose-600 hover:bg-rose-500/15"
+                        onClick={() => remove("products", productDraft.id!)}
+                      >
+                        <Trash2Icon /> Delete
+                      </Button>
+                    ) : null}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-5 p-5">
+                  <div className="relative min-h-56 overflow-hidden rounded-xl border border-white/45 bg-white/15 bg-cover bg-center shadow-sm" style={bannerStyle}>
+                    {!productDraft.image_url ? (
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          background: `
+                      radial-gradient(circle at 79% 17%, ${bannerPrimary}42 0, transparent 22%),
+                      radial-gradient(circle at 14% 88%, ${bannerSecondary}1f 0, transparent 24%),
+                      radial-gradient(circle at 87% 85%, ${bannerPrimary}1a 0, transparent 16%),
+                      linear-gradient(135deg, #ffffff 0%, #E6F7FD 100%)
+                    `,
+                        }}
+                      />
+                    ) : null}
+                    <div className="absolute inset-0 bg-black/10" />
+                    <div className="relative flex h-full min-h-48 items-end gap-4 p-5 text-white">
+                      <div className="grid size-20 place-items-center rounded-2xl border border-white/45 bg-white/85 bg-cover bg-center shadow-lg" style={logoStyle}>
+                        {!productDraft.logo_url ? <ImageIcon className="size-7 text-muted-foreground" /> : null}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate text-2xl font-bold">{productDraft.name || "New product"}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <form id="product-form" className="grid gap-4" onSubmit={submitProduct}>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <Input
+                        className={adminInputClass}
+                        placeholder="Name"
+                        value={productDraft.name}
+                        onChange={(event) => {
+                          const name = event.target.value;
+                          setProductDraft((current) => ({ ...current, name, slug: toSlug(name) }));
+                        }}
+                        required
+                      />
+                      <Input className={adminInputClass} placeholder="Slug" value={productDraft.slug} readOnly required />
+                      <CustomDropdown
+                        allowCustom
+                        value={productDraft.category}
+                        onChange={(value) => setProductDraft({ ...productDraft, category: value })}
+                        options={categoryOptions}
+                        placeholder="Category"
+                      />
+                      <CustomDropdown className="h-10" value={productDraft.stock_status} onChange={(value) => setProductDraft({ ...productDraft, stock_status: value })} options={stockOptions} />
+                    </div>
+                    <Input className={adminInputClass} placeholder="Description" value={productDraft.description} onChange={(event) => setProductDraft({ ...productDraft, description: event.target.value })} />
+                  </form>
+                  <div className="grid gap-5 rounded-xl border border-white/35 bg-white/10 p-4">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm font-semibold">Settings</p>
+                      <p className="text-xs text-muted-foreground">Uploads, banner colors, product flags, and save action.</p>
+                    </div>
+
+                    <div className="grid gap-3">
+                      <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(event) => uploadProductImage(event.target.files?.[0], "logo")} />
+                      <input ref={bannerInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(event) => handleBannerFileSelected(event.target.files?.[0])} />
+
+                      <div className="grid gap-2 md:grid-cols-3">
+                        <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={() => setShowLogoUploadDialog(true)}>
+                          <UploadIcon /> Upload logo
+                        </Button>
+                        <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={() => setShowBannerUploadDialog(true)}>
+                          <UploadIcon /> Upload banner
+                        </Button>
+                        <Button type="button" variant="outline" className="w-full justify-start" disabled={!productDraft.name.trim() || !productDraft.slug.trim() || isPending} onClick={generateBanner}>
+                          <WandSparklesIcon /> Generate banner
+                        </Button>
+                      </div>
+
+                      <label className="flex h-10 items-center justify-between rounded-lg border border-white/35 bg-white/20 px-3 text-sm shadow-sm backdrop-blur-md">
+                        <span>Banner Colors</span>
+                        <div className="flex items-center gap-1">
+                          <input type="color" className="size-6 cursor-pointer" value={bannerPrimary} onChange={(event) => setBannerPrimary(event.target.value)} />
+                          <input type="color" className="size-6 cursor-pointer" value={bannerSecondary} onChange={(event) => setBannerSecondary(event.target.value)} />
+                        </div>
+                      </label>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <ProductToggleCard
+                        label="Best seller"
+                        description="Highlight this product."
+                        checked={productDraft.is_best_seller}
+                        onChange={(checked) => setProductDraft({ ...productDraft, is_best_seller: checked })}
+                      />
+                      <ProductToggleCard
+                        label="Limited"
+                        description="Limited availability."
+                        checked={productDraft.is_limited}
+                        onChange={(checked) => setProductDraft({ ...productDraft, is_limited: checked })}
+                      />
+                      <ProductToggleCard
+                        label="Active"
+                        description="Visible to customers."
+                        checked={productDraft.is_active}
+                        onChange={(checked) => setProductDraft({ ...productDraft, is_active: checked })}
+                      />
+                    </div>
+
+                    <Button type="submit" form="product-form" className="w-full md:w-auto" disabled={isPending}>
+                      <SaveIcon /> Save product
+                    </Button>
+                  </div>
+                  {showLogoUploadDialog ? (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/35 px-4">
+                      <div className="w-full max-w-md rounded-2xl border border-white/40 bg-white p-5 shadow-2xl">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-base font-bold">Upload logo</p>
+                            <p className="mt-1 text-sm text-[#555]">
+                              Copy the prompt, then attach the reference image below when asking the AI to generate your logo.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            className="grid size-8 shrink-0 place-items-center rounded-full bg-[#E6F7FD] text-[#0B7FAE]"
+                            onClick={() => setShowLogoUploadDialog(false)}
+                            aria-label="Close logo upload dialog"
+                          >
+                            <XIcon className="size-4" />
+                          </button>
+                        </div>
+                        <div className="mt-4 rounded-xl border border-black/10 bg-[#F6FCFF] p-3">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={LOGO_FORMAT_REFERENCE_URL}
+                              alt="Logo format reference"
+                              className="h-20 w-20 shrink-0 rounded-xl border border-black/10 bg-white object-contain p-1 shadow-sm"
+                            />
+                            <div className="ml-auto flex shrink-0">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="h-10 rounded-full"
+                                onClick={async () => {
+                                  try {
+                                    await copyImageToClipboard(LOGO_FORMAT_REFERENCE_URL);
+                                    toast.success("Reference image copied");
+                                  } catch {
+                                    window.open(LOGO_FORMAT_REFERENCE_URL, "_blank", "noopener,noreferrer");
+                                    toast.info("Image opened in a new tab. Save or copy it from there.");
+                                  }
+                                }}
+                              >
+                                <ClipboardCopyIcon className="size-4" /> Copy image
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-5 flex flex-wrap justify-end gap-2">
+                          <Button type="button" variant="outline" onClick={copyImagePrompt} disabled={!productDraft.name.trim()}>
+                            <ClipboardCopyIcon /> Copy prompt
+                          </Button>
+                          <Button type="button" variant="outline" onClick={() => setShowLogoUploadDialog(false)}>
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            disabled={isPending}
+                            onClick={() => {
+                              setShowLogoUploadDialog(false);
+                              logoInputRef.current?.click();
+                            }}
+                          >
+                            <UploadIcon /> Choose logo
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                  {showBannerUploadDialog ? (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/35 px-4">
+                      <div className="w-full max-w-md rounded-2xl border border-white/40 bg-white p-5 shadow-2xl">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-base font-bold">Upload banner</p>
+                            <p className="mt-1 text-sm text-[#555]">
+                              Banner image must be exactly {BANNER_WIDTH} x {BANNER_HEIGHT}px, the same size as generated banners.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            className="grid size-8 shrink-0 place-items-center rounded-full bg-[#E6F7FD] text-[#0B7FAE]"
+                            onClick={() => setShowBannerUploadDialog(false)}
+                            aria-label="Close banner upload dialog"
+                          >
+                            <XIcon className="size-4" />
+                          </button>
+                        </div>
+                        <div className="mt-4 rounded-xl border border-black/10 bg-[#F6FCFF] p-3 text-sm text-[#555]">
+                          <p className="font-semibold text-[#111]">Required size</p>
+                          <p>{BANNER_WIDTH}px wide x {BANNER_HEIGHT}px high</p>
+                          <p className="mt-2 text-xs">Accepted: PNG, JPEG, WebP, SVG</p>
+                        </div>
+                        <div className="mt-5 flex flex-wrap justify-end gap-2">
+                          <Button type="button" variant="outline" onClick={() => setShowBannerUploadDialog(false)}>
+                            Cancel
+                          </Button>
+                          <Button type="button" disabled={isPending} onClick={() => bannerInputRef.current?.click()}>
+                            <UploadIcon /> Choose banner
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </CardContent>
+              </Card>
+            </div>
+            <div className="min-w-0 xl:flex xl:items-stretch">
+              <div className="w-full">{productionPreviewCard}</div>
             </div>
           </div>
-            </>
-          )}
-        </aside>
-      </div>
+
+          {productDraft.id ? (
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_460px] xl:items-stretch">
+              <div className="min-w-0">
+          <Card className="overflow-hidden border-white/35 bg-white/20 shadow-xl backdrop-blur-xl">
+            <CardHeader className="border-b border-white/35 bg-white/10 px-5 py-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle>Plans</CardTitle>
+                <CardDescription>{productDraft.id ? `${plans.length} plans` : "Save product first"}</CardDescription>
+              </div>
+              <Button type="button" size="sm" onClick={() => setPlanDraft(emptyPlan(productDraft.id ?? ""))} disabled={!productDraft.id}>
+                <PlusIcon /> Add plan
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5 p-5">
+            <PlansDragList
+              plans={plans}
+              planDraftId={planDraft.id}
+              isPending={isPending}
+              isNewPlan={!planDraft.id}
+              onSelect={(plan) => setPlanDraft(planToDraft(plan))}
+              onRemove={(id) => remove("plans", id)}
+              onReorder={(reordered) => {
+                const updated = reordered.map((p, i) => ({ ...p, sort_order: i }));
+                setPlans(updated);
+                startTransition(async () => {
+                  try {
+                    await fetch("/api/admin/plans/reorder", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(
+                        updated.map((p) => ({ id: p.id, sort_order: p.sort_order }))
+                      ),
+                    });
+                  } catch {
+                    // silent – visual order already updated
+                  }
+                });
+              }}
+              productSaved={Boolean(productDraft.id)}
+            />
+
+            <form className="grid gap-3 rounded-xl border border-white/35 bg-white/10 p-4" onSubmit={submitPlan}>
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-semibold">{planDraft.id ? "Edit plan" : "Create plan"}</p>
+                <p className="text-xs text-muted-foreground">{productDraft.id ? "Select a card above to edit an existing plan." : "Save the product before adding plans."}</p>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input className={adminInputClass} placeholder="Plan name" value={planDraft.name} onChange={(event) => setPlanDraft({ ...planDraft, name: event.target.value })} required />
+                <Input className={adminInputClass} placeholder="Duration" value={planDraft.duration} onChange={(event) => setPlanDraft({ ...planDraft, duration: event.target.value })} />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Input className={adminInputClass} placeholder="Price" type="number" value={planDraft.real_price} onChange={(event) => setPlanDraft({ ...planDraft, real_price: event.target.value })} required />
+                <Input className={adminInputClass} placeholder="Offer" type="number" value={planDraft.offer_price} onChange={(event) => setPlanDraft({ ...planDraft, offer_price: event.target.value })} />
+                <Input className={adminInputClass} placeholder="Actual" type="number" value={planDraft.actual_price} onChange={(event) => setPlanDraft({ ...planDraft, actual_price: event.target.value })} />
+              </div>
+              <CustomDropdown value={planDraft.stock_status} onChange={(value) => setPlanDraft({ ...planDraft, stock_status: value })} options={stockOptions} />
+              <Input className={adminInputClass} placeholder="Features separated by commas" value={planDraft.features} onChange={(event) => setPlanDraft({ ...planDraft, features: event.target.value })} />
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={planDraft.is_active} onChange={(event) => setPlanDraft({ ...planDraft, is_active: event.target.checked })} />
+                Active
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <Button type="submit" disabled={isPending || !productDraft.id}>
+                  <SaveIcon /> {planDraft.id ? "Save plan" : "Create plan"}
+                </Button>
+                {planDraft.id ? (
+                  <Button type="button" variant="outline" disabled={isPending} onClick={() => remove("plans", planDraft.id!)}>
+                    <Trash2Icon /> Delete
+                  </Button>
+                ) : null}
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+              </div>
+              <div className="min-w-0 xl:flex xl:items-stretch">
+                <div className="w-full">{planPreviewCard}</div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
       <ConfirmDialog
         open={Boolean(pendingDelete)}
         onOpenChange={(open) => {

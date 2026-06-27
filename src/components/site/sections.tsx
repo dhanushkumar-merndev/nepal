@@ -2,9 +2,9 @@
 
 import { MessageCircle, PackageCheck, ShieldCheck, Sparkles } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { FadeIn } from "@/components/site/fade-in";
 import { LocaleLink } from "@/components/site/locale-link";
 import { FAQItem } from "@/components/site/faq-item";
-import { FadeIn } from "@/components/site/fade-in";
 import { TrustBadges } from "@/components/site/hero";
 import { getLocaleFromPathname } from "@/lib/locale";
 import { getSiteCopy } from "@/lib/site-copy";
