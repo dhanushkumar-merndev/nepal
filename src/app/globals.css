@@ -78,6 +78,19 @@ textarea {
 .mobile-shine-btn {
   position: relative;
   overflow: hidden;
+  isolation: isolate;
+  transform: translateZ(0);
+  animation: mobile-button-float 2.8s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mobile-shine-btn::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 100%);
+  z-index: 0;
 }
 
 .mobile-shine-btn::after {
@@ -90,9 +103,27 @@ textarea {
   background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0.7) 50%, rgba(255, 255, 255, 0.2) 80%, transparent 100%);
   transform: skewX(-20deg);
   animation: mobile-button-shine 2.6s ease-in-out infinite;
+  z-index: 0;
+}
+
+.mobile-shine-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 10px 22px rgba(21, 159, 211, 0.24);
+}
+
+.mobile-cta-enter {
+  animation: mobile-cta-enter 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
 
 @media (min-width: 1024px) {
+  .mobile-cta-enter {
+    animation: none;
+  }
+
+  .mobile-shine-btn {
+    animation: none;
+  }
+
   .mobile-shine-btn::after {
     display: none;
   }
@@ -127,6 +158,27 @@ textarea {
   100% {
     left: 110%;
     opacity: 0;
+  }
+}
+
+@keyframes mobile-button-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes mobile-cta-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

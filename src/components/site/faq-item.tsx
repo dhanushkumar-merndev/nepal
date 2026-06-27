@@ -8,7 +8,10 @@ export function FAQItem({ question, answer }: { question: string; answer: string
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="premium-card overflow-hidden p-0">
+    <div
+      data-state={open ? "open" : "closed"}
+      className="premium-card overflow-hidden p-0"
+    >
       <button
         type="button"
         className="flex w-full items-center justify-between gap-4 p-5 text-left font-semibold"
@@ -25,12 +28,19 @@ export function FAQItem({ question, answer }: { question: string; answer: string
       </button>
       <div
         className={cn(
-          "grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-out will-change-[grid-template-rows,opacity] motion-reduce:transition-none",
-          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+          "grid overflow-hidden transition-[grid-template-rows] duration-500 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] will-change-[grid-template-rows] motion-reduce:transition-none",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
         )}
       >
         <div className="min-h-0 overflow-hidden">
-          <p className="px-5 pb-5 text-sm leading-6 text-[#555]">{answer}</p>
+          <p
+            className={cn(
+              "px-5 pb-5 text-sm leading-6 text-[#555] transition-opacity duration-200 ease-out motion-reduce:transition-none",
+              open ? "opacity-100 delay-150" : "opacity-0 delay-0",
+            )}
+          >
+            {answer}
+          </p>
         </div>
       </div>
     </div>

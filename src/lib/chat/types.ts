@@ -1,7 +1,7 @@
 export type RecommendedAction = {
   label: string;
   prompt: string;
-  type: "question" | "product" | "cart" | "support" | "add_to_cart" | "checkout" | "plan_selection";
+  type: "question" | "product" | "cart" | "support" | "add_to_cart" | "checkout" | "plan_selection" | "compare_selection";
   productSlug?: string;
   planId?: string;
   productId?: string;
@@ -15,6 +15,7 @@ export type RecommendedAction = {
   quantity?: number;
   addKey?: string;
   groups?: PlanSelectionGroup[];
+  serviceOptions?: CompareServiceOption[];
 };
 
 export type PlanSelectionGroup = {
@@ -36,6 +37,11 @@ export type PlanSelectionOption = {
   offerPrice?: number | null;
   finalPrice: number;
   addKey?: string;
+};
+
+export type CompareServiceOption = {
+  productId: string;
+  productName: string;
 };
 
 export type ChatMessage = {

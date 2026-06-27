@@ -51,6 +51,20 @@ const productTerms = [
   "tiktok growth",
 ];
 
+const knownServices = [
+  { name: "Netflix", aliases: ["netflix"] },
+  { name: "Prime Video", aliases: ["prime video", "prime"] },
+  { name: "SonyLIV", aliases: ["sonyliv", "sony liv"] },
+  { name: "YouTube Premium", aliases: ["youtube premium", "youtube"] },
+  { name: "Crunchyroll", aliases: ["crunchyroll", "crunchy"] },
+  { name: "Zee5", aliases: ["zee5", "zee 5"] },
+  { name: "Spotify Premium", aliases: ["spotify premium", "spotify"] },
+  { name: "Free Fire Topup", aliases: ["free fire topup", "free fire", "ff"] },
+  { name: "Instagram Growth", aliases: ["instagram growth"] },
+  { name: "Facebook Growth", aliases: ["facebook growth"] },
+  { name: "TikTok Growth", aliases: ["tiktok growth", "tik tok growth"] },
+] as const;
+
 const doneTerms = ["enough", "done", "that's all", "thats all", "checkout", "proceed", "finish", "all done", "nothing else", "no more", "go to checkout"];
 
 const websiteIntentTerms = [
@@ -174,6 +188,10 @@ type LocalChatResponse = {
   actions: RecommendedAction[];
 };
 
+function hasCartItems(cart: { quantity: number }[]) {
+  return cart.some((item) => item.quantity > 0);
+}
+
 export async function POST(request: Request) {
   const limit = await rateLimit(`ai-chat:${getIp(request)}`);
   const chatLimit = Number(process.env.AI_CHAT_RATE_LIMIT_REQUESTS_PER_MINUTE ?? 30);
@@ -193,7 +211,8 @@ export async function POST(request: Request) {
     return streamLocalResponse(refusal, [supportAction]);
   }
 
-  const deterministic = localProductResponse(parsed.data.message, products, parsed.data.messages);
+  const cartHasItems = hasCartItems(parsed.data.cart);
+  const deterministic = localProductResponse(parsed.data.message, products, parsed.data.messages, cartHasItems);
   if (deterministic) return streamLocalResponse(deterministic.text, deterministic.actions);
 
   const cartContext = parsed.data.cart.length
@@ -212,7 +231,7 @@ export async function POST(request: Request) {
   if (!apiKey) {
     return streamLocalResponse(
       "I can help with Ott Subscription Nepal plans and checkout. Groq is not configured yet, but you can ask about Netflix, Spotify Premium, YouTube Premium, Free Fire topup, prices, stock, cart, payment, and WhatsApp checkout.",
-      defaultActions(products),
+      defaultActions(products, cartHasItems),
     );
   }
 
@@ -228,10 +247,10 @@ export async function POST(request: Request) {
   const response = await createGroqStream(apiKey, messages);
 
   if (!response?.ok || !response.body) {
-    return streamLocalResponse("I could not reach the AI service right now. You can still ask me about plans, prices, stock, and WhatsApp checkout.", defaultActions(products));
+    return streamLocalResponse("I could not reach the AI service right now. You can still ask me about plans, prices, stock, and WhatsApp checkout.", defaultActions(products, cartHasItems));
   }
 
-  const actions = actionsForMessage(parsed.data.message, products);
+  const actions = actionsForMessage(parsed.data.message, products, cartHasItems);
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
@@ -443,6 +462,7 @@ function localProductResponse(
   message: string,
   products: Product[],
   messages: { role: string; content: string }[] = [],
+  cartHasItems = false,
 ): LocalChatResponse | null {
   const lower = message.toLowerCase().replace(/\s+/g, " ").trim();
   const rejection = rejectionResponse(lower, messages);
@@ -451,25 +471,27 @@ function localProductResponse(
   const confirmation = confirmationResponse(lower, products, messages);
   if (confirmation) return confirmation;
 
-  const support = supportResponse(lower);
+  const support = supportResponse(lower, cartHasItems);
   if (support) return support;
 
-  const checkout = checkoutResponse(lower);
+  const checkout = checkoutResponse(lower, cartHasItems);
   if (checkout) return checkout;
 
   const cheapest = cheapestPlanResponse(lower, products);
   if (cheapest) return cheapest;
-
-  const servicesOverview = servicesOverviewResponse(lower, products);
-  if (servicesOverview) return servicesOverview;
 
   const mentionedProducts = findMentionedProducts(lower, products);
   const followUpProducts = !mentionedProducts.length
     ? inferFollowUpProducts(lower, messages, products)
     : [];
   const resolvedProducts = mentionedProducts.length ? mentionedProducts : followUpProducts;
+  const unavailableProduct = !resolvedProducts.length ? unavailableProductResponse(lower, products, cartHasItems) : null;
+  if (unavailableProduct) return unavailableProduct;
+  const servicesOverview = !resolvedProducts.length ? servicesOverviewResponse(lower, products, cartHasItems) : null;
+  if (servicesOverview) return servicesOverview;
   const suggestedProducts = findSuggestedProducts(lower, products, mentionedProducts);
   const isBuying = /\b(add|buy|purchase|need|want|get|book|order)\b/.test(lower);
+  const wantsCompare = /\bcompare\b/.test(lower);
   const isExplainIntent = /\b(explain|describe|detail|details|about|info|information|what is|tell me about)\b/.test(lower);
   const hasQuantityOnlyFollowUp = !mentionedProducts.length && followUpProducts.length > 0 && quantityLikeMessage(lower);
 
@@ -495,6 +517,12 @@ function localProductResponse(
   }
 
   if (!resolvedProducts.length) {
+    if (wantsCompare) {
+      return {
+        text: "Select any two services below and I will compare them for you.",
+        actions: [compareSelectionAction(products)],
+      };
+    }
     if (greetings.includes(lower)) {
       const greetingsTexts = [
         "Namaste! I can help you find OTT plans, compare prices, check stock, add subscriptions to cart, or connect with support.",
@@ -506,7 +534,7 @@ function localProductResponse(
       ];
       return {
         text: greetingsTexts[Math.floor(Math.random() * greetingsTexts.length)],
-        actions: defaultActions(products),
+        actions: defaultActions(products, cartHasItems),
       };
     }
     return null;
@@ -546,7 +574,7 @@ function localProductResponse(
       text: explainProduct(product),
       actions: [
         planSelectionAction([product], lower),
-        { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+        ...cartAwareCheckoutActions(cartHasItems),
       ],
     };
   }
@@ -555,7 +583,7 @@ function localProductResponse(
     text: plansTable(resolvedProducts),
     actions: [
       planSelectionAction(resolvedProducts, lower),
-      ...questionActionsForProducts(resolvedProducts),
+      ...questionActionsForProducts(resolvedProducts, cartHasItems),
     ],
   };
 }
@@ -597,11 +625,11 @@ function rejectionResponse(message: string, messages: { role: string; content: s
 
   return {
     text: "Okay, I won't add it to cart.",
-    actions: defaultActions(),
+    actions: defaultActions([], false),
   };
 }
 
-function supportResponse(message: string): LocalChatResponse | null {
+function supportResponse(message: string, cartHasItems: boolean): LocalChatResponse | null {
   if (!/\b(contact|support|help|whatsapp)\b/.test(message)) return null;
   if (!/\b(contact|support)\b/.test(message)) return null;
 
@@ -609,14 +637,24 @@ function supportResponse(message: string): LocalChatResponse | null {
     text: "You can contact support on WhatsApp for plans, activation, renewal, payment, and checkout help.",
     actions: [
       supportAction,
-      { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+      ...cartAwareCheckoutActions(cartHasItems),
       { label: "Show plans", prompt: "Show me available plans.", type: "question" },
     ],
   };
 }
 
-function checkoutResponse(message: string): LocalChatResponse | null {
+function checkoutResponse(message: string, cartHasItems: boolean): LocalChatResponse | null {
   if (!/\b(checkout|pay|payment|order)\b/.test(message)) return null;
+
+  if (!cartHasItems) {
+    return {
+      text: "Your cart is empty right now. Choose a plan first, then open checkout and we will prepare the full WhatsApp order message for you.",
+      actions: [
+        { label: "Show plans", prompt: "Show me available plans.", type: "question" },
+        supportAction,
+      ],
+    };
+  }
 
   return {
     text: "Choose your plans, add them to cart, then open checkout. We will prepare the full WhatsApp order message automatically for you.",
@@ -684,7 +722,7 @@ function cheapestPlanResponse(message: string, products: Product[]) {
   };
 }
 
-function servicesOverviewResponse(message: string, products: Product[]): LocalChatResponse | null {
+function servicesOverviewResponse(message: string, products: Product[], cartHasItems: boolean): LocalChatResponse | null {
   const asksServices =
     /\b(what|which|show|list|tell)\b/.test(message) &&
     /\b(service|services|product|products|plans)\b/.test(message);
@@ -713,7 +751,27 @@ function servicesOverviewResponse(message: string, products: Product[]): LocalCh
 
   return {
     text: lines.join("\n"),
-    actions: defaultActions(activeProducts),
+    actions: defaultActions(activeProducts, cartHasItems),
+  };
+}
+
+function unavailableProductResponse(message: string, products: Product[], cartHasItems: boolean): LocalChatResponse | null {
+  const requested = knownServices.find((service) =>
+    service.aliases.some((alias) => message.includes(alias)),
+  );
+
+  if (!requested) return null;
+
+  const isAvailable = products.some((product) =>
+    productAliases(product).some((alias) => requested.aliases.some((requestedAlias) => requestedAlias === alias)),
+  );
+
+  if (isAvailable) return null;
+
+  const activeProducts = products.filter((product) => product.is_active);
+  return {
+    text: `${requested.name} is not currently listed in our active services right now. You can choose from the available services below or contact WhatsApp support for updates.`,
+    actions: defaultActions(activeProducts, cartHasItems),
   };
 }
 
@@ -724,6 +782,8 @@ function findMentionedProducts(message: string, products: Product[]) {
 }
 
 function findSuggestedProducts(message: string, products: Product[], exactProducts: Product[]) {
+  if (exactProducts.length > 0) return [];
+
   const exactIds = new Set(exactProducts.map((product) => product.id));
   const words = message
     .replace(/[^\w\s-]/g, " ")
@@ -977,6 +1037,20 @@ function planSelectionAction(products: Product[], message: string): RecommendedA
   };
 }
 
+function compareSelectionAction(products: Product[]): RecommendedAction {
+  return {
+    label: "Choose two services",
+    prompt: "Choose two services to compare.",
+    type: "compare_selection",
+    serviceOptions: products
+      .filter((product) => product.is_active)
+      .map((product) => ({
+        productId: product.id,
+        productName: product.name,
+      })),
+  };
+}
+
 function addToCartAction(product: Product, plan: Plan, quantity: number): RecommendedAction {
   const labelQty = quantity > 1 ? `${quantity}x ` : "";
   return {
@@ -1002,13 +1076,13 @@ function addKey(productSlug: string, planId: string, quantity: number) {
   return `${productSlug}:${planId}:${quantity}`;
 }
 
-function actionsForMessage(message: string, products: Product[]): RecommendedAction[] {
+function actionsForMessage(message: string, products: Product[], cartHasItems: boolean): RecommendedAction[] {
   const lower = message.toLowerCase();
 
   const isDone = doneTerms.some((term) => lower.includes(term));
   if (isDone) {
     return [
-      { label: "Proceed to Checkout", prompt: "Take me to checkout.", type: "checkout" },
+      ...cartAwareProceedActions(cartHasItems),
       { label: "View cart", prompt: "Show me my cart.", type: "cart" },
     ];
   }
@@ -1016,7 +1090,7 @@ function actionsForMessage(message: string, products: Product[]): RecommendedAct
   if (lower.includes("contact") || lower.includes("support") || lower.includes("enquiry") || lower.includes("inquiry")) {
     return [
       supportAction,
-      { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+      ...cartAwareCheckoutActions(cartHasItems),
       { label: "View all plans", prompt: "Show me available plans.", type: "question" },
     ];
   }
@@ -1045,10 +1119,11 @@ function actionsForMessage(message: string, products: Product[]): RecommendedAct
 
     if (!isAddIntent) {
       const hasMultiplePlans = mentionedProducts.length > 1 || mentionedProducts.some((p) => p.plans.filter((pl) => pl.is_active).length > 1);
+      const comparePrompt = buildComparePrompt(mentionedProducts);
       actions.push(
         planSelectionAction(mentionedProducts, lower),
-        ...(hasMultiplePlans ? [{ label: "Compare plans" as const, prompt: `Compare ${mentionedProducts.length === 1 ? mentionedProducts[0].name + " plans" : "these plans"}.`, type: "question" as const }] : []),
-        { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+        ...(hasMultiplePlans ? [{ label: "Compare plans" as const, prompt: comparePrompt, type: "question" as const }] : []),
+        ...cartAwareCheckoutActions(cartHasItems),
       );
     }
 
@@ -1059,15 +1134,15 @@ function actionsForMessage(message: string, products: Product[]): RecommendedAct
   if (wantsCart && (lower.includes("cart") || lower.includes("my"))) {
     return [
       { label: "View cart", prompt: "Show me my cart.", type: "cart" },
-      { label: "Proceed to Checkout", prompt: "Take me to checkout.", type: "checkout" },
+      ...cartAwareProceedActions(cartHasItems),
     ];
   }
 
-  return defaultActions(products);
+  return defaultActions(products, cartHasItems);
 }
 
-function defaultActions(products: Product[] = []): RecommendedAction[] {
-  const productPrompts = products.slice(0, 8).map((product) => ({
+function defaultActions(products: Product[] = [], cartHasItems = false): RecommendedAction[] {
+  const productPrompts = shuffle(products).slice(0, 8).map((product) => ({
     label: `${product.name} plans`,
     prompt: `Show me ${product.name} plans.`,
     type: "question" as const,
@@ -1075,17 +1150,35 @@ function defaultActions(products: Product[] = []): RecommendedAction[] {
   const fallback: RecommendedAction[] = [
     { label: "Show cheapest OTT plan", prompt: "Show me the cheapest OTT plan available.", type: "question" },
     { label: "Compare Spotify and YouTube", prompt: "Compare Spotify Premium and YouTube Premium.", type: "question" },
-    { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+    ...cartAwareCheckoutActions(cartHasItems),
   ];
   return shuffle([...productPrompts, ...fallback]).slice(0, 4);
 }
 
-function questionActionsForProducts(products: Product[]): RecommendedAction[] {
+function questionActionsForProducts(products: Product[], cartHasItems: boolean): RecommendedAction[] {
   const hasMultiplePlans = products.length > 1 || products.some((p) => p.plans.filter((pl) => pl.is_active).length > 1);
   return [
-    ...(hasMultiplePlans ? [{ label: "Compare plans" as const, prompt: `Compare ${products.length === 1 ? products[0].name + " plans" : "these plans"}.`, type: "question" as const }] : []),
-    { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
+    ...(hasMultiplePlans ? [{ label: "Compare plans" as const, prompt: buildComparePrompt(products), type: "question" as const }] : []),
+    ...cartAwareCheckoutActions(cartHasItems),
   ];
+}
+
+function buildComparePrompt(products: Product[]) {
+  if (!products.length) return "Compare two services.";
+  if (products.length === 1) return `Compare ${products[0].name} plans.`;
+  return `Compare ${products[0].name} and ${products[1].name}.`;
+}
+
+function cartAwareCheckoutActions(cartHasItems: boolean): RecommendedAction[] {
+  return cartHasItems
+    ? [{ label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" }]
+    : [];
+}
+
+function cartAwareProceedActions(cartHasItems: boolean): RecommendedAction[] {
+  return cartHasItems
+    ? [{ label: "Proceed to Checkout", prompt: "Take me to checkout.", type: "checkout" }]
+    : [];
 }
 
 function shuffle<T>(items: T[]) {

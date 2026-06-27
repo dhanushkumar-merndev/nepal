@@ -1,9 +1,35 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/site/header";
 import { Footer } from "@/components/site/footer";
 import { LocaleLink } from "@/components/site/locale-link";
 import { ProductPlanCheckout } from "@/components/site/product-plan-checkout";
 import { getProductBySlug } from "@/lib/data/products";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
+
+  if (!product) {
+    return {
+      title: "Plan Not Found",
+    };
+  }
+
+  return {
+    title: `${product.name} Plans`,
+    description:
+      product.description ??
+      `View ${product.name} plans, pricing, and checkout details on Ott Subscription Nepal.`,
+    alternates: {
+      canonical: `/plans/${product.slug}`,
+    },
+  };
+}
 
 export default async function ProductPlansPage({
   params,

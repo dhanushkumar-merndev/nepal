@@ -154,7 +154,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
     },
     hero: {
       badge: "Premium digital services in Nepal",
-      heading: "Premium OTT\nSubscriptions in\nNepal",
+      heading: "Ott subscription\nNepal",
       description:
         "Netflix, Spotify, Prime Video, YouTube Premium and more - easy activation, fast support, and simple WhatsApp checkout.",
       viewAllPlans: "View All Plans",

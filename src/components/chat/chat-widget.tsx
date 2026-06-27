@@ -23,10 +23,10 @@ const thinkingMessages = [
 ];
 
 const starterPrompts = [
-  "Show me Netflix plans",
-  "Compare Spotify and YouTube",
-  "What is the cheapest OTT plan?",
-  "I need Netflix and Prime Video",
+  "Show me available plans",
+  "Show me in-stock plans",
+  "What is the cheapest active plan?",
+  "Compare two services",
   "How do I checkout?",
 ];
 
@@ -292,7 +292,7 @@ export function ChatWidget() {
           assistantMessage.id,
           "I could not answer right now. Please try asking about plans, prices, stock, or WhatsApp checkout again.",
           [
-            { label: "Show Netflix plans", prompt: "Show me Netflix plans.", type: "question" },
+            { label: "Show plans", prompt: "Show me available plans.", type: "question" },
             { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
             { label: "Contact support", prompt: "How can I contact support on WhatsApp?", type: "support" },
           ],
@@ -596,6 +596,15 @@ export function ChatWidget() {
                             />
                           );
                         }
+                        if (action.type === "compare_selection") {
+                          return (
+                            <CompareSelectionAction
+                              key={`${action.label}-${message.id}`}
+                              action={action}
+                              onCompare={(prompt) => sendMessage(prompt)}
+                            />
+                          );
+                        }
                         const isAddCart = action.type === "add_to_cart";
                         const isCheckout = action.type === "checkout";
                         const isSupport = action.type === "support";
@@ -868,6 +877,63 @@ function PlanSelectionAction({
       >
         <ShoppingCart className="size-3.5" />
         Add {totalQuantity || ""} to cart
+      </button>
+    </div>
+  );
+}
+
+function CompareSelectionAction({
+  action,
+  onCompare,
+}: {
+  action: RecommendedAction;
+  onCompare: (prompt: string) => void;
+}) {
+  const options = useMemo(() => action.serviceOptions ?? [], [action.serviceOptions]);
+  const [selected, setSelected] = useState<string[]>([]);
+
+  if (!options.length) return null;
+
+  return (
+    <div className="mt-2 w-full rounded-2xl border border-[#159FD3]/20 bg-white p-3 text-[#111] shadow-sm">
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const checked = selected.includes(option.productId);
+          return (
+            <button
+              key={option.productId}
+              type="button"
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+                checked
+                  ? "border-[#159FD3] bg-[#E6F7FD] text-[#0B7FAE]"
+                  : "border-black/10 bg-white text-[#0B7FAE]",
+              )}
+              onClick={() =>
+                setSelected((current) =>
+                  checked
+                    ? current.filter((id) => id !== option.productId)
+                    : current.length >= 2
+                      ? [...current.slice(1), option.productId]
+                      : [...current, option.productId],
+                )
+              }
+            >
+              {option.productName}
+            </button>
+          );
+        })}
+      </div>
+      <button
+        type="button"
+        className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-[#159FD3] px-4 py-2 text-xs font-black text-white transition hover:bg-[#0B7FAE] disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={selected.length !== 2}
+        onClick={() => {
+          const chosen = options.filter((option) => selected.includes(option.productId)).map((option) => option.productName);
+          onCompare(`Compare ${chosen[0]} and ${chosen[1]}.`);
+        }}
+      >
+        Compare selected services
       </button>
     </div>
   );

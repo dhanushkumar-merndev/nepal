@@ -7,6 +7,7 @@ import { CheckCircle2, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LocaleLink } from "@/components/site/locale-link";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { getLocaleFromPathname } from "@/lib/locale";
 import { getSiteCopy } from "@/lib/site-copy";
 import type { Product } from "@/lib/types";
@@ -37,12 +38,15 @@ export function TrustBadges({ className = "" }: { className?: string }) {
 export function Hero({ services }: { services: Pick<Product, "name" | "logo_url" | "stock_status">[] }) {
   const heroServices = services.slice(0, 4);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const isMobile = useIsMobile();
   const pathname = usePathname() || "/";
   const locale = getLocaleFromPathname(pathname);
   const copy = getSiteCopy(locale);
-  const shouldSplitHeading = locale === "en";
+  const shouldSplitHeading = locale === "en" && !isMobile;
 
   useEffect(() => {
+    if (isMobile) return;
+
     const el = headingRef.current;
     if (!el) return;
     const chars = el.querySelectorAll<HTMLElement>(".gsap-char");
@@ -57,9 +61,10 @@ export function Hero({ services }: { services: Pick<Product, "name" | "logo_url"
     return () => {
       animation.kill();
     };
-  }, []);
+  }, [isMobile]);
 
   const heading = copy.hero.heading;
+  const mobileDelay = isMobile ? 0 : undefined;
 
   return (
     <section className="mx-auto grid max-w-7xl items-center gap-6 px-4 pb-10 pt-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 lg:py-24">
@@ -97,7 +102,7 @@ export function Hero({ services }: { services: Pick<Product, "name" | "logo_url"
                   className="block"
                   initial={{ opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: 0.08 + li * 0.08, ease: "easeOut" }}
+                  transition={{ duration: 0.45, delay: mobileDelay ?? (0.08 + li * 0.08), ease: "easeOut" }}
                 >
                   {line}
                 </motion.span>
@@ -109,7 +114,7 @@ export function Hero({ services }: { services: Pick<Product, "name" | "logo_url"
           className="mt-4 max-w-2xl text-base leading-7 text-[#555] lg:mt-6 lg:text-lg lg:leading-8"
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.25, ease: "easeOut" }}
+          transition={{ duration: 0.45, delay: mobileDelay ?? 0.25, ease: "easeOut" }}
         >
           {copy.hero.description}
         </motion.p>

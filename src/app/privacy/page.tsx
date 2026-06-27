@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
 import { Footer } from "@/components/site/footer";
 import { Header } from "@/components/site/header";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description:
+    "Read the privacy policy for Ott Subscription Nepal, including what data we collect and how we use it.",
+  alternates: {
+    canonical: "/privacy",
+  },
+};
 
 export default function PrivacyPage() {
   return (

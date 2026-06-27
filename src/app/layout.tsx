@@ -5,6 +5,7 @@ import { HtmlLangSync } from "@/components/site/html-lang-sync";
 import { LenisProvider } from "@/components/site/lenis-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { absoluteUrl, getSiteUrlObject } from "@/lib/site-url";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,14 +25,48 @@ const notoSansDevanagari = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: "Ott Subscription Nepal | Premium OTT Plans & Digital Services",
+  metadataBase: getSiteUrlObject(),
+  title: {
+    default: "Ott Subscription Nepal | Premium OTT Plans & Digital Services",
+    template: "%s | Ott Subscription Nepal",
+  },
   description:
-    "Buy Netflix, Spotify, Prime Video, YouTube Premium, Crunchyroll, Zee5, Free Fire topup and digital services in Nepal with easy WhatsApp checkout.",
+    "Buy Netflix, Spotify, Prime Video, YouTube Premium, Crunchyroll, Zee5, Free Fire top-up and other digital services in Nepal with fast activation and easy WhatsApp checkout.",
+  applicationName: "Ott Subscription Nepal",
+  category: "shopping",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   openGraph: {
     title: "Ott Subscription Nepal",
     description:
-      "Premium OTT plans and digital service support in Nepal with easy WhatsApp checkout.",
+      "Premium OTT plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
+    url: "/",
+    siteName: "Ott Subscription Nepal",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/logo.png",
+        width: 512,
+        height: 512,
+        alt: "Ott Subscription Nepal",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ott Subscription Nepal",
+    description:
+      "Premium OTT plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
     images: ["/logo.png"],
   },
   icons: {
@@ -50,6 +85,26 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Ott Subscription Nepal",
+    url: absoluteUrl("/"),
+    logo: absoluteUrl("/logo.png"),
+    description:
+      "Premium OTT subscription activation and digital service support in Nepal with fast WhatsApp checkout.",
+    sameAs: ["https://www.instagram.com/ottsubscriptionnepal4?igsh=MWJjYzZ6bTR0aGxnMQ=="],
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        telephone: "+9779842901942",
+        contactType: "customer support",
+        areaServed: "NP",
+        availableLanguage: ["en", "hi", "ne"],
+      },
+    ],
+  };
+
   return (
     <html
       lang="en"
@@ -57,6 +112,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         <TooltipProvider>
           <HtmlLangSync />
           <LenisProvider />

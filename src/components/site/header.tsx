@@ -26,6 +26,7 @@ export function Header() {
     [copy.nav.reviews, "/reviews", false],
     [copy.nav.faq, "/faq", false],
     [copy.nav.contact, "", true],
+    ["About Us", "/about", false],
   ];
 
   const contactHref = `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "9779842901942"}?text=${encodeURIComponent("Hello Ott Subscription Nepal,\n\nI have some query.")}`;
