@@ -6,7 +6,7 @@ import { signOut } from "@/lib/auth/sign-out";
 
 export function AdminGoogleLogin({ signedIn }: { signedIn: boolean }) {
   return signedIn ? (
-    <Button variant="secondary" onClick={() => signOut()}>
+    <Button variant="secondary" onClick={() => signOut("/admin/login")}>
       Sign out
     </Button>
   ) : (
