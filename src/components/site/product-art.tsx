@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Tv } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { imageTransformUrl } from "@/lib/image/compress";
 
 type ProductArtProps = {
   name: string;
@@ -41,7 +40,7 @@ export function ProductArt({ name, imageUrl, logoUrl, className }: ProductArtPro
               {!logoFailed ? (
                 <img
                   key={logoUrl}
-                  src={imageTransformUrl(logoUrl, 128)}
+                  src={logoUrl}
                   alt={`${name} logo`}
                   width={64}
                   height={64}

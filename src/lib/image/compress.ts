@@ -20,15 +20,17 @@ export async function compressImage(file: File, maxDim: number, quality = 0.8): 
 }
 
 export function imageTransformUrl(url: string, width: number, quality = 80): string {
+  void width;
+  void quality;
+
   if (!url.includes("supabase.co/storage")) return url;
   try {
     const u = new URL(url);
-    const path = u.pathname.replace("/object/public/", "/render/image/public/").split("?")[0];
+    const path = u.pathname.replace("/render/image/public/", "/object/public/").split("?")[0];
+    const v = u.searchParams.get("v");
     u.pathname = path;
     u.search = "";
-    u.searchParams.set("width", String(width));
-    u.searchParams.set("quality", String(quality));
-    u.searchParams.set("format", "webp");
+    if (v) u.searchParams.set("v", v);
     return u.toString();
   } catch {
     return url;

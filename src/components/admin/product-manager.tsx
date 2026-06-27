@@ -620,10 +620,7 @@ export function ProductDetailManager({ product, categories }: { product: Product
         formData.set("productId", productId);
         formData.set("slug", productDraft.slug);
         formData.set("assetType", assetType);
-        const maxDim = assetType === "logo" ? 400 : 1200;
-        const { compressImage } = await import("@/lib/image/compress");
-        const compressed = await compressImage(file, maxDim);
-        formData.set("file", new File([compressed], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp" }));
+        formData.set("file", file);
         const response = await fetch("/api/admin/products/upload", { method: "POST", body: formData });
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error || "Unable to upload image.");
