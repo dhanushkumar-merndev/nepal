@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { LocaleLink } from "@/components/site/locale-link";
 import { getLocaleFromPathname } from "@/lib/locale";
 import { getSiteCopy } from "@/lib/site-copy";
+import { imageTransformUrl } from "@/lib/image/compress";
 import type { Product } from "@/lib/types";
 import { usePathname } from "next/navigation";
 
@@ -154,7 +155,7 @@ export function Hero({ services }: { services: Pick<Product, "name" | "logo_url"
               <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-md">
                 {service.logo_url ? (
                   <img
-                    src={service.logo_url}
+                    src={imageTransformUrl(service.logo_url, 96)}
                     alt={service.name}
                     width={48}
                     height={48}

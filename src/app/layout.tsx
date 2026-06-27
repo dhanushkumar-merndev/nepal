@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Devanagari } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { HtmlLangSync } from "@/components/site/html-lang-sync";
 import { LenisProvider } from "@/components/site/lenis-provider";
@@ -123,6 +125,8 @@ export default function RootLayout({
           <ChatWidget />
           <Toaster />
         </TooltipProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

@@ -76,16 +76,20 @@ export function Header() {
         )}
       >
         <LocaleLink href="/" className="flex items-center gap-2 leading-none sm:gap-3">
-          <img
-            src="/header-logo.png"
-            alt="Ott Subscription Nepal"
-            width={160}
-            height={160}
-            className={cn(
-              "shrink-0 object-contain transition-all duration-300",
-              scrolled ? "size-9 lg:size-10" : "size-9 lg:size-14",
-            )}
-          />
+          <picture>
+            <source srcSet="/header-logo-80.webp 80w, /header-logo-160.webp 160w" sizes="(max-width: 1023px) 36px, 56px" type="image/webp" />
+            <source srcSet="/header-logo-80.png 80w, /header-logo-160.png 160w" sizes="(max-width: 1023px) 36px, 56px" type="image/png" />
+            <img
+              src="/header-logo-80.png"
+              alt="Ott Subscription Nepal"
+              width={160}
+              height={160}
+              className={cn(
+                "shrink-0 object-contain transition-all duration-300",
+                scrolled ? "size-9 lg:size-10" : "size-9 lg:size-14",
+              )}
+            />
+          </picture>
         </LocaleLink>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-[#555] lg:flex">

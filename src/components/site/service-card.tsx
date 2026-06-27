@@ -13,6 +13,7 @@ import { getSiteCopy, translateStockStatus } from "@/lib/site-copy";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/store/cart-store";
+import { imageTransformUrl } from "@/lib/image/compress";
 import { getDisplayPrice, getSaveAmount, getStartingPlan, hasOffer } from "@/lib/utils/pricing";
 import { formatPrice } from "@/lib/utils/format";
 
@@ -54,7 +55,7 @@ export function ServiceCard({ product }: { product: Product }) {
               {!logoFailed ? (
                 <img
                     key={product.logo_url}
-                    src={product.logo_url}
+                    src={imageTransformUrl(product.logo_url, 136)}
                     alt={`${product.name} logo`}
                     width={68}
                     height={68}
