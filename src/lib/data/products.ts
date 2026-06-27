@@ -8,7 +8,9 @@ export async function getProducts() {
   const redis = getRedis();
   if (redis) {
     const cached = await redis.get<string>(PUBLIC_PRODUCTS_KEY);
-    if (cached) return JSON.parse(cached) as Product[];
+    if (cached) {
+      try { return JSON.parse(cached) as Product[]; } catch { /* stale cache, refetch */ }
+    }
   }
 
   const supabase = await createClient();

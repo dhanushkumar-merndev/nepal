@@ -7,7 +7,9 @@ export async function getHomeReviews() {
   const redis = getRedis();
   if (redis) {
     const cached = await redis.get<string>(PUBLIC_HOME_REVIEWS_KEY);
-    if (cached) return JSON.parse(cached) as Review[];
+    if (cached) {
+      try { return JSON.parse(cached) as Review[]; } catch { /* stale cache, refetch */ }
+    }
   }
 
   const supabase = createAdminClient();
