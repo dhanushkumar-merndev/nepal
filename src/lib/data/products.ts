@@ -1,9 +1,16 @@
 import type { Plan, Product } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
+import { getRedis, PUBLIC_PRODUCTS_KEY } from "@/lib/ai/cache";
 
 type ProductRow = Omit<Product, "plans"> & { plans?: Plan[] | null };
 
 export async function getProducts() {
+  const redis = getRedis();
+  if (redis) {
+    const cached = await redis.get<string>(PUBLIC_PRODUCTS_KEY);
+    if (cached) return JSON.parse(cached) as Product[];
+  }
+
   const supabase = await createClient();
   if (!supabase) return [];
 
@@ -30,12 +37,17 @@ export async function getProducts() {
 
   if (error || !data?.length) return [];
 
-  return (data as ProductRow[]).map((product) => ({
+  const products = (data as ProductRow[]).map((product) => ({
     ...product,
     rating: product.rating ?? 4.8,
     review_count: product.review_count ?? 0,
     plans: (product.plans ?? []).filter((plan) => plan.is_active),
   }));
+
+  const ttl = Number(process.env.PUBLIC_PRODUCTS_CACHE_TTL ?? 300);
+  if (redis) await redis.set(PUBLIC_PRODUCTS_KEY, JSON.stringify(products), { ex: ttl });
+
+  return products;
 }
 
 export async function getProductBySlug(slug: string) {

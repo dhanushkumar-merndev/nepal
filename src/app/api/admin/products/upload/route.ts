@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { invalidateProductContextCache } from "@/lib/ai/cache";
+import { invalidateProductContextCache, invalidatePublicProductsCache } from "@/lib/ai/cache";
 import { isAdminRequest } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 

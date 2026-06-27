@@ -3,6 +3,8 @@ import { Redis } from "@upstash/redis";
 export const AI_PRODUCT_CONTEXT_KEY = "ott:ai:product-context:v1";
 export const AI_CHAT_RESPONSE_PREFIX = "ott:ai:chat-response:v1:";
 export const REVIEWS_PAGE_CACHE_PREFIX = "ott:reviews:approved-page:v2:";
+export const PUBLIC_PRODUCTS_KEY = "ott:public:products:v1";
+export const PUBLIC_HOME_REVIEWS_KEY = "ott:public:home-reviews:v1";
 
 export function getRedis() {
   const url = process.env.UPSTASH_REDIS_REST_URL;
@@ -23,6 +25,18 @@ export async function invalidateReviewsCache() {
   if (!redis) return;
   const keys = await redis.keys(`${REVIEWS_PAGE_CACHE_PREFIX}*`);
   if (keys.length) await redis.del(...keys);
+}
+
+export async function invalidatePublicProductsCache() {
+  const redis = getRedis();
+  if (!redis) return;
+  await redis.del(PUBLIC_PRODUCTS_KEY);
+}
+
+export async function invalidatePublicHomeReviewsCache() {
+  const redis = getRedis();
+  if (!redis) return;
+  await redis.del(PUBLIC_HOME_REVIEWS_KEY);
 }
 
 async function invalidateChatResponseCache(redis = getRedis()) {

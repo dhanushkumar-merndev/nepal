@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { planSchema } from "@/lib/validators/plan";
-import { invalidateProductContextCache } from "@/lib/ai/cache";
+import { invalidateProductContextCache, invalidatePublicProductsCache } from "@/lib/ai/cache";
 import { isAdminRequest } from "@/lib/auth/admin";
 import { invalidateAdminDashboardCache } from "@/lib/data/admin";
 
@@ -23,6 +23,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase.from("plans").insert(parsed.data).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   await invalidateProductContextCache();
+  await invalidatePublicProductsCache();
   await invalidateAdminDashboardCache();
   return NextResponse.json({ data, message: "Product updated and AI cache refreshed." });
 }
@@ -38,6 +39,7 @@ export async function PATCH(request: Request) {
   const { data, error } = await supabase.from("plans").update(parsed.data).eq("id", body.id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   await invalidateProductContextCache();
+  await invalidatePublicProductsCache();
   await invalidateAdminDashboardCache();
   return NextResponse.json({ data, message: "Product updated and AI cache refreshed." });
 }
@@ -51,6 +53,7 @@ export async function DELETE(request: Request) {
   const { error } = await supabase.from("plans").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   await invalidateProductContextCache();
+  await invalidatePublicProductsCache();
   await invalidateAdminDashboardCache();
   return NextResponse.json({ ok: true, message: "Product updated and AI cache refreshed." });
 }
