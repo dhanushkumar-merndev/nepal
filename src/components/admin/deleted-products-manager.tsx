@@ -89,8 +89,8 @@ export function DeletedProductListManager({ products }: { products: Product[] })
         </div>
       </div>
 
-      <Card className="overflow-hidden rounded-[30px] border border-white/50 bg-white/70 shadow-[0_30px_70px_rgba(15,23,42,0.08)] backdrop-blur-xl">
-        <CardHeader className="border-b border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(248,250,252,0.7))]">
+      <Card className="overflow-hidden rounded-[30px] border border-white/50 bg-white/70 pt-0 shadow-[0_30px_70px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+        <CardHeader className="border-b border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(248,250,252,0.7))] px-5 pt-5 pb-4 md:px-6 md:pt-6">
           <CardTitle>Deleted Products</CardTitle>
           <CardDescription>
             {deletedCount} deleted products. Products are automatically permanently deleted after 30 days.

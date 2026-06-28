@@ -37,7 +37,7 @@ const launcherMessages = [
 ];
 
 const confirmationPrompts = new Set(["yes", "yeah", "yep", "ok", "okay", "sure", "add it", "add this", "add that", "please add", "do it"]);
-const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+const SESSION_TTL_MS = 20 * 60 * 60 * 1000;
 
 type CartRemovalResult = {
   message: string;
@@ -57,6 +57,7 @@ export function ChatWidget() {
   const [thinkingIndex, setThinkingIndex] = useState(0);
   const [showHelpBubble, setShowHelpBubble] = useState(false);
   const [launcherMessageIndex, setLauncherMessageIndex] = useState(0);
+  const [sessionHydrated, setSessionHydrated] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const sessionRef = useRef(session);
@@ -85,12 +86,13 @@ export function ChatWidget() {
     setSessions(storedSessions);
 
     const latest = storedSessions[0];
-    if (!latest) return;
-
-    const updatedAt = new Date(latest.updatedAt).getTime();
-    if (Number.isNaN(updatedAt) || Date.now() - updatedAt > SESSION_TTL_MS) return;
-
-    setSession(latest);
+    if (latest) {
+      const updatedAt = new Date(latest.updatedAt).getTime();
+      if (!Number.isNaN(updatedAt) && Date.now() - updatedAt <= SESSION_TTL_MS) {
+        setSession(latest);
+      }
+    }
+    setSessionHydrated(true);
   }, []);
 
   useEffect(() => {
@@ -111,7 +113,7 @@ export function ChatWidget() {
     if (open || !showHelpBubble) return;
     const id = window.setInterval(() => {
       setLauncherMessageIndex((index) => (index + 1) % launcherMessages.length);
-    }, 5000);
+    }, 3200);
     return () => window.clearInterval(id);
   }, [open, showHelpBubble]);
 
@@ -119,7 +121,7 @@ export function ChatWidget() {
     if (!streaming) return;
     const id = window.setInterval(() => {
       setThinkingIndex((index) => (index + 1) % thinkingMessages.length);
-    }, 1200);
+    }, 800);
     return () => window.clearInterval(id);
   }, [streaming]);
 
@@ -269,7 +271,7 @@ export function ChatWidget() {
             for (const word of token.split(/(\s+)/)) {
               content += word;
               updateAssistant(baseSession.id, assistantMessage.id, content, actions);
-              await wait(word.trim() ? 26 : 6);
+              await wait(word.trim() ? 12 : 3);
             }
           }
 
@@ -564,8 +566,9 @@ export function ChatWidget() {
             visibleMessages.map((message) => (
               <motion.div
                 key={message.id}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.14 }}
                 className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}
               >
                 <div
@@ -712,7 +715,7 @@ export function ChatWidget() {
             initial={{ opacity: 0, y: 16, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
-            transition={{ duration: 0.1 }}
+            transition={{ duration: 0.08 }}
             data-chat-panel
             className={cn(
               "fixed z-50 flex overflow-hidden bg-white shadow-2xl [overscroll-behavior:contain]",
@@ -728,7 +731,10 @@ export function ChatWidget() {
       </AnimatePresence>
       <button
         type="button"
-        onClick={() => {
+        onClick={async () => {
+          if (!sessionHydrated) {
+            await loadInitialSession();
+          }
           setOpen((v) => !v);
           setShowHelpBubble(false);
         }}
@@ -740,16 +746,16 @@ export function ChatWidget() {
           <motion.span
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: "auto" }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.16 }}
             className="relative hidden h-5 overflow-hidden whitespace-nowrap pl-2 pr-1 text-sm font-bold lg:block"
           >
             <AnimatePresence mode="wait">
               <motion.span
                 key={launcherMessages[launcherMessageIndex]}
-                initial={{ opacity: 0, y: 14 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -14 }}
-                transition={{ duration: 0.22 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.14 }}
                 className="block"
               >
                 {launcherMessages[launcherMessageIndex]}

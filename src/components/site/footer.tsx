@@ -13,13 +13,15 @@ export function Footer() {
   const pathname = usePathname() || "/";
   const locale = getLocaleFromPathname(pathname);
   const copy = getSiteCopy(locale);
-  const links = [
+  const navigationLinks = [
     { label: copy.footer.links.plans, href: "/plans" },
     { label: copy.footer.links.services, href: "/#popular-plans" },
     { label: copy.footer.links.reviews, href: "/reviews" },
     { label: copy.footer.links.faq, href: "/#faq" },
     { label: copy.footer.links.contact, href: "/#contact" },
-    { label: "About Us", href: "/about" },
+    { label: copy.footer.links.about, href: "/about" },
+  ];
+  const legalLinks = [
     { label: copy.footer.links.privacy, href: "/privacy" },
     { label: copy.footer.links.terms, href: "/terms" },
   ];
@@ -33,8 +35,8 @@ export function Footer() {
           <div className="absolute -right-20 -top-20 size-60 rounded-full bg-[#159FD3]/10 blur-3xl" />
           <div className="absolute -bottom-20 -left-20 size-60 rounded-full bg-[#0B7FAE]/10 blur-3xl" />
 
-          <div className="relative mx-auto max-w-7xl grid gap-6 p-6 md:gap-8 md:p-8 md:grid-cols-2 lg:gap-10 lg:p-10 lg:grid-cols-[1.4fr_0.7fr_0.7fr_1.2fr]">
-            <div>
+          <div className="relative mx-auto grid max-w-7xl gap-6 p-6 sm:grid-cols-2 md:gap-8 md:p-8 lg:gap-10 lg:p-10 lg:grid-cols-[1.4fr_0.7fr_0.7fr_1.2fr]">
+            <div className="sm:col-span-2 lg:col-span-1">
               <h2 className="mt-3 text-2xl font-black tracking-tight md:text-3xl">
                 Ott Subscription<br />Nepal
               </h2>
@@ -68,10 +70,10 @@ export function Footer() {
               </div>
             </div>
 
-            <div>
+            <div className="order-3 sm:order-none">
               <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">{copy.footer.navigate}</h3>
               <nav className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm lg:grid-cols-1">
-                {links.map((link) => (
+                {navigationLinks.map((link) => (
                   <LocaleLink
                     key={link.href}
                     href={link.href}
@@ -83,7 +85,7 @@ export function Footer() {
               </nav>
             </div>
 
-            <div>
+            <div className="order-1 sm:order-none">
               <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">{copy.footer.connect}</h3>
               <nav className="mt-3 grid gap-2 text-sm">
                 {support.map((s) => (
@@ -98,7 +100,22 @@ export function Footer() {
               </nav>
             </div>
 
-            <div className="lg:pl-4 lg:border-l border-white/30">
+            <div className="order-2 sm:order-none">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">{copy.footer.legal}</h3>
+              <nav className="mt-3 grid gap-2 text-sm">
+                {legalLinks.map((link) => (
+                  <LocaleLink
+                    key={link.href}
+                    href={link.href}
+                    className="text-[#555] transition hover:text-[#159FD3]"
+                  >
+                    {link.label}
+                  </LocaleLink>
+                ))}
+              </nav>
+            </div>
+
+            <div className="order-4 border-white/30 sm:col-span-2 lg:order-none lg:col-span-1 lg:border-l lg:pl-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">{copy.footer.community}</h3>
               <p className="mt-2 text-sm text-[#555]">
                 {copy.footer.communityDescription}

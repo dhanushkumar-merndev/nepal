@@ -13,6 +13,7 @@ type SiteCopy = {
     reviews: string;
     faq: string;
     contact: string;
+    about: string;
     menu: string;
     language: string;
     closeMenu: string;
@@ -80,6 +81,33 @@ type SiteCopy = {
     description: string;
     items: HomeFaqItem[];
   };
+  aboutPage: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    stats: {
+      since: {
+        label: string;
+        value: string;
+        text: string;
+      };
+      customers: {
+        label: string;
+        value: string;
+        text: string;
+      };
+      focus: {
+        label: string;
+        value: string;
+        text: string;
+      };
+    };
+    services: string;
+    focusTitle: string;
+    focusItems: string[];
+    supportText: string;
+    closingText: string;
+  };
   productUi: {
     viewPlans: string;
     bestSeller: string;
@@ -122,6 +150,7 @@ type SiteCopy = {
     brandDescription: string;
     navigate: string;
     connect: string;
+    legal: string;
     community: string;
     communityDescription: string;
     joinWhatsapp: string;
@@ -134,6 +163,7 @@ type SiteCopy = {
       reviews: string;
       faq: string;
       contact: string;
+      about: string;
       privacy: string;
       terms: string;
     };
@@ -148,6 +178,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
       reviews: "Reviews",
       faq: "FAQ",
       contact: "Contact",
+      about: "About Us",
       menu: "Menu",
       language: "Language",
       closeMenu: "Close menu",
@@ -245,6 +276,43 @@ const copy: Record<SiteLocale, SiteCopy> = {
         },
       ],
     },
+    aboutPage: {
+      eyebrow: "About Us",
+      title: "Ott Subscription Nepal",
+      intro:
+        "Welcome to Ott Subscription Nepal, your trusted destination for affordable and convenient digital subscription services in Nepal.",
+      stats: {
+        since: {
+          label: "Since",
+          value: "2023",
+          text: "We have been helping customers access premium subscriptions and digital services with ease.",
+        },
+        customers: {
+          label: "Customers",
+          value: "3,000+",
+          text: "Happy customers have trusted us for a smooth, reliable, and friendly subscription experience.",
+        },
+        focus: {
+          label: "Focus",
+          value: "Support",
+          text: "Fast service, helpful support, and a hassle-free experience from start to finish.",
+        },
+      },
+      services:
+        "We offer subscriptions for popular platforms such as Netflix, Prime Video, SonyLIV, Spotify, Canva, CapCut, and more. Our goal is to make entertainment, creativity, and digital tools more accessible to everyone in Nepal.",
+      focusTitle: "What We Focus On",
+      focusItems: [
+        "Fast and easy subscription service",
+        "Affordable pricing",
+        "Friendly customer support",
+        "Secure and reliable service",
+        "A hassle-free experience from start to finish",
+      ],
+      supportText:
+        "Whether you want to watch your favorite movies and series, enjoy music, edit videos, design content, or use premium digital tools, we are here to help you get started quickly.",
+      closingText:
+        "Thank you for choosing Ott Subscription Nepal. Your trust motivates us to keep improving and delivering the best subscription service experience in Nepal.",
+    },
     productUi: {
       viewPlans: "View plans",
       bestSeller: "Best Seller",
@@ -304,6 +372,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
         "Premium digital subscription activation and renewal support. Fast WhatsApp checkout.",
       navigate: "Navigate",
       connect: "Connect",
+      legal: "Legal",
       community: "Community",
       communityDescription: "Join our WhatsApp community for updates and support.",
       joinWhatsapp: "Join WhatsApp",
@@ -316,6 +385,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
         reviews: "Reviews",
         faq: "FAQ",
         contact: "Contact",
+        about: "About Us",
         privacy: "Privacy",
         terms: "Terms",
       },
@@ -328,6 +398,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
       reviews: "समीक्षाएँ",
       faq: "सवाल",
       contact: "संपर्क",
+      about: "हमारे बारे में",
       menu: "मेन्यू",
       language: "भाषा",
       closeMenu: "मेन्यू बंद करें",
@@ -425,6 +496,43 @@ const copy: Record<SiteLocale, SiteCopy> = {
         },
       ],
     },
+    aboutPage: {
+      eyebrow: "हमारे बारे में",
+      title: "Ott Subscription Nepal",
+      intro:
+        "Ott Subscription Nepal में आपका स्वागत है। हम नेपाल में किफायती और आसान डिजिटल subscription services के लिए आपका भरोसेमंद स्थान हैं।",
+      stats: {
+        since: {
+          label: "शुरुआत",
+          value: "2023",
+          text: "हम 2023 से ग्राहकों को premium subscriptions और digital services तक आसान पहुंच दिलाने में मदद कर रहे हैं।",
+        },
+        customers: {
+          label: "ग्राहक",
+          value: "3,000+",
+          text: "हजारों खुश ग्राहकों ने सहज, भरोसेमंद और friendly subscription experience के लिए हम पर भरोसा किया है।",
+        },
+        focus: {
+          label: "फोकस",
+          value: "सहायता",
+          text: "तेज सेवा, मददगार support, और शुरुआत से अंत तक बिना झंझट का अनुभव।",
+        },
+      },
+      services:
+        "हम Netflix, Prime Video, SonyLIV, Spotify, Canva, CapCut और अन्य लोकप्रिय platforms के subscriptions उपलब्ध कराते हैं। हमारा लक्ष्य है कि नेपाल में entertainment, creativity और digital tools सभी के लिए अधिक सुलभ बनें।",
+      focusTitle: "हम किस पर ध्यान देते हैं",
+      focusItems: [
+        "तेज और आसान subscription service",
+        "किफायती कीमतें",
+        "Friendly customer support",
+        "सुरक्षित और भरोसेमंद सेवा",
+        "शुरुआत से अंत तक बिना झंझट का अनुभव",
+      ],
+      supportText:
+        "चाहे आप अपनी पसंदीदा movies और series देखना चाहते हों, music सुनना चाहते हों, video edit करना चाहते हों, content design करना चाहते हों, या premium digital tools इस्तेमाल करना चाहते हों, हम आपकी जल्दी शुरुआत में मदद के लिए यहां हैं।",
+      closingText:
+        "Ott Subscription Nepal को चुनने के लिए धन्यवाद। आपका भरोसा हमें लगातार बेहतर होने और नेपाल में सबसे अच्छी subscription service experience देने के लिए प्रेरित करता है।",
+    },
     productUi: {
       viewPlans: "योजना देखें",
       bestSeller: "बेस्ट सेलर",
@@ -484,6 +592,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
         "प्रीमियम डिजिटल सदस्यता सक्रियण और नवीनीकरण सहायता। तेज WhatsApp checkout।",
       navigate: "नेविगेशन",
       connect: "जुड़ें",
+      legal: "कानूनी",
       community: "कम्युनिटी",
       communityDescription: "अपडेट और सहायता के लिए हमारी WhatsApp community से जुड़ें।",
       joinWhatsapp: "WhatsApp जॉइन करें",
@@ -496,6 +605,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
         reviews: "समीक्षाएँ",
         faq: "सवाल",
         contact: "संपर्क",
+        about: "हमारे बारे में",
         privacy: "प्राइवेसी",
         terms: "शर्तें",
       },
@@ -508,6 +618,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
       reviews: "रिभ्यु",
       faq: "प्रश्न",
       contact: "सम्पर्क",
+      about: "हाम्रो बारेमा",
       menu: "मेनु",
       language: "भाषा",
       closeMenu: "मेनु बन्द गर्नुहोस्",
@@ -605,6 +716,43 @@ const copy: Record<SiteLocale, SiteCopy> = {
         },
       ],
     },
+    aboutPage: {
+      eyebrow: "हाम्रो बारेमा",
+      title: "Ott Subscription Nepal",
+      intro:
+        "Ott Subscription Nepal मा स्वागत छ। हामी नेपालमा सस्तो र सहज डिजिटल subscription services का लागि तपाईंको भरपर्दो गन्तव्य हौं।",
+      stats: {
+        since: {
+          label: "सुरु",
+          value: "2023",
+          text: "हामी 2023 देखि ग्राहकहरूलाई premium subscriptions र digital services सजिलै उपलब्ध गराउन मद्दत गर्दै आएका छौं।",
+        },
+        customers: {
+          label: "ग्राहक",
+          value: "3,000+",
+          text: "हजारौं खुसी ग्राहकहरूले सजिलो, भरपर्दो र friendly subscription experience का लागि हामीमाथि भरोसा गरेका छन्।",
+        },
+        focus: {
+          label: "मुख्य ध्यान",
+          value: "सहयोग",
+          text: "छिटो सेवा, सहयोगी support, र सुरुदेखि अन्त्यसम्म झन्झटमुक्त अनुभव।",
+        },
+      },
+      services:
+        "हामी Netflix, Prime Video, SonyLIV, Spotify, Canva, CapCut लगायत लोकप्रिय platforms का subscriptions उपलब्ध गराउँछौं। हाम्रो लक्ष्य नेपालमा entertainment, creativity, र digital tools सबैका लागि अझ पहुँचयोग्य बनाउनु हो।",
+      focusTitle: "हामी केमा केन्द्रित छौं",
+      focusItems: [
+        "छिटो र सजिलो subscription service",
+        "किफायती मूल्य",
+        "Friendly customer support",
+        "सुरक्षित र भरपर्दो सेवा",
+        "सुरुदेखि अन्त्यसम्म झन्झटमुक्त अनुभव",
+      ],
+      supportText:
+        "तपाईं आफ्ना मनपर्ने movies र series हेर्न चाहनुहुन्छ, music सुन्न चाहनुहुन्छ, video edit गर्न चाहनुहुन्छ, content design गर्न चाहनुहुन्छ, वा premium digital tools प्रयोग गर्न चाहनुहुन्छ भने, हामी तपाईंलाई छिट्टै सुरु गराउन यहाँ छौं।",
+      closingText:
+        "Ott Subscription Nepal रोज्नुभएकोमा धन्यवाद। तपाईंको विश्वासले हामीलाई अझ राम्रो बन्न र नेपालमा उत्कृष्ट subscription service experience दिन प्रेरित गर्छ।",
+    },
     productUi: {
       viewPlans: "प्लान हेर्नुहोस्",
       bestSeller: "बेस्ट सेलर",
@@ -664,6 +812,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
         "प्रिमियम डिजिटल सदस्यता सक्रियता र नवीकरण सहायता। छिटो WhatsApp मार्फत अर्डर गर्नुहोस्।",
       navigate: "नेभिगेट",
       connect: "जडान",
+      legal: "कानुनी",
       community: "कम्युनिटी",
       communityDescription: "अपडेट र सहायता का लागि हाम्रो WhatsApp समुदायमा जोडिनुहोस्।",
       joinWhatsapp: "WhatsApp मा जोडिनुहोस्",
@@ -676,6 +825,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
         reviews: "रिभ्यु",
         faq: "प्रश्न",
         contact: "सम्पर्क",
+        about: "हाम्रो बारेमा",
         privacy: "प्राइभेसी",
         terms: "सर्तहरू",
       },

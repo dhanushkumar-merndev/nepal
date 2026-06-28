@@ -4,7 +4,10 @@ const memory = new Map<string, { count: number; resetAt: number }>();
 
 export async function rateLimit(key: string) {
   const limit = Number(process.env.RATE_LIMIT_REQUESTS_PER_MINUTE ?? 30);
-  const windowSeconds = 60;
+  return rateLimitWindow(key, limit, 60);
+}
+
+export async function rateLimitWindow(key: string, limit: number, windowSeconds: number) {
   const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
   const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
@@ -33,4 +36,8 @@ export function getIp(request: Request) {
     request.headers.get("x-real-ip") ||
     "local"
   );
+}
+
+export function getUtcDayKey(date = new Date()) {
+  return date.toISOString().slice(0, 10);
 }

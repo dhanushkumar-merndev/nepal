@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { getIp, rateLimit } from "@/lib/rate-limit";
+import { createClient } from "@/lib/supabase/server";
+import { getIp, getUtcDayKey, rateLimit, rateLimitWindow } from "@/lib/rate-limit";
 import { getProductContext } from "@/lib/ai/product-context";
 import { getProducts } from "@/lib/data/products";
 import { getDisplayPrice } from "@/lib/utils/pricing";
@@ -72,6 +73,8 @@ const websiteIntentTerms = [
   "plans",
   "explain",
   "description",
+  "feature",
+  "features",
   "describe",
   "detail",
   "details",
@@ -193,10 +196,21 @@ function hasCartItems(cart: { quantity: number }[]) {
 }
 
 export async function POST(request: Request) {
-  const limit = await rateLimit(`ai-chat:${getIp(request)}`);
+  const chatUserKey = await getChatUserKey(request);
+  const limit = await rateLimit(`ai-chat:${chatUserKey}`);
   const chatLimit = Number(process.env.AI_CHAT_RATE_LIMIT_REQUESTS_PER_MINUTE ?? 30);
   if (!limit.success || limit.limit > chatLimit) {
     return new Response("Too many requests. Please try again after a minute.", { status: 429 });
+  }
+
+  const dailyLimitCount = Number(process.env.AI_CHAT_RATE_LIMIT_REQUESTS_PER_DAY ?? 100);
+  const dailyLimit = await rateLimitWindow(
+    `ai-chat-daily:${chatUserKey}:${getUtcDayKey()}`,
+    dailyLimitCount,
+    60 * 60 * 24,
+  );
+  if (!dailyLimit.success) {
+    return new Response("Daily chat limit reached. Please try again tomorrow.", { status: 429 });
   }
 
   const parsed = requestSchema.safeParse(await request.json());
@@ -304,6 +318,18 @@ export async function POST(request: Request) {
       Connection: "keep-alive",
     },
   });
+}
+
+async function getChatUserKey(request: Request) {
+  const supabase = await createClient();
+  if (supabase) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user?.id) return `user:${user.id}`;
+  }
+
+  return `ip:${getIp(request)}`;
 }
 
 function buildSystemPrompt(productContext: string) {
@@ -492,7 +518,7 @@ function localProductResponse(
   const suggestedProducts = findSuggestedProducts(lower, products, mentionedProducts);
   const isBuying = /\b(add|buy|purchase|need|want|get|book|order)\b/.test(lower);
   const wantsCompare = /\bcompare\b/.test(lower);
-  const isExplainIntent = /\b(explain|describe|detail|details|about|info|information|what is|tell me about)\b/.test(lower);
+  const isExplainIntent = /\b(explain|describe|detail|details|about|info|information|what is|tell me about|feature|features)\b/.test(lower);
   const hasQuantityOnlyFollowUp = !mentionedProducts.length && followUpProducts.length > 0 && quantityLikeMessage(lower);
 
   if (suggestedProducts.length) {
@@ -604,10 +630,15 @@ function explainProduct(product: Product) {
 
   if (activePlans.length) {
     lines.push("");
-    lines.push("| Service | Plan | Price | Offer | Stock |");
-    lines.push("| --- | --- | --- | --- | --- |");
+    lines.push("Available plans and features:");
+    lines.push("");
     for (const plan of activePlans) {
-      lines.push(`| ${product.name} | ${plan.name} | ${formatPrice(Number(plan.real_price))} | ${plan.offer_price ? formatPrice(Number(plan.offer_price)) : "None"} | ${plan.stock_status} |`);
+      lines.push(`- ${plan.name}: ${formatPrice(getDisplayPrice(plan))}${plan.offer_price ? ` offer from ${formatPrice(Number(plan.real_price))}` : ""}. Stock: ${plan.stock_status}.`);
+      if (plan.features?.length) {
+        lines.push(`  Features: ${plan.features.join(", ")}.`);
+      } else {
+        lines.push("  Features: No extra plan features are listed right now.");
+      }
     }
   }
 
@@ -1119,10 +1150,9 @@ function actionsForMessage(message: string, products: Product[], cartHasItems: b
 
     if (!isAddIntent) {
       const hasMultiplePlans = mentionedProducts.length > 1 || mentionedProducts.some((p) => p.plans.filter((pl) => pl.is_active).length > 1);
-      const comparePrompt = buildComparePrompt(mentionedProducts);
       actions.push(
         planSelectionAction(mentionedProducts, lower),
-        ...(hasMultiplePlans ? [{ label: "Compare plans" as const, prompt: comparePrompt, type: "question" as const }] : []),
+        ...(hasMultiplePlans ? [{ ...compareSelectionAction(products), label: "Compare plans" as const }] : []),
         ...cartAwareCheckoutActions(cartHasItems),
       );
     }
@@ -1158,15 +1188,9 @@ function defaultActions(products: Product[] = [], cartHasItems = false): Recomme
 function questionActionsForProducts(products: Product[], cartHasItems: boolean): RecommendedAction[] {
   const hasMultiplePlans = products.length > 1 || products.some((p) => p.plans.filter((pl) => pl.is_active).length > 1);
   return [
-    ...(hasMultiplePlans ? [{ label: "Compare plans" as const, prompt: buildComparePrompt(products), type: "question" as const }] : []),
+    ...(hasMultiplePlans ? [{ ...compareSelectionAction(products), label: "Compare plans" as const }] : []),
     ...cartAwareCheckoutActions(cartHasItems),
   ];
-}
-
-function buildComparePrompt(products: Product[]) {
-  if (!products.length) return "Compare two services.";
-  if (products.length === 1) return `Compare ${products[0].name} plans.`;
-  return `Compare ${products[0].name} and ${products[1].name}.`;
 }
 
 function cartAwareCheckoutActions(cartHasItems: boolean): RecommendedAction[] {

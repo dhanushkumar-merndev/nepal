@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminRequest } from "@/lib/auth/admin";
-import { invalidateReviewsCache, invalidatePublicHomeReviewsCache } from "@/lib/ai/cache";
+import {
+  invalidatePublicHomeReviewsCache,
+  invalidatePublicProductRatingsCache,
+  invalidatePublicProductsCache,
+  invalidateReviewsCache,
+} from "@/lib/ai/cache";
 import { getAdminReviewsPage, invalidateAdminDashboardCache, invalidateAdminListCache } from "@/lib/data/admin";
 
 export async function GET(request: Request) {
@@ -48,6 +53,8 @@ export async function PATCH(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   await invalidateReviewsCache();
   await invalidatePublicHomeReviewsCache();
+  await invalidatePublicProductRatingsCache();
+  await invalidatePublicProductsCache();
   await invalidateAdminDashboardCache();
   await invalidateAdminListCache();
 

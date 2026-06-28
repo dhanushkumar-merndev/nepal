@@ -13,6 +13,14 @@ import { getSiteCopy } from "@/lib/site-copy";
 import type { Product } from "@/lib/types";
 import { usePathname } from "next/navigation";
 
+function splitIntoGraphemes(value: string, locale: string) {
+  if (typeof Intl !== "undefined" && typeof Intl.Segmenter !== "undefined") {
+    return Array.from(new Intl.Segmenter(locale, { granularity: "grapheme" }).segment(value), ({ segment }) => segment);
+  }
+
+  return Array.from(value);
+}
+
 export function TrustBadges({ className = "" }: { className?: string }) {
   const pathname = usePathname() || "/";
   const locale = getLocaleFromPathname(pathname);
@@ -42,6 +50,10 @@ export function Hero({ services }: { services: Pick<Product, "name" | "logo_url"
   const locale = getLocaleFromPathname(pathname);
   const copy = getSiteCopy(locale);
   const headingLines = useMemo(() => copy.hero.heading.split("\n"), [copy.hero.heading]);
+  const animatedHeadingLines = useMemo(
+    () => headingLines.map((line) => splitIntoGraphemes(line, locale)),
+    [headingLines, locale],
+  );
 
   useEffect(() => {
     const el = headingRef.current;
@@ -86,9 +98,9 @@ export function Hero({ services }: { services: Pick<Product, "name" | "logo_url"
           ref={headingRef}
           className="mt-3 hidden max-w-3xl break-words text-4xl font-black tracking-tight text-[#111] md:text-5xl lg:block lg:text-7xl"
         >
-          {headingLines.map((line, index) => (
-            <span key={`${line}-${index}`} className="block">
-              {line.split("").map((char, charIndex) => (
+          {animatedHeadingLines.map((line, index) => (
+            <span key={`${headingLines[index]}-${index}`} className="block">
+              {line.map((char, charIndex) => (
                 <span
                   key={`${index}-${charIndex}`}
                   className="gsap-char inline-block opacity-0"
