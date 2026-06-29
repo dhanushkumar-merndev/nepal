@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { invalidateProductContextCache, invalidatePublicProductsCache } from "@/lib/ai/cache";
 import { isAdminRequest } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { invalidateAdminListCache } from "@/lib/data/admin";
 
 const bucket = "product-images";
 const allowedTypes = new Set(["image/png", "image/jpeg", "image/webp", "image/svg+xml"]);
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
   const { error: uploadError } = await supabase.storage.from(bucket).upload(path, file, {
     upsert: true,
     contentType: file.type,
-    cacheControl: "60",
+    cacheControl: "3600",
   });
   if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 });
 
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
 
   await invalidateProductContextCache();
   await invalidatePublicProductsCache();
+  await invalidateAdminListCache();
   return NextResponse.json({ data, publicUrl });
 }
 

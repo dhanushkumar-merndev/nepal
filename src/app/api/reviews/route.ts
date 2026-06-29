@@ -1,4 +1,10 @@
 import { NextResponse } from "next/server";
+import {
+  invalidatePublicHomeReviewsCache,
+  invalidatePublicProductRatingsCache,
+  invalidatePublicProductsCache,
+  invalidateReviewsCache,
+} from "@/lib/ai/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getIp, rateLimit } from "@/lib/rate-limit";
 import { reviewSchema } from "@/lib/validators/review";
@@ -36,6 +42,10 @@ export async function POST(request: Request) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await invalidateReviewsCache();
+  await invalidatePublicHomeReviewsCache();
+  await invalidatePublicProductRatingsCache();
+  await invalidatePublicProductsCache();
   await invalidateAdminDashboardCache();
   await invalidateAdminListCache();
   return NextResponse.json({ ok: true, message: "Review submitted. It will appear after approval." });

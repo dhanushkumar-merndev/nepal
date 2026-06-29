@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import { getRedis, REVIEWS_PAGE_CACHE_PREFIX } from "@/lib/ai/cache";
+import { getRedis, ONE_HOUR_CACHE_TTL_SECONDS, REVIEWS_PAGE_CACHE_PREFIX } from "@/lib/ai/cache";
 import type { Review } from "@/lib/types";
 
 const REVIEWS_PER_PAGE = 18;
-const REVIEWS_CACHE_TTL_SECONDS = 60 * 60 * 24;
+const REVIEWS_CACHE_TTL_SECONDS = ONE_HOUR_CACHE_TTL_SECONDS;
 
 export async function getApprovedReviews() {
   const supabase = await createClient();

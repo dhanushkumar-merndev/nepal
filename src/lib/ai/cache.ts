@@ -1,5 +1,6 @@
 import { Redis } from "@upstash/redis";
 
+export const ONE_HOUR_CACHE_TTL_SECONDS = 60 * 60;
 export const AI_PRODUCT_CONTEXT_KEY = "ott:ai:product-context:v1";
 export const AI_CHAT_RESPONSE_PREFIX = "ott:ai:chat-response:v1:";
 export const REVIEWS_PAGE_CACHE_PREFIX = "ott:reviews:approved-page:v2:";

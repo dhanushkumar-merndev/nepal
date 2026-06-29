@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getRedis } from "@/lib/ai/cache";
+import { getRedis, ONE_HOUR_CACHE_TTL_SECONDS } from "@/lib/ai/cache";
 import type { Product, Review } from "@/lib/types";
 
 export type AdminOrder = {
@@ -39,9 +39,10 @@ type OrderCartItem = {
 };
 
 const ADMIN_DASHBOARD_CACHE_KEY = "ott:admin:dashboard:v1";
+const ADMIN_PRODUCTS_CACHE_PREFIX = "ott:admin:products:v1:";
 const ADMIN_ORDERS_CACHE_PREFIX = "ott:admin:orders:v1:";
 const ADMIN_REVIEWS_CACHE_PREFIX = "ott:admin:reviews:v1:";
-const ADMIN_LIST_CACHE_TTL = 60 * 60 * 24;
+const ADMIN_LIST_CACHE_TTL = ONE_HOUR_CACHE_TTL_SECONDS;
 
 export async function invalidateAdminDashboardCache() {
   const redis = getRedis();
@@ -52,12 +53,18 @@ export async function invalidateAdminDashboardCache() {
 export async function invalidateAdminListCache() {
   const redis = getRedis();
   if (!redis) return;
-  const keys = await redis.keys(`${ADMIN_ORDERS_CACHE_PREFIX}*`);
+  const keys = await redis.keys(`${ADMIN_PRODUCTS_CACHE_PREFIX}*`);
+  keys.push(...(await redis.keys(`${ADMIN_ORDERS_CACHE_PREFIX}*`)));
   keys.push(...(await redis.keys(`${ADMIN_REVIEWS_CACHE_PREFIX}*`)));
   if (keys.length) await redis.del(...keys);
 }
 
 export async function getAdminProducts({ includeDeleted = false } = {}) {
+  const redis = getRedis();
+  const cacheKey = `${ADMIN_PRODUCTS_CACHE_PREFIX}${includeDeleted ? "with-deleted" : "active-only"}`;
+  const cached = await redis?.get<Product[]>(cacheKey);
+  if (cached) return cached;
+
   const supabase = createAdminClient();
   if (!supabase) return [] as Product[];
 
@@ -74,7 +81,9 @@ export async function getAdminProducts({ includeDeleted = false } = {}) {
   const { data, error } = await query;
 
   if (error) return [];
-  return data as Product[];
+  const payload = data as Product[];
+  await redis?.set(cacheKey, payload, { ex: ADMIN_LIST_CACHE_TTL });
+  return payload;
 }
 
 type AdminOrderFilters = {
@@ -304,7 +313,7 @@ export async function getAdminDashboardData() {
     dailyOrders: Array.from(daily.values()).sort((a, b) => a.date.localeCompare(b.date)).slice(-14),
   };
 
-  await redis?.set(ADMIN_DASHBOARD_CACHE_KEY, payload, { ex: 60 });
+  await redis?.set(ADMIN_DASHBOARD_CACHE_KEY, payload, { ex: ADMIN_LIST_CACHE_TTL });
   return payload;
 }
 

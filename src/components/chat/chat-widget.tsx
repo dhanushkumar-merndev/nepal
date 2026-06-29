@@ -897,8 +897,21 @@ function CompareSelectionAction({
 }) {
   const options = useMemo(() => action.serviceOptions ?? [], [action.serviceOptions]);
   const [selected, setSelected] = useState<string[]>([]);
+  const [expanded, setExpanded] = useState(() => !action.collapsed);
 
   if (!options.length) return null;
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-[#0B7FAE]"
+        onClick={() => setExpanded(true)}
+      >
+        {action.label}
+      </button>
+    );
+  }
 
   return (
     <div className="mt-2 w-full rounded-2xl border border-[#159FD3]/20 bg-white p-3 text-[#111] shadow-sm">

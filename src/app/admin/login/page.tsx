@@ -31,7 +31,7 @@ export default async function AdminLoginPage({
           ) : null}
           {notAdmin ? (
             <p className="mt-4 text-sm font-semibold text-[#F59E0B]">
-              You are not an admin.
+              You are not authorized to access this page.
             </p>
           ) : null}
           <div className="mt-6">

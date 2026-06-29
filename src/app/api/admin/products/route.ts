@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { productSchema } from "@/lib/validators/product";
 import { invalidateProductContextCache, invalidatePublicProductsCache } from "@/lib/ai/cache";
 import { isAdminRequest } from "@/lib/auth/admin";
-import { invalidateAdminDashboardCache } from "@/lib/data/admin";
+import { invalidateAdminDashboardCache, invalidateAdminListCache } from "@/lib/data/admin";
 
 const bucket = "product-images";
 
@@ -27,6 +27,7 @@ export async function POST(request: Request) {
   await invalidateProductContextCache();
   await invalidatePublicProductsCache();
   await invalidateAdminDashboardCache();
+  await invalidateAdminListCache();
   return NextResponse.json({ data, message: "Product updated and AI cache refreshed." });
 }
 
@@ -68,6 +69,7 @@ export async function PATCH(request: Request) {
   await invalidateProductContextCache();
   await invalidatePublicProductsCache();
   await invalidateAdminDashboardCache();
+  await invalidateAdminListCache();
   return NextResponse.json({ data: payload, message: "Product updated and AI cache refreshed." });
 }
 
@@ -82,6 +84,7 @@ export async function DELETE(request: Request) {
   await invalidateProductContextCache();
   await invalidatePublicProductsCache();
   await invalidateAdminDashboardCache();
+  await invalidateAdminListCache();
   return NextResponse.json({ ok: true, message: "Product updated and AI cache refreshed." });
 }
 

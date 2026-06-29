@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getApprovedReviews } from "@/lib/data/reviews";
-import { getRedis, PUBLIC_HOME_REVIEWS_KEY } from "@/lib/ai/cache";
+import { getRedis, ONE_HOUR_CACHE_TTL_SECONDS, PUBLIC_HOME_REVIEWS_KEY } from "@/lib/ai/cache";
 import type { Review } from "@/lib/types";
 
 export async function getHomeReviews() {
@@ -55,7 +55,7 @@ export async function getHomeReviews() {
     }
   }
 
-  const ttl = Number(process.env.HOME_REVIEWS_CACHE_TTL ?? 300);
+  const ttl = Number(process.env.HOME_REVIEWS_CACHE_TTL ?? ONE_HOUR_CACHE_TTL_SECONDS);
   if (redis && reviews.length) await redis.set(PUBLIC_HOME_REVIEWS_KEY, JSON.stringify(reviews), { ex: ttl });
 
   return reviews;

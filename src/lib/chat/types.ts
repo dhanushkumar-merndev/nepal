@@ -16,6 +16,7 @@ export type RecommendedAction = {
   addKey?: string;
   groups?: PlanSelectionGroup[];
   serviceOptions?: CompareServiceOption[];
+  collapsed?: boolean;
 };
 
 export type PlanSelectionGroup = {

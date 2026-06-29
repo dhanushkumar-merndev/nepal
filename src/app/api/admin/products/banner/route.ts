@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { invalidateProductContextCache, invalidatePublicProductsCache } from "@/lib/ai/cache";
 import { isAdminRequest } from "@/lib/auth/admin";
+import { invalidateAdminListCache } from "@/lib/data/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { makeBannerSvg } from "@/lib/utils/banner";
 
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
   const { error: uploadError } = await supabase.storage.from(bucket).upload(path, svg, {
     upsert: true,
     contentType: "image/svg+xml",
-    cacheControl: "60",
+    cacheControl: "3600",
   });
   if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 });
 
@@ -57,6 +58,7 @@ export async function POST(request: Request) {
 
   await invalidateProductContextCache();
   await invalidatePublicProductsCache();
+  await invalidateAdminListCache();
   return NextResponse.json({ data, imageUrl, message: "Banner generated and product updated." });
 }
 

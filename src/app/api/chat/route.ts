@@ -605,6 +605,21 @@ function localProductResponse(
     };
   }
 
+  if (wantsCompare && resolvedProducts.length >= 2) {
+    return {
+      text: plansTable(resolvedProducts),
+      actions: [
+        planSelectionAction(resolvedProducts, lower),
+        compareSelectionAction(products, {
+          collapsed: true,
+          label: "Compare two services",
+          prompt: "Compare two services.",
+        }),
+        ...cartAwareCheckoutActions(cartHasItems),
+      ],
+    };
+  }
+
   return {
     text: plansTable(resolvedProducts),
     actions: [
@@ -907,7 +922,7 @@ function plansTable(products: Product[]) {
         product.name,
         plan.name,
         formatPrice(Number(plan.real_price)),
-        plan.offer_price ? formatPrice(Number(plan.offer_price)) : "None",
+        plan.offer_price ? formatPrice(Number(plan.offer_price)) : "N/A",
         plan.stock_status,
       ]),
   );
@@ -1068,11 +1083,15 @@ function planSelectionAction(products: Product[], message: string): RecommendedA
   };
 }
 
-function compareSelectionAction(products: Product[]): RecommendedAction {
+function compareSelectionAction(
+  products: Product[],
+  options: { collapsed?: boolean; label?: string; prompt?: string } = {},
+): RecommendedAction {
   return {
-    label: "Choose two services",
-    prompt: "Choose two services to compare.",
+    label: options.label ?? "Choose two services",
+    prompt: options.prompt ?? "Choose two services to compare.",
     type: "compare_selection",
+    collapsed: options.collapsed ?? false,
     serviceOptions: products
       .filter((product) => product.is_active)
       .map((product) => ({

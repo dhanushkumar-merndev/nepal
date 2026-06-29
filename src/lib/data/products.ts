@@ -1,8 +1,9 @@
 import type { Plan, Product } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
-import { getRedis, PUBLIC_PRODUCTS_KEY, PUBLIC_PRODUCT_RATINGS_KEY } from "@/lib/ai/cache";
+import { getRedis, ONE_HOUR_CACHE_TTL_SECONDS, PUBLIC_PRODUCTS_KEY, PUBLIC_PRODUCT_RATINGS_KEY } from "@/lib/ai/cache";
+import { withCachedProductAssets } from "@/lib/utils/product-assets";
 
-type ProductRow = Omit<Product, "plans"> & { plans?: Plan[] | null };
+type ProductRow = Omit<Product, "plans"> & { plans?: Plan[] | null; updated_at?: string | null };
 type ProductRatingStats = Record<string, { rating: number; review_count: number }>;
 
 async function getProductRatingStats() {
@@ -38,7 +39,8 @@ async function getProductRatingStats() {
     return acc;
   }, {});
 
-  if (redis) await redis.set(PUBLIC_PRODUCT_RATINGS_KEY, JSON.stringify(stats), { ex: 86400 });
+  const ttl = Number(process.env.PUBLIC_PRODUCT_RATINGS_CACHE_TTL ?? ONE_HOUR_CACHE_TTL_SECONDS);
+  if (redis) await redis.set(PUBLIC_PRODUCT_RATINGS_KEY, JSON.stringify(stats), { ex: ttl });
 
   return stats;
 }
@@ -81,14 +83,16 @@ export async function getProducts() {
 
   if (error || !data?.length) return [];
 
-  const products = (data as ProductRow[]).map((product) => ({
-    ...product,
-    rating: ratingStats[product.id]?.rating ?? 4.8,
-    review_count: ratingStats[product.id]?.review_count ?? 0,
-    plans: (product.plans ?? []).filter((plan) => plan.is_active),
-  }));
+  const products = (data as ProductRow[]).map((product) =>
+    withCachedProductAssets({
+      ...product,
+      rating: ratingStats[product.id]?.rating ?? 4.8,
+      review_count: ratingStats[product.id]?.review_count ?? 0,
+      plans: (product.plans ?? []).filter((plan) => plan.is_active),
+    }),
+  );
 
-  const ttl = Number(process.env.PUBLIC_PRODUCTS_CACHE_TTL ?? 300);
+  const ttl = Number(process.env.PUBLIC_PRODUCTS_CACHE_TTL ?? ONE_HOUR_CACHE_TTL_SECONDS);
   if (redis) await redis.set(PUBLIC_PRODUCTS_KEY, JSON.stringify(products), { ex: ttl });
 
   return products;
