@@ -608,7 +608,7 @@ async function localProductResponse(
 
     return {
       text: "Which plan/month should I add? Select the available option for each service, then press the cart button.",
-      actions: [planSelectionAction(resolvedProducts, lower, planSelectionOptions)],
+      actions: [planSelectionAction(resolvedProducts, lower, { ...planSelectionOptions, useMessageQuantity: hasQuantityOnlyFollowUp })],
     };
   }
 
@@ -875,7 +875,7 @@ function stockPlansResponse(message: string, products: Product[], cartHasItems: 
       planSelectionAction(
         products.filter((product) => product.plans.some((plan) => plan.is_active && plan.stock_status === "In Stock")),
         message,
-        { stockStatus: "In Stock" },
+        { stockStatus: "In Stock", selectionMode: "none" },
       ),
       ...cartAwareCheckoutActions(cartHasItems),
     ],
@@ -922,7 +922,7 @@ function allPlansResponse(message: string, products: Product[], cartHasItems: bo
   return {
     text: plansTable(activeProducts),
     actions: [
-      planSelectionAction(activeProducts, message),
+      planSelectionAction(activeProducts, message, { selectionMode: "none" }),
       ...cartAwareCheckoutActions(cartHasItems),
     ],
   };
@@ -1169,7 +1169,8 @@ function quantityForProduct(message: string, product: Product) {
 
   for (const mention of mentions) {
     const beforeProduct = message.substring(Math.max(previousEnd, mention.index - 32), mention.index).trim();
-    const qty = parseTrailingQuantity(beforeProduct) ?? 1;
+    const afterProduct = message.substring(mention.end, Math.min(message.length, mention.end + 32)).trim();
+    const qty = parseCorrectionQuantity(afterProduct) ?? parseTrailingQuantity(beforeProduct) ?? parseLeadingQuantity(afterProduct) ?? 1;
     const betweenMentions = message.substring(previousEnd, mention.index);
 
     total = total > 0 && isQuantityCorrection(betweenMentions) ? qty : total + qty;
@@ -1200,7 +1201,7 @@ function productMentions(message: string, product: Product) {
 }
 
 function isQuantityCorrection(text: string) {
-  return /\b(no+|nono|nah|not|instead|rather|actually|correction|correct|only)\b|\b(make|change|set)\s+(?:it\s+)?(?:to\s+)?$/i.test(text);
+  return /\b(no+|nono|nonon|nah|not|instead|rather|actually|correction|correct|only)\b|\b(make|change|set)\s+(?:it\s+)?(?:to\s+)?$/i.test(text);
 }
 
 function quantityForProductOrMessage(message: string, product: Product) {
@@ -1209,6 +1210,44 @@ function quantityForProductOrMessage(message: string, product: Product) {
 
   const anywhere = parseTrailingQuantity(message) ?? quantityFromAnywhere(message);
   return Math.min(Math.max(anywhere ?? 1, 1), 50);
+}
+
+function parseLeadingQuantity(text: string) {
+  const normalized = text.toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+  const numeric = normalized.match(/^(\d+)(?:\s+(.*))?$/);
+  if (numeric) {
+    return isDurationTail(numeric[2] ?? "") ? null : Number(numeric[1]);
+  }
+
+  const words = normalized.split(" ").filter(Boolean);
+  const first = words[0];
+  if (first && numberWords[first]) {
+    return isDurationTail(words.slice(1).join(" ")) ? null : numberWords[first];
+  }
+
+  return null;
+}
+
+function parseCorrectionQuantity(text: string) {
+  if (!isQuantityCorrection(text)) return null;
+  return quantityFromEnd(text);
+}
+
+function quantityFromEnd(text: string) {
+  const normalized = text.toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+  const numericMatches = [...normalized.matchAll(/\b(\d+)\b/g)];
+  const lastNumeric = numericMatches.at(-1)?.[1];
+  if (lastNumeric) return Number(lastNumeric);
+
+  const words = normalized.split(" ").filter(Boolean);
+  for (const word of [...words].reverse()) {
+    if (numberWords[word]) return numberWords[word];
+  }
+  return null;
+}
+
+function isDurationTail(text: string) {
+  return /^(months?|mons?|mths?|monts?|moths?)\b/.test(text.trim());
 }
 
 function quantityFromAnywhere(message: string) {
@@ -1256,7 +1295,7 @@ function parseTrailingQuantity(text: string) {
 function planSelectionAction(
   products: Product[],
   message: string,
-  options: { stockStatus?: string; monthCounts?: number[] } = {},
+  options: { stockStatus?: string; monthCounts?: number[]; useMessageQuantity?: boolean; selectionMode?: "auto" | "none" } = {},
 ): RecommendedAction {
   return {
     label: "Choose plans",
@@ -1264,13 +1303,14 @@ function planSelectionAction(
     type: "plan_selection",
     groups: products.map((product) => {
       const selectedPlan = findLikelyMentionedPlan(message, product);
-      const quantity = quantityForProduct(message, product);
+      const quantity = options.useMessageQuantity ? quantityForProductOrMessage(message, product) : quantityForProduct(message, product);
       return {
         productId: product.id,
         productSlug: product.slug,
         productName: product.name,
         imageUrl: product.image_url,
         quantity,
+        selectionMode: options.selectionMode ?? "auto",
         selectedPlanIds: selectedPlan ? [selectedPlan.id] : undefined,
         options: product.plans
           .filter((plan) =>

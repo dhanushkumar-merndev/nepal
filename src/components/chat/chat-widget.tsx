@@ -823,7 +823,7 @@ function PlanSelectionAction({
       const firstAvailable = group.options.find((option) => isAvailableStock(option.stockStatus));
       selected[group.productId] = selectedAvailable.length
         ? selectedAvailable.map((option) => option.planId)
-        : firstAvailable ? [firstAvailable.planId] : [];
+        : group.selectionMode === "none" ? [] : firstAvailable ? [firstAvailable.planId] : [];
     }
     return selected;
   }, [groups]);

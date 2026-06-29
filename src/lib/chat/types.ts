@@ -39,6 +39,7 @@ export type PlanSelectionGroup = {
   productName: string;
   imageUrl?: string | null;
   quantity: number;
+  selectionMode?: "auto" | "none";
   selectedPlanIds?: string[];
   options: PlanSelectionOption[];
 };
