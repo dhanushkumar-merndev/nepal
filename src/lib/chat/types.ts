@@ -17,6 +17,20 @@ export type RecommendedAction = {
   groups?: PlanSelectionGroup[];
   serviceOptions?: CompareServiceOption[];
   collapsed?: boolean;
+  pendingCartItems?: PendingCartItem[];
+};
+
+export type PendingCartItem = {
+  productId: string;
+  productName: string;
+  planId: string;
+  planName: string;
+  realPrice: number;
+  offerPrice?: number | null;
+  finalPrice: number;
+  quantity: number;
+  imageUrl?: string | null;
+  addKey?: string;
 };
 
 export type PlanSelectionGroup = {

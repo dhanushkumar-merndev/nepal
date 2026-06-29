@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { CartItem } from "@/lib/types";
-import type { ChatMessage, ChatSession, RecommendedAction } from "@/lib/chat/types";
+import type { ChatMessage, ChatSession, PendingCartItem, RecommendedAction } from "@/lib/chat/types";
 import { deleteSession, getSessions, saveSession } from "@/lib/chat/indexeddb";
 import { getLocaleFromPathname, localizePath, stripLocalePrefix } from "@/lib/locale";
 import { useCartStore } from "@/lib/store/cart-store";
@@ -341,6 +341,15 @@ export function ChatWidget() {
       action: { label: "View Cart", onClick: () => router.push(localizePath("/cart", locale)) },
     });
     if (!options.skipAssistantMessage) {
+      if (action.pendingCartItems?.length) {
+        const [nextLargeItem, ...remainingLargeItems] = action.pendingCartItems;
+        await appendAssistant(
+          `Added ${label} ${action.productName} to cart.\n\nAre you sure you need quantity ${nextLargeItem.quantity} for ${nextLargeItem.productName} ${nextLargeItem.planName}?`,
+          buildLargeQuantityConfirmationActions(nextLargeItem, remainingLargeItems),
+        );
+        return;
+      }
+
       // Suggest remaining items that were mentioned but not in cart
       const userMsgs = sessionRef.current.messages.filter((m) => m.role === "user").slice(-3);
       const mentioned = userMsgs
@@ -367,35 +376,6 @@ export function ChatWidget() {
   }
 
   async function handleBulkCartAction(items: CartItem[]) {
-    const largeItem = items.find((item) => item.quantity > 5);
-    if (largeItem) {
-      await appendAssistant(
-        `Are you sure you need quantity ${largeItem.quantity} for ${largeItem.productName} ${largeItem.planName}?`,
-        [
-          {
-            label: "Yes",
-            prompt: `Add ${largeItem.quantity} ${largeItem.planName} ${largeItem.productName} to cart.`,
-            type: "add_to_cart",
-            productId: largeItem.productId,
-            productName: largeItem.productName,
-            planId: largeItem.planId,
-            planName: largeItem.planName,
-            realPrice: largeItem.realPrice,
-            offerPrice: largeItem.offerPrice,
-            finalPrice: largeItem.finalPrice,
-            imageUrl: largeItem.imageUrl,
-            quantity: largeItem.quantity,
-            addKey: largeItem.addKey,
-          },
-          { label: "No", prompt: "Show smaller quantity suggestions.", type: "question" },
-          { label: "Qty 1", prompt: `Add 1 ${largeItem.planName} ${largeItem.productName} to cart.`, type: "question" },
-          { label: "Qty 3", prompt: `Add 3 ${largeItem.planName} ${largeItem.productName} to cart.`, type: "question" },
-          { label: "Qty 5", prompt: `Add 5 ${largeItem.planName} ${largeItem.productName} to cart.`, type: "question" },
-        ],
-      );
-      return;
-    }
-
     const newItems = items.filter((item) => !item.addKey || !usedAddKeys.includes(item.addKey));
     if (!newItems.length) {
       toast.info("Already in cart", {
@@ -405,14 +385,38 @@ export function ChatWidget() {
       return;
     }
 
-    for (const item of newItems) addCartItem(item);
-    const totalQty = newItems.reduce((sum, item) => sum + item.quantity, 0);
+    const safeItems = newItems.filter((item) => item.quantity <= 5);
+    const largeItems = newItems.filter((item) => item.quantity > 5);
+    const [largeItem, ...remainingLargeItems] = largeItems;
+    const safeSummary = safeItems.map((item) => `${item.quantity}x ${item.productName} ${item.planName}`).join(", ");
+
+    if (safeItems.length) {
+      for (const item of safeItems) addCartItem(item);
+      if (largeItem) {
+        toast.success(`${safeItems.length} plan${safeItems.length > 1 ? "s" : ""} added to cart`, {
+          description: safeSummary,
+          action: { label: "View Cart", onClick: () => router.push(localizePath("/cart", locale)) },
+        });
+      }
+    }
+
+    if (largeItem) {
+      const addedMessage = safeItems.length
+        ? `Added to cart first: ${safeSummary}.\n\n`
+        : "";
+      await appendAssistant(
+        `${addedMessage}Are you sure you need quantity ${largeItem.quantity} for ${largeItem.productName} ${largeItem.planName}?`,
+        buildLargeQuantityConfirmationActions(largeItem, remainingLargeItems),
+      );
+      return;
+    }
+
+    const totalQty = safeItems.reduce((sum, item) => sum + item.quantity, 0);
     toast.success(`${totalQty} subscription${totalQty > 1 ? "s" : ""} added to cart`, {
-      description: `${newItems.length} selected plan${newItems.length > 1 ? "s" : ""}`,
+      description: `${safeItems.length} selected plan${safeItems.length > 1 ? "s" : ""}`,
       action: { label: "View Cart", onClick: () => router.push(localizePath("/cart", locale)) },
     });
-    const summary = newItems.map((item) => `${item.quantity}x ${item.productName} ${item.planName}`).join(", ");
-    await appendAssistant(`Added to cart: ${summary}.`);
+    await appendAssistant(`Added to cart: ${safeSummary}.`);
   }
 
   async function appendAssistant(content: string, recommendedActions?: RecommendedAction[]) {
@@ -772,6 +776,34 @@ export function ChatWidget() {
       </button>
     </>
   );
+}
+
+function buildLargeQuantityConfirmationActions(
+  largeItem: PendingCartItem,
+  pendingCartItems: PendingCartItem[] = [],
+): RecommendedAction[] {
+  return [
+    {
+      label: "Yes",
+      prompt: `Add ${largeItem.quantity} ${largeItem.planName} ${largeItem.productName} to cart.`,
+      type: "add_to_cart",
+      productId: largeItem.productId,
+      productName: largeItem.productName,
+      planId: largeItem.planId,
+      planName: largeItem.planName,
+      realPrice: largeItem.realPrice,
+      offerPrice: largeItem.offerPrice,
+      finalPrice: largeItem.finalPrice,
+      imageUrl: largeItem.imageUrl,
+      quantity: largeItem.quantity,
+      addKey: largeItem.addKey,
+      pendingCartItems,
+    },
+    { label: "No", prompt: "Show smaller quantity suggestions.", type: "question" },
+    { label: "Qty 1", prompt: `Add 1 ${largeItem.planName} ${largeItem.productName} to cart.`, type: "question" },
+    { label: "Qty 3", prompt: `Add 3 ${largeItem.planName} ${largeItem.productName} to cart.`, type: "question" },
+    { label: "Qty 5", prompt: `Add 5 ${largeItem.planName} ${largeItem.productName} to cart.`, type: "question" },
+  ];
 }
 
 function PlanSelectionAction({
@@ -1279,7 +1311,6 @@ function applyCartRemoval(
       message: "Removed all items from your cart.",
       actions: [
         { label: "Show plans", prompt: "Show me available plans.", type: "question" },
-        { label: "Checkout", prompt: "How do I checkout on WhatsApp?", type: "checkout" },
       ],
     };
   }

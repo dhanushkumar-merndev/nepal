@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { OFFICIAL_SUPPORT_EMAIL } from "@/lib/contact";
 import { absoluteUrl } from "@/lib/site-url";
 
 export function GET() {
@@ -28,6 +29,7 @@ export function GET() {
     "",
     "## Contact",
     "- WhatsApp: https://wa.me/9779842901942",
+    `- Email: ${OFFICIAL_SUPPORT_EMAIL}`,
     "- Instagram: https://www.instagram.com/ottsubscriptionnepal4?igsh=MWJjYzZ6bTR0aGxnMQ==",
     "",
     "## Notes For Language Models",

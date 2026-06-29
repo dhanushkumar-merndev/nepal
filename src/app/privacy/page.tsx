@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Footer } from "@/components/site/footer";
 import { Header } from "@/components/site/header";
+import { OFFICIAL_SUPPORT_EMAIL } from "@/lib/contact";
 import { buildStaticPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildStaticPageMetadata("privacy");
@@ -70,7 +71,11 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-bold text-[#111]">7. Contact</h2>
             <p className="mt-2">
               For privacy-related inquiries, reach out via WhatsApp or email us at
-              support@ottsubscriptionnepal.com.
+              {" "}
+              <a href={`mailto:${OFFICIAL_SUPPORT_EMAIL}`} className="text-[#159FD3] hover:underline">
+                {OFFICIAL_SUPPORT_EMAIL}
+              </a>
+              .
             </p>
           </section>
 

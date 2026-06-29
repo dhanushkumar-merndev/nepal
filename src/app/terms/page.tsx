@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Footer } from "@/components/site/footer";
 import { Header } from "@/components/site/header";
+import { OFFICIAL_SUPPORT_EMAIL } from "@/lib/contact";
 import { buildStaticPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildStaticPageMetadata("terms");
@@ -84,7 +85,11 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-bold text-[#111]">8. Contact</h2>
             <p className="mt-2">
-              For order or legal inquiries, contact us via WhatsApp or email at support@ottsubscriptionnepal.com.
+              For order or legal inquiries, contact us via WhatsApp or email at{" "}
+              <a href={`mailto:${OFFICIAL_SUPPORT_EMAIL}`} className="text-[#159FD3] hover:underline">
+                {OFFICIAL_SUPPORT_EMAIL}
+              </a>
+              .
             </p>
           </section>
         </div>

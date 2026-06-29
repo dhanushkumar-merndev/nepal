@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getIp, getUtcDayKey, rateLimit, rateLimitWindow } from "@/lib/rate-limit";
 import { getProductContext } from "@/lib/ai/product-context";
+import { getOfficialServiceInfo } from "@/lib/chat/official-service-info";
 import { getProducts } from "@/lib/data/products";
 import { getDisplayPrice } from "@/lib/utils/pricing";
 import { formatPrice } from "@/lib/utils/format";
@@ -176,6 +177,14 @@ const outOfScopeTerms = [
 const greetings = ["hi", "hello", "hey", "namaste", "help"];
 const confirmationTerms = ["yes", "yeah", "yep", "ok", "okay", "sure", "add it", "add this", "add that", "please add", "do it"];
 const rejectionTerms = ["no", "nope", "not now", "cancel", "don't add", "dont add"];
+const ignoredProductTypoParts = new Set([
+  "growth",
+  "premium",
+  "video",
+  "topup",
+  "subscription",
+  "subscriptions",
+]);
 
 const refusal =
   "I can help with Ott Subscription Nepal only: plans, prices, stock, cart, checkout, reviews, and support.";
@@ -226,7 +235,7 @@ export async function POST(request: Request) {
   }
 
   const cartHasItems = hasCartItems(parsed.data.cart);
-  const deterministic = localProductResponse(parsed.data.message, products, parsed.data.messages, cartHasItems);
+  const deterministic = await localProductResponse(parsed.data.message, products, parsed.data.messages, cartHasItems);
   if (deterministic) return streamLocalResponse(deterministic.text, deterministic.actions);
 
   const cartContext = parsed.data.cart.length
@@ -409,6 +418,7 @@ function isWebsiteScope(message: string, products: Product[] = []) {
   const hasWebsiteIntent = websiteIntentTerms.some((term) => normalized.includes(term));
 
   if (hasProductTerm && hasWebsiteIntent) return true;
+  if (hasProductTerm) return true;
 
   return hasWebsiteIntent;
 }
@@ -484,12 +494,12 @@ const numberWords: Record<string, number> = {
   hundred: 100, thousand: 1000,
 };
 
-function localProductResponse(
+async function localProductResponse(
   message: string,
   products: Product[],
   messages: { role: string; content: string }[] = [],
   cartHasItems = false,
-): LocalChatResponse | null {
+): Promise<LocalChatResponse | null> {
   const lower = message.toLowerCase().replace(/\s+/g, " ").trim();
   const rejection = rejectionResponse(lower, messages);
   if (rejection) return rejection;
@@ -513,6 +523,12 @@ function localProductResponse(
   const resolvedProducts = mentionedProducts.length ? mentionedProducts : followUpProducts;
   const unavailableProduct = !resolvedProducts.length ? unavailableProductResponse(lower, products, cartHasItems) : null;
   if (unavailableProduct) return unavailableProduct;
+  const stock = !resolvedProducts.length ? stockPlansResponse(lower, products, cartHasItems) : null;
+  if (stock) return stock;
+  const durationPlans = !resolvedProducts.length ? durationPlansResponse(lower, products, cartHasItems) : null;
+  if (durationPlans) return durationPlans;
+  const allPlans = !resolvedProducts.length ? allPlansResponse(lower, products, cartHasItems) : null;
+  if (allPlans) return allPlans;
   const servicesOverview = !resolvedProducts.length ? servicesOverviewResponse(lower, products, cartHasItems) : null;
   if (servicesOverview) return servicesOverview;
   const suggestedProducts = findSuggestedProducts(lower, products, mentionedProducts);
@@ -520,6 +536,8 @@ function localProductResponse(
   const wantsCompare = /\bcompare\b/.test(lower);
   const isExplainIntent = /\b(explain|describe|detail|details|about|info|information|what is|tell me about|feature|features)\b/.test(lower);
   const hasQuantityOnlyFollowUp = !mentionedProducts.length && followUpProducts.length > 0 && quantityLikeMessage(lower);
+  const monthCounts = mentionedMonthCounts(lower);
+  const planSelectionOptions = monthCounts.length ? { monthCounts } : undefined;
 
   if (suggestedProducts.length) {
     const resolvedProducts = uniqueProducts([...suggestedProducts, ...mentionedProducts]);
@@ -590,14 +608,14 @@ function localProductResponse(
 
     return {
       text: "Which plan/month should I add? Select the available option for each service, then press the cart button.",
-      actions: [planSelectionAction(resolvedProducts, lower)],
+      actions: [planSelectionAction(resolvedProducts, lower, planSelectionOptions)],
     };
   }
 
   if (isExplainIntent && resolvedProducts.length === 1) {
     const product = resolvedProducts[0];
     return {
-      text: explainProduct(product),
+      text: await explainProduct(product),
       actions: [
         planSelectionAction([product], lower),
         ...cartAwareCheckoutActions(cartHasItems),
@@ -607,9 +625,9 @@ function localProductResponse(
 
   if (wantsCompare && resolvedProducts.length >= 2) {
     return {
-      text: plansTable(resolvedProducts),
+      text: plansTable(resolvedProducts, planSelectionOptions),
       actions: [
-        planSelectionAction(resolvedProducts, lower),
+        planSelectionAction(resolvedProducts, lower, planSelectionOptions),
         compareSelectionAction(products, {
           collapsed: true,
           label: "Compare two services",
@@ -621,40 +639,60 @@ function localProductResponse(
   }
 
   return {
-    text: plansTable(resolvedProducts),
+    text: plansTable(resolvedProducts, planSelectionOptions),
     actions: [
-      planSelectionAction(resolvedProducts, lower),
+      planSelectionAction(resolvedProducts, lower, planSelectionOptions),
       ...questionActionsForProducts(resolvedProducts, cartHasItems),
     ],
   };
 }
 
-function explainProduct(product: Product) {
+async function explainProduct(product: Product) {
   const activePlans = product.plans.filter((plan) => plan.is_active);
   const availablePlans = activePlans.filter((plan) => plan.stock_status !== "Out of Stock" && plan.stock_status !== "Coming Soon");
   const cheapestPlan = [...availablePlans].sort((a, b) => getDisplayPrice(a) - getDisplayPrice(b))[0] ?? activePlans[0];
+  const officialInfo = await getOfficialServiceInfo(product.name);
+  const oneMonthPlan = activePlans.find((plan) => planMonthCount(plan) === 1)
+    ?? activePlans.find((plan) => /\b1\s*month\b/i.test(`${plan.name} ${plan.duration ?? ""}`))
+    ?? null;
 
-  const lines = [
-    `${product.name} is ${product.description || "available on Ott Subscription Nepal."}`,
-    `Category: ${product.category}. Stock: ${product.stock_status}.`,
-  ];
+  const lines = [`${product.name}`];
+  lines.push(
+    officialInfo
+      ? officialInfo.summary
+      : product.description || `${product.name} is available on Ott Subscription Nepal.`,
+  );
+  lines.push("");
+  lines.push(`Category: ${product.category}`);
+  lines.push(`Current stock: ${product.stock_status}`);
 
   if (cheapestPlan) {
-    lines.push(`Starting plan: ${cheapestPlan.name} for ${formatPrice(getDisplayPrice(cheapestPlan))}.`);
+    lines.push(`Starting plan: ${cheapestPlan.name} for ${formatPrice(getDisplayPrice(cheapestPlan))}`);
   }
 
   if (activePlans.length) {
     lines.push("");
-    lines.push("Available plans and features:");
+    lines.push("Our available plans");
     lines.push("");
+    lines.push("| Plan | Price | Offer | Stock |");
+    lines.push("| --- | --- | --- | --- |");
     for (const plan of activePlans) {
-      lines.push(`- ${plan.name}: ${formatPrice(getDisplayPrice(plan))}${plan.offer_price ? ` offer from ${formatPrice(Number(plan.real_price))}` : ""}. Stock: ${plan.stock_status}.`);
-      if (plan.features?.length) {
-        lines.push(`  Features: ${plan.features.join(", ")}.`);
-      } else {
-        lines.push("  Features: No extra plan features are listed right now.");
-      }
+      lines.push(
+        `| ${plan.name} | ${formatPrice(getDisplayPrice(plan))} | ${plan.offer_price ? formatPrice(Number(plan.real_price)) : "N/A"} | ${plan.stock_status} |`,
+      );
     }
+  }
+
+  lines.push("");
+  lines.push(`What our ${oneMonthPlan?.name ?? "1 Month plan"} includes`);
+  if (oneMonthPlan) {
+    lines.push(
+      oneMonthPlan.features?.length
+        ? oneMonthPlan.features.join(", ")
+        : "No extra inclusions are listed in our database for this plan right now.",
+    );
+  } else {
+    lines.push("A 1 Month plan is not currently active in our database.");
   }
 
   lines.push("");
@@ -801,6 +839,95 @@ function servicesOverviewResponse(message: string, products: Product[], cartHasI
   };
 }
 
+function stockPlansResponse(message: string, products: Product[], cartHasItems: boolean): LocalChatResponse | null {
+  const asksStock = /\b(in stock|instock|available|availability|stock)\b/.test(message);
+  const asksPlans = /\b(plan|plans|service|services|product|products|show|list)\b/.test(message);
+  if (!asksStock || !asksPlans) return null;
+
+  const rows = products.flatMap((product) =>
+    product.plans
+      .filter((plan) => product.is_active && plan.is_active && plan.stock_status === "In Stock")
+      .map((plan) => [
+        product.name,
+        plan.name,
+        formatPrice(Number(plan.real_price)),
+        plan.offer_price ? formatPrice(Number(plan.offer_price)) : "N/A",
+        plan.stock_status,
+      ]),
+  );
+
+  if (!rows.length) {
+    return {
+      text: "No in-stock plans are listed right now. Please contact WhatsApp support for updates.",
+      actions: [supportAction],
+    };
+  }
+
+  return {
+    text: [
+      "Here are the in-stock plans:",
+      "",
+      "| Service | Plan | Price | Offer | Stock |",
+      "| --- | --- | --- | --- | --- |",
+      ...rows.map((row) => `| ${row.join(" | ")} |`),
+    ].join("\n"),
+    actions: [
+      planSelectionAction(
+        products.filter((product) => product.plans.some((plan) => plan.is_active && plan.stock_status === "In Stock")),
+        message,
+        { stockStatus: "In Stock" },
+      ),
+      ...cartAwareCheckoutActions(cartHasItems),
+    ],
+  };
+}
+
+function durationPlansResponse(message: string, products: Product[], cartHasItems: boolean): LocalChatResponse | null {
+  const monthCounts = mentionedMonthCounts(message);
+  const asksPlans = /\b(plan|plans|month|months|show|list|mention|available)\b/.test(message);
+  if (!monthCounts.length || !asksPlans) return null;
+
+  const matchingProducts = products.filter((product) =>
+    product.is_active && product.plans.some((plan) => plan.is_active && monthCounts.includes(planMonthCount(plan) ?? -1)),
+  );
+
+  if (!matchingProducts.length) {
+    return {
+      text: `No ${formatMonthCounts(monthCounts)} plans are listed right now. Please contact WhatsApp support for updates.`,
+      actions: [supportAction],
+    };
+  }
+
+  return {
+    text: plansTable(matchingProducts, { monthCounts }),
+    actions: [
+      planSelectionAction(matchingProducts, message, { monthCounts }),
+      ...cartAwareCheckoutActions(cartHasItems),
+    ],
+  };
+}
+
+function allPlansResponse(message: string, products: Product[], cartHasItems: boolean): LocalChatResponse | null {
+  const asksAllPlans = /\b(all|full|every|available)\b/.test(message) && /\b(plan|plans)\b/.test(message);
+  if (!asksAllPlans) return null;
+
+  const activeProducts = products.filter((product) => product.is_active && product.plans.some((plan) => plan.is_active));
+  if (!activeProducts.length) {
+    return {
+      text: "No active plans are listed right now. Please contact WhatsApp support for updates.",
+      actions: [supportAction],
+    };
+  }
+
+  return {
+    text: plansTable(activeProducts),
+    actions: [
+      planSelectionAction(activeProducts, message),
+      ...cartAwareCheckoutActions(cartHasItems),
+    ],
+  };
+}
+
 function unavailableProductResponse(message: string, products: Product[], cartHasItems: boolean): LocalChatResponse | null {
   const requested = knownServices.find((service) =>
     service.aliases.some((alias) => message.includes(alias)),
@@ -828,8 +955,6 @@ function findMentionedProducts(message: string, products: Product[]) {
 }
 
 function findSuggestedProducts(message: string, products: Product[], exactProducts: Product[]) {
-  if (exactProducts.length > 0) return [];
-
   const exactIds = new Set(exactProducts.map((product) => product.id));
   const words = message
     .replace(/[^\w\s-]/g, " ")
@@ -839,12 +964,19 @@ function findSuggestedProducts(message: string, products: Product[], exactProduc
 
   return products.filter((product) => {
     if (exactIds.has(product.id)) return false;
-    return productAliases(product).some((alias) =>
-      alias
+    return productAliases(product).some((alias) => {
+      const normalizedAlias = alias.replace(/[^\w\s-]/g, " ").trim();
+      const aliasCompact = normalizedAlias.replace(/[\s-]+/g, "");
+
+      if (aliasCompact.length >= 4 && words.some((word) => editDistance(word, aliasCompact) <= typoThreshold(aliasCompact))) {
+        return true;
+      }
+
+      return normalizedAlias
         .split(/[\s-]+/)
-        .filter((part) => part.length >= 5)
-        .some((part) => words.some((word) => editDistance(word, part) <= 2)),
-    );
+        .filter((part) => part.length >= 4 && !ignoredProductTypoParts.has(part.toLowerCase()))
+        .some((part) => words.some((word) => editDistance(word, part) <= typoThreshold(part)));
+    });
   });
 }
 
@@ -854,11 +986,29 @@ function replaceLikelyProductTypos(message: string, products: Product[]) {
 
   for (const product of products) {
     const canonical = product.name;
+    const typoWords = new Set<string>();
+
     for (const alias of productAliases(product)) {
-      for (const part of alias.split(/[\s-]+/).filter((item) => item.length >= 5)) {
-        const match = words.find((word) => editDistance(word.replace(/[^\w-]/g, ""), part) <= 2);
-        if (match) corrected = corrected.replace(new RegExp(`\\b${escapeRegExp(match)}\\b`, "i"), canonical);
+      const aliasCompact = alias.replace(/[^\w-]/g, "").toLowerCase();
+      for (const word of words) {
+        const compactWord = word.replace(/[^\w-]/g, "").toLowerCase();
+        if (compactWord.length >= 4 && editDistance(compactWord, aliasCompact) <= typoThreshold(aliasCompact)) {
+          typoWords.add(word);
+        }
       }
+
+      for (const part of alias.split(/[\s-]+/).filter((item) => item.length >= 4 && !ignoredProductTypoParts.has(item.toLowerCase()))) {
+        for (const word of words) {
+          const compactWord = word.replace(/[^\w-]/g, "").toLowerCase();
+          if (compactWord.length >= 4 && editDistance(compactWord, part.toLowerCase()) <= typoThreshold(part)) {
+            typoWords.add(word);
+          }
+        }
+      }
+    }
+
+    for (const word of typoWords) {
+      corrected = corrected.replace(new RegExp(`\\b${escapeRegExp(word)}\\b`, "gi"), canonical);
     }
   }
 
@@ -899,6 +1049,12 @@ function editDistance(a: string, b: string) {
   return dp[a.length][b.length];
 }
 
+function typoThreshold(value: string) {
+  if (value.length <= 4) return 1;
+  if (value.length <= 8) return 2;
+  return 3;
+}
+
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -914,10 +1070,10 @@ function productAliases(product: Product) {
   return [...aliases];
 }
 
-function plansTable(products: Product[]) {
+function plansTable(products: Product[], options: { monthCounts?: number[] } = {}) {
   const rows = products.flatMap((product) =>
     product.plans
-      .filter((plan) => plan.is_active)
+      .filter((plan) => plan.is_active && (!options.monthCounts?.length || options.monthCounts.includes(planMonthCount(plan) ?? -1)))
       .map((plan) => [
         product.name,
         plan.name,
@@ -969,13 +1125,27 @@ function findLikelyMentionedPlan(message: string, product: Product) {
 }
 
 function mentionedMonthCount(message: string) {
-  const digitMatch = message.match(/\b(\d+)\s*(?:months?|mons?|mths?|monts?|moths?)\b/);
-  if (digitMatch) return Number(digitMatch[1]);
+  return mentionedMonthCounts(message)[0] ?? null;
+}
 
-  const wordMatch = message.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:months?|mons?|mths?|monts?|moths?)\b/);
-  if (wordMatch) return numberWords[wordMatch[1]];
+function mentionedMonthCounts(message: string) {
+  const months = new Set<number>();
+  const numberPattern = "\\d+|one|two|three|four|five|six|seven|eight|nine|ten";
+  const pattern = new RegExp(`\\b((?:${numberPattern})(?:\\s*(?:and|or|,)\\s*(?:${numberPattern}))*)\\s*(?:months?|mons?|mths?|monts?|moths?)\\b`, "g");
+  let match: RegExpExecArray | null = null;
 
-  return null;
+  while ((match = pattern.exec(message)) !== null) {
+    const rawCounts = match[1].match(new RegExp(numberPattern, "g")) ?? [];
+    for (const raw of rawCounts) {
+      months.add(/^\d+$/.test(raw) ? Number(raw) : numberWords[raw]);
+    }
+  }
+
+  return [...months].filter(Boolean);
+}
+
+function formatMonthCounts(monthCounts: number[]) {
+  return monthCounts.map((month) => `${month} Month`).join(" and ");
 }
 
 function planMonthCount(plan: Plan) {
@@ -991,14 +1161,46 @@ function planMonthCount(plan: Plan) {
 }
 
 function quantityForProduct(message: string, product: Product) {
-  const aliases = productAliases(product);
-  const indexes = aliases
-    .map((alias) => message.indexOf(alias))
-    .filter((index) => index >= 0);
-  const productIndex = indexes.length ? Math.min(...indexes) : -1;
-  const beforeProduct = productIndex >= 0 ? message.substring(Math.max(0, productIndex - 24), productIndex).trim() : "";
-  const qty = parseTrailingQuantity(beforeProduct) ?? 1;
-  return Math.min(Math.max(qty, 1), 50);
+  const mentions = productMentions(message, product);
+  if (!mentions.length) return 1;
+
+  let total = 0;
+  let previousEnd = 0;
+
+  for (const mention of mentions) {
+    const beforeProduct = message.substring(Math.max(previousEnd, mention.index - 32), mention.index).trim();
+    const qty = parseTrailingQuantity(beforeProduct) ?? 1;
+    const betweenMentions = message.substring(previousEnd, mention.index);
+
+    total = total > 0 && isQuantityCorrection(betweenMentions) ? qty : total + qty;
+    previousEnd = mention.end;
+  }
+
+  return Math.min(Math.max(total, 1), 50);
+}
+
+function productMentions(message: string, product: Product) {
+  const mentions: { index: number; end: number }[] = [];
+
+  for (const alias of productAliases(product)) {
+    const aliasPattern = new RegExp(`\\b${escapeRegExp(alias)}\\b`, "gi");
+    let match: RegExpExecArray | null = null;
+
+    while ((match = aliasPattern.exec(message)) !== null) {
+      mentions.push({ index: match.index, end: match.index + match[0].length });
+    }
+  }
+
+  return mentions
+    .sort((a, b) => a.index - b.index || b.end - a.end)
+    .filter((mention, index, sorted) => {
+      const previous = sorted[index - 1];
+      return !previous || mention.index >= previous.end;
+    });
+}
+
+function isQuantityCorrection(text: string) {
+  return /\b(no+|nono|nah|not|instead|rather|actually|correction|correct|only)\b|\b(make|change|set)\s+(?:it\s+)?(?:to\s+)?$/i.test(text);
 }
 
 function quantityForProductOrMessage(message: string, product: Product) {
@@ -1051,7 +1253,11 @@ function parseTrailingQuantity(text: string) {
   return null;
 }
 
-function planSelectionAction(products: Product[], message: string): RecommendedAction {
+function planSelectionAction(
+  products: Product[],
+  message: string,
+  options: { stockStatus?: string; monthCounts?: number[] } = {},
+): RecommendedAction {
   return {
     label: "Choose plans",
     prompt: "Choose plans to add to cart.",
@@ -1067,7 +1273,11 @@ function planSelectionAction(products: Product[], message: string): RecommendedA
         quantity,
         selectedPlanIds: selectedPlan ? [selectedPlan.id] : undefined,
         options: product.plans
-          .filter((plan) => plan.is_active)
+          .filter((plan) =>
+            plan.is_active
+            && (!options.stockStatus || plan.stock_status === options.stockStatus)
+            && (!options.monthCounts?.length || options.monthCounts.includes(planMonthCount(plan) ?? -1)),
+          )
           .map((plan) => ({
             planId: plan.id,
             planName: plan.name,
@@ -1168,10 +1378,9 @@ function actionsForMessage(message: string, products: Product[], cartHasItems: b
     }
 
     if (!isAddIntent) {
-      const hasMultiplePlans = mentionedProducts.length > 1 || mentionedProducts.some((p) => p.plans.filter((pl) => pl.is_active).length > 1);
       actions.push(
         planSelectionAction(mentionedProducts, lower),
-        ...(hasMultiplePlans ? [{ ...compareSelectionAction(products), label: "Compare plans" as const }] : []),
+        ...(mentionedProducts.length > 1 ? [{ ...compareSelectionAction(products), label: "Compare plans" as const }] : []),
         ...cartAwareCheckoutActions(cartHasItems),
       );
     }
@@ -1205,9 +1414,8 @@ function defaultActions(products: Product[] = [], cartHasItems = false): Recomme
 }
 
 function questionActionsForProducts(products: Product[], cartHasItems: boolean): RecommendedAction[] {
-  const hasMultiplePlans = products.length > 1 || products.some((p) => p.plans.filter((pl) => pl.is_active).length > 1);
   return [
-    ...(hasMultiplePlans ? [{ ...compareSelectionAction(products), label: "Compare plans" as const }] : []),
+    ...(products.length > 1 ? [{ ...compareSelectionAction(products), label: "Compare plans" as const }] : []),
     ...cartAwareCheckoutActions(cartHasItems),
   ];
 }

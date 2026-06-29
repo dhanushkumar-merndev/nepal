@@ -1,4 +1,5 @@
 import type { Product, Review } from "@/lib/types";
+import { OFFICIAL_SUPPORT_EMAIL } from "@/lib/contact";
 import { defaultLocale, getLocaleFromPathname, localizePath, stripLocalePrefix, type SiteLocale } from "@/lib/locale";
 import { getSiteCopy } from "@/lib/site-copy";
 import { absoluteUrl } from "@/lib/site-url";
@@ -24,10 +25,12 @@ export function buildOrganizationSchema() {
     description:
       "Premium OTT subscription activation and digital service support in Nepal with fast WhatsApp checkout.",
     sameAs: [instagramUrl],
+    email: OFFICIAL_SUPPORT_EMAIL,
     contactPoint: [
       {
         "@type": "ContactPoint",
         telephone: "+9779842901942",
+        email: OFFICIAL_SUPPORT_EMAIL,
         contactType: "customer support",
         areaServed: "NP",
         availableLanguage: ["en", "hi", "ne"],

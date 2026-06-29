@@ -1,12 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { OFFICIAL_SUPPORT_EMAIL } from "@/lib/contact";
 import { LocaleLink } from "@/components/site/locale-link";
 import { getLocaleFromPathname } from "@/lib/locale";
 import { getSiteCopy } from "@/lib/site-copy";
 
 const support = [
   { label: "WhatsApp", href: "https://wa.me/9779842901942" },
+  { label: "Email", href: `mailto:${OFFICIAL_SUPPORT_EMAIL}` },
 ];
 
 export function Footer() {
@@ -35,8 +37,8 @@ export function Footer() {
           <div className="absolute -right-20 -top-20 size-60 rounded-full bg-[#159FD3]/10 blur-3xl" />
           <div className="absolute -bottom-20 -left-20 size-60 rounded-full bg-[#0B7FAE]/10 blur-3xl" />
 
-          <div className="relative mx-auto grid max-w-7xl gap-6 p-6 sm:grid-cols-2 md:gap-8 md:p-8 lg:gap-y-6 lg:gap-x-8 lg:p-10 lg:grid-cols-[1.45fr_repeat(3,minmax(0,0.72fr))_1.1fr] xl:gap-x-10">
-            <div className="sm:col-span-2 lg:col-span-1">
+          <div className="relative mx-auto grid max-w-7xl grid-cols-2 gap-6 p-6 md:gap-8 md:p-8 lg:gap-y-6 lg:gap-x-8 lg:p-10 lg:grid-cols-[1.45fr_repeat(3,minmax(0,0.72fr))_1.1fr] xl:gap-x-10">
+            <div className="col-span-2 lg:col-span-1">
               <h2 className="mt-3 text-2xl font-black tracking-tight md:text-3xl">
                 Ott Subscription<br />Nepal
               </h2>
@@ -70,7 +72,7 @@ export function Footer() {
               </div>
             </div>
 
-            <div className="order-1 lg:order-none">
+            <div className="order-1 col-span-2 lg:order-none lg:col-span-1">
               <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">{copy.footer.navigate}</h3>
               <nav aria-label="Footer navigation" className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm lg:grid-cols-1">
                 {navigationLinks.map((link) => (
@@ -115,7 +117,7 @@ export function Footer() {
               </nav>
             </div>
 
-            <div className="order-4 border-white/30 sm:col-span-2 lg:order-none lg:col-span-1 lg:border-l lg:pl-4">
+            <div className="order-4 col-span-2 border-white/30 lg:order-none lg:col-span-1 lg:border-l lg:pl-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">{copy.footer.community}</h3>
               <p className="mt-2 text-sm text-[#555]">
                 {copy.footer.communityDescription}

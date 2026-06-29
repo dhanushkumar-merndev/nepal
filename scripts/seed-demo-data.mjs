@@ -249,7 +249,7 @@ async function seedOrders(rows) {
 async function seedSettings() {
   const settings = [
     { key: "home_reviews_mode", value: "auto" },
-    { key: "support_email", value: "support@ottsubscriptionnepal.com" },
+    { key: "support_email", value: "support.ottsubcriptionnepal@gmail.com" },
     { key: "payment_instructions", value: "Checkout creates a WhatsApp order message for confirmation." },
   ];
   const { error } = await supabase.from("settings").upsert(settings, { onConflict: "key" });

@@ -25,7 +25,7 @@ The app uses `NEXT_PUBLIC_SITE_URL` for canonical URLs, sitemap entries, Open Gr
 Set it to your public origin in every deployed environment:
 
 ```bash
-NEXT_PUBLIC_SITE_URL=https://www.ottsubscriptionnepal.com
+NEXT_PUBLIC_SITE_URL=https://www.ottsubscriptionnepal.shop
 ```
 
 Do not leave it as `localhost` in production. CI and Vercel production builds are guarded against that.
