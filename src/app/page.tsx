@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Footer } from "@/components/site/footer";
 import { Header } from "@/components/site/header";
 import { Hero } from "@/components/site/hero";
@@ -10,17 +12,27 @@ import { getHomeReviews } from "@/lib/data/home-reviews";
 import { getProducts } from "@/lib/data/products";
 import { HomePopularPlansHeader } from "@/components/site/home-popular-plans-header";
 import { buildStaticPageMetadata } from "@/lib/seo";
+import { buildWebPageSchema } from "@/lib/schema";
 
 export const metadata: Metadata = buildStaticPageMetadata("home");
 
 export default async function Home() {
   const [products, reviews] = await Promise.all([getProducts(), getHomeReviews()]);
+  const pathname = (await headers()).get("x-current-pathname") || "/";
   const bestSellers = products.filter((product) => product.is_best_seller);
   const heroServices = [...bestSellers, ...products.filter((p) => !p.is_best_seller)].slice(0, 4);
   const popularPlans = products.slice(0, 8);
 
   return (
     <>
+      <JsonLd
+        data={buildWebPageSchema({
+          pathname,
+          title: "Premium OTT Subscriptions in Nepal",
+          description:
+            "Shop Netflix, Spotify, Prime Video, YouTube Premium and more in Nepal with fast activation, real customer reviews, and WhatsApp checkout.",
+        })}
+      />
       <Header />
       <main className="flex-1">
         <Hero services={heroServices} />

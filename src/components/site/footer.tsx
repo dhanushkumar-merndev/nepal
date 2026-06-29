@@ -35,7 +35,7 @@ export function Footer() {
           <div className="absolute -right-20 -top-20 size-60 rounded-full bg-[#159FD3]/10 blur-3xl" />
           <div className="absolute -bottom-20 -left-20 size-60 rounded-full bg-[#0B7FAE]/10 blur-3xl" />
 
-          <div className="relative mx-auto grid max-w-7xl gap-6 p-6 sm:grid-cols-2 md:gap-8 md:p-8 lg:gap-10 lg:p-10 lg:grid-cols-[1.4fr_0.7fr_0.7fr_1.2fr]">
+          <div className="relative mx-auto grid max-w-7xl gap-6 p-6 sm:grid-cols-2 md:gap-8 md:p-8 lg:gap-y-6 lg:gap-x-8 lg:p-10 lg:grid-cols-[1.45fr_repeat(3,minmax(0,0.72fr))_1.1fr] xl:gap-x-10">
             <div className="sm:col-span-2 lg:col-span-1">
               <h2 className="mt-3 text-2xl font-black tracking-tight md:text-3xl">
                 Ott Subscription<br />Nepal
@@ -70,9 +70,9 @@ export function Footer() {
               </div>
             </div>
 
-            <div className="order-3 sm:order-none">
+            <div className="order-1 lg:order-none">
               <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">{copy.footer.navigate}</h3>
-              <nav className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm lg:grid-cols-1">
+              <nav aria-label="Footer navigation" className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm lg:grid-cols-1">
                 {navigationLinks.map((link) => (
                   <LocaleLink
                     key={link.href}
@@ -85,9 +85,9 @@ export function Footer() {
               </nav>
             </div>
 
-            <div className="order-1 sm:order-none">
+            <div className="order-2 lg:order-none">
               <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">{copy.footer.connect}</h3>
-              <nav className="mt-3 grid gap-2 text-sm">
+              <nav aria-label="Support links" className="mt-3 grid gap-2 text-sm">
                 {support.map((s) => (
                   <a
                     key={s.label}
@@ -100,9 +100,9 @@ export function Footer() {
               </nav>
             </div>
 
-            <div className="order-2 sm:order-none">
+            <div className="order-3 lg:order-none">
               <h3 className="text-xs font-bold uppercase tracking-widest text-[#737373]">{copy.footer.legal}</h3>
-              <nav className="mt-3 grid gap-2 text-sm">
+              <nav aria-label="Legal links" className="mt-3 grid gap-2 text-sm">
                 {legalLinks.map((link) => (
                   <LocaleLink
                     key={link.href}
@@ -135,7 +135,7 @@ export function Footer() {
                 </div>
               </a>
             </div>
-            <div className="col-span-full mt-4 pt-4 md:mt-5 md:pt-5 lg:mt-6 lg:pt-6">
+            <div className="order-5 col-span-full mt-4 pt-4 md:mt-5 md:pt-5 lg:mt-6 lg:pt-6">
               <div className="flex flex-col items-center justify-center gap-1 text-center text-xs text-[#555] sm:flex-row sm:gap-2">
                 <p>&copy; {new Date().getFullYear()} {copy.footer.rights}</p>
                 <span className="hidden sm:inline">|</span>

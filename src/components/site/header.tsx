@@ -92,7 +92,7 @@ export function Header() {
           </picture>
         </LocaleLink>
 
-        <nav className="hidden items-center gap-6 text-sm font-medium text-[#555] lg:flex">
+        <nav aria-label="Primary navigation" className="hidden items-center gap-6 text-sm font-medium text-[#555] lg:flex">
           {nav.map(([label, href, external]) =>
             external ? (
               <a key={label} href={contactHref} target="_blank" rel="noopener noreferrer" className="text-[#555] transition-colors hover:text-[#159FD3]">
@@ -162,7 +162,7 @@ export function Header() {
               <X className="size-5 text-[#555]" />
             </button>
           </div>
-          <nav className="grid gap-1 p-4">
+          <nav aria-label="Mobile navigation" className="grid gap-1 p-4">
             {nav.map(([label, href, external]) =>
               external ? (
                 <a

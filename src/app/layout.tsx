@@ -1,14 +1,24 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Geist, Geist_Mono, Noto_Sans_Devanagari } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { JsonLd } from "@/components/seo/json-ld";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { LenisProvider } from "@/components/site/lenis-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getLocaleFromPathname } from "@/lib/locale";
 import { absoluteUrl, getSiteUrlObject } from "@/lib/site-url";
+import {
+  buildBreadcrumbSchema,
+  buildFaqPageSchema,
+  buildHomeFaqSchema,
+  buildOrganizationSchema,
+  buildServiceSchema,
+  buildWebPageSchema,
+  buildWebsiteSchema,
+} from "@/lib/schema";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,6 +47,17 @@ export const metadata: Metadata = {
     "Buy Netflix, Spotify, Prime Video, YouTube Premium, Crunchyroll, Zee5, Free Fire top-up and other digital services in Nepal with fast activation and easy WhatsApp checkout.",
   applicationName: "Ott Subscription Nepal",
   category: "shopping",
+  keywords: [
+    "OTT Subscription Nepal",
+    "Netflix subscription Nepal",
+    "Spotify Premium Nepal",
+    "YouTube Premium Nepal",
+    "Prime Video Nepal",
+    "digital subscriptions Nepal",
+  ],
+  authors: [{ name: "Ott Subscription Nepal", url: absoluteUrl("/") }],
+  creator: "Ott Subscription Nepal",
+  publisher: "Ott Subscription Nepal",
   robots: {
     index: true,
     follow: true,
@@ -83,6 +104,11 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
 };
 
+export const viewport: Viewport = {
+  themeColor: "#159FD3",
+  colorScheme: "light",
+};
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -90,25 +116,26 @@ export default async function RootLayout({
 }>) {
   const pathname = (await headers()).get("x-current-pathname") || "/";
   const htmlLang = getLocaleFromPathname(pathname);
-  const organizationJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "Ott Subscription Nepal",
-    url: absoluteUrl("/"),
-    logo: absoluteUrl("/logo.png"),
-    description:
-      "Premium OTT subscription activation and digital service support in Nepal with fast WhatsApp checkout.",
-    sameAs: ["https://www.instagram.com/ottsubscriptionnepal4?igsh=MWJjYzZ6bTR0aGxnMQ=="],
-    contactPoint: [
-      {
-        "@type": "ContactPoint",
-        telephone: "+9779842901942",
-        contactType: "customer support",
-        areaServed: "NP",
-        availableLanguage: ["en", "hi", "ne"],
-      },
-    ],
-  };
+  const pageSchemas: Array<Record<string, unknown>> = [
+    buildOrganizationSchema(),
+    buildWebsiteSchema(),
+    buildServiceSchema(),
+    buildWebPageSchema({
+      pathname,
+      title: "Ott Subscription Nepal",
+      description:
+        "Premium OTT plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
+    }),
+    buildBreadcrumbSchema(pathname),
+  ];
+
+  if (pathname === "/" || pathname === "/hi" || pathname === "/ne") {
+    pageSchemas.push(buildHomeFaqSchema(htmlLang));
+  }
+
+  if (pathname === "/faq" || pathname === "/hi/faq" || pathname === "/ne/faq") {
+    pageSchemas.push(buildFaqPageSchema(htmlLang));
+  }
 
   return (
     <html
@@ -117,10 +144,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
-        />
+        <JsonLd data={pageSchemas} />
         <TooltipProvider>
           <LenisProvider />
           {children}

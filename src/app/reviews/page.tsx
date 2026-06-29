@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Footer } from "@/components/site/footer";
 import { Header } from "@/components/site/header";
 import { LocaleLink } from "@/components/site/locale-link";
@@ -7,6 +9,7 @@ import { ReviewForm } from "@/components/site/review-form";
 import { SlideIn } from "@/components/site/slide-in";
 import { ReviewPagerLabel, ReviewsPageIntro, ReviewsPageStats, ReviewsPaginationCopy, ReviewsShowingCopy } from "@/components/site/reviews-page-copy";
 import { buildStaticPageMetadata } from "@/lib/seo";
+import { buildReviewsPageSchema, buildWebPageSchema } from "@/lib/schema";
 
 export const metadata: Metadata = buildStaticPageMetadata("reviews");
 
@@ -17,6 +20,7 @@ export default async function ReviewsPage({
 }) {
   const { getApprovedReviewsPage } = await import("@/lib/data/reviews");
   const params = await searchParams;
+  const pathname = (await headers()).get("x-current-pathname") || "/reviews";
   const currentPage = Math.max(1, Number(params?.page ?? 1) || 1);
   const { reviews, totalCount, pageSize } = await getApprovedReviewsPage(currentPage);
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -30,6 +34,16 @@ export default async function ReviewsPage({
 
   return (
     <>
+      <JsonLd
+        data={[
+          buildWebPageSchema({
+            pathname,
+            title: "Customer reviews",
+            description: "Real reviews from real customers about our OTT and digital services.",
+          }),
+          buildReviewsPageSchema({ pathname, reviews }),
+        ]}
+      />
       <Header />
       <main className="flex-1" style={{ minHeight: "calc(100dvh - 10rem)" }}>
         <section className="mx-auto w-full max-w-7xl px-4 py-12">

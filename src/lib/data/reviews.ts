@@ -63,3 +63,23 @@ export async function getApprovedReviewsPage(page = 1) {
   if (redis) await redis.set(cacheKey, result, { ex: ttl });
   return result;
 }
+
+export async function getApprovedReviewsForProduct(productId: string, limit = 3) {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("*, products(name)")
+    .eq("status", "approved")
+    .eq("product_id", productId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data?.length) return [];
+
+  return data.map((review) => ({
+    ...review,
+    product_name: review.products?.name,
+  })) as Review[];
+}
