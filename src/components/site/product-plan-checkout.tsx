@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Minus, Plus, ShoppingCart, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { LocaleLink } from "@/components/site/locale-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getLocaleFromPathname } from "@/lib/locale";
@@ -136,6 +137,30 @@ export function ProductPlanCheckout({ product }: { product: Product }) {
           </article>
         );
       })}
+      <article className="rounded-3xl border border-[#159FD3]/15 bg-[#EAF8FE] p-5 text-left shadow-sm md:col-span-2">
+        <h2 className="text-xl font-black text-[#111]">{copy.productUi.trustTitle}</h2>
+        <ul className="mt-4 grid gap-3 text-sm leading-6 text-[#555] md:grid-cols-3">
+          {copy.productUi.trustItems.map((item) => (
+            <li key={item} className="rounded-2xl border border-white/60 bg-white/70 p-4">
+              {item}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <LocaleLink
+            href="/refund-policy"
+            className="inline-flex items-center justify-center rounded-full bg-[#159FD3] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0B7FAE]"
+          >
+            {copy.productUi.policyLink}
+          </LocaleLink>
+          <LocaleLink
+            href="/faq"
+            className="inline-flex items-center justify-center rounded-full border border-[#159FD3]/20 bg-white px-4 py-2 text-sm font-bold text-[#0B7FAE] transition hover:bg-[#E6F7FD]"
+          >
+            {copy.productUi.faqLink}
+          </LocaleLink>
+        </div>
+      </article>
     </div>
   );
 }

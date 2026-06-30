@@ -12,6 +12,7 @@ import { formatPrice } from "@/lib/utils/format";
 import { getSaveAmount } from "@/lib/utils/pricing";
 import { buildWhatsAppMessage, getWhatsAppUrl } from "@/lib/utils/whatsapp";
 import { getLocaleFromPathname, localizePath } from "@/lib/locale";
+import { LocaleLink } from "@/components/site/locale-link";
 import { getSiteCopy } from "@/lib/site-copy";
 
 export function CartPage() {
@@ -58,7 +59,7 @@ export function CartPage() {
     setSubmitting(false);
     if (redirectToWhatsApp) window.location.assign(whatsappUrl);
     else window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-  }, [cartItems, cartTotal]);
+  }, [cartItems, cartTotal, clear]);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setReady(true));
@@ -205,6 +206,12 @@ export function CartPage() {
                 </Button>
                 <p className="mt-3 text-center text-xs text-[#555]">
                   {copy.cartPage.redirectHint}
+                </p>
+                <p className="mt-3 text-center text-xs leading-5 text-[#555]">
+                  {copy.cartPage.policyHint}{" "}
+                  <LocaleLink href="/refund-policy" className="font-semibold text-[#0B7FAE] hover:text-[#159FD3]">
+                    {copy.cartPage.policyLink}
+                  </LocaleLink>
                 </p>
               </div>
             </aside>

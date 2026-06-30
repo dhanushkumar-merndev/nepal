@@ -6,6 +6,11 @@ type HomeFaqItem = {
   answer: string;
 };
 
+type InfoItem = {
+  title: string;
+  description: string;
+};
+
 type SiteCopy = {
   nav: {
     home: string;
@@ -74,6 +79,8 @@ type SiteCopy = {
     redirectHint: string;
     enterNameError: string;
     signInHint: string;
+    policyHint: string;
+    policyLink: string;
   };
   faqPage: {
     eyebrow: string;
@@ -126,10 +133,17 @@ type SiteCopy = {
     areYouSureQty: string;
     yes: string;
     no: string;
+    trustTitle: string;
+    trustItems: string[];
+    policyLink: string;
+    faqLink: string;
   };
   trustSection: {
     title: string;
     description: string;
+    cards: InfoItem[];
+    policyLink: string;
+    faqLink: string;
   };
   reviews: {
     eyebrow: string;
@@ -157,17 +171,18 @@ type SiteCopy = {
     communityGroup: string;
     rights: string;
     supportTagline: string;
-    links: {
-      plans: string;
-      services: string;
-      reviews: string;
-      faq: string;
-      contact: string;
-      about: string;
-      privacy: string;
-      terms: string;
+      links: {
+        plans: string;
+        services: string;
+        reviews: string;
+        faq: string;
+        contact: string;
+        about: string;
+        privacy: string;
+        terms: string;
+        refund: string;
+      };
     };
-  };
 };
 
 const copy: Record<SiteLocale, SiteCopy> = {
@@ -240,6 +255,8 @@ const copy: Record<SiteLocale, SiteCopy> = {
       redirectHint: "You will be redirected to WhatsApp to confirm your order.",
       enterNameError: "Please enter your name.",
       signInHint: "Please sign in with Google to continue checkout.",
+      policyHint: "Before you order, please review our refund and replacement policy for delivery, mismatch, and support cases.",
+      policyLink: "Read refund policy",
     },
     faqPage: {
       eyebrow: "FAQ",
@@ -263,6 +280,10 @@ const copy: Record<SiteLocale, SiteCopy> = {
           answer: "Refunds are handled on a case-by-case basis. Please contact us on WhatsApp with your order details and we will assist you.",
         },
         {
+          question: "Are the accounts shared or private?",
+          answer: "That depends on the specific plan. Please read the plan features carefully or contact us on WhatsApp before payment if you want confirmation about shared or private access.",
+        },
+        {
           question: "How long does activation take?",
           answer: "Most subscriptions are activated within 5–30 minutes after payment confirmation. Some services may take up to 24 hours depending on the provider.",
         },
@@ -273,6 +294,10 @@ const copy: Record<SiteLocale, SiteCopy> = {
         {
           question: "Can I change my plan after purchase?",
           answer: "Plan changes depend on the service. Contact us on WhatsApp with your order details and we will check availability.",
+        },
+        {
+          question: "What if my subscription stops working early?",
+          answer: "Please contact us with your order details as soon as possible. We review verified delivery or activation issues for replacement or support according to our refund and replacement policy.",
         },
       ],
     },
@@ -331,11 +356,35 @@ const copy: Record<SiteLocale, SiteCopy> = {
       areYouSureQty: "Are you sure you need quantity",
       yes: "Yes",
       no: "No",
+      trustTitle: "Before you order",
+      trustItems: [
+        "Check the plan features to confirm whether access is shared or private.",
+        "Refunds are not automatic, but verified delivery or activation issues are reviewed for support or replacement.",
+        "If anything is unclear, message us on WhatsApp before payment and we will confirm the plan details.",
+      ],
+      policyLink: "Refund policy",
+      faqLink: "Plan FAQ",
     },
     trustSection: {
       title: "Secure, simple checkout",
       description:
         "Add your plans to cart, enter your details, and send a ready-made order message for quick confirmation.",
+      cards: [
+        {
+          title: "Refund and replacement help",
+          description: "Verified delivery, activation, or mismatch issues are reviewed case by case with support or replacement options when applicable.",
+        },
+        {
+          title: "Shared or private plan clarity",
+          description: "Plan access can differ by product. Check the listed features or ask us on WhatsApp before payment if you need confirmation.",
+        },
+        {
+          title: "Transparent service model",
+          description: "We clearly operate as a subscription activation and digital service support store, not as an official platform partner.",
+        },
+      ],
+      policyLink: "Read refund policy",
+      faqLink: "See plan FAQ",
     },
     reviews: {
       eyebrow: "Top reviews",
@@ -365,6 +414,14 @@ const copy: Record<SiteLocale, SiteCopy> = {
           question: "Can I renew later?",
           answer: "Yes. We support easy renewal assistance for active services.",
         },
+        {
+          question: "Are plans shared or private?",
+          answer: "It depends on the product and plan. Please check the plan features or ask on WhatsApp before payment if you need confirmation.",
+        },
+        {
+          question: "What if a plan stops working early?",
+          answer: "Contact us with your order details. Verified delivery or activation issues are reviewed for support or replacement based on our policy.",
+        },
       ],
     },
     footer: {
@@ -388,6 +445,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
         about: "About Us",
         privacy: "Privacy",
         terms: "Terms",
+        refund: "Refund Policy",
       },
     },
   },
@@ -460,6 +518,8 @@ const copy: Record<SiteLocale, SiteCopy> = {
       redirectHint: "ऑर्डर की पुष्टि के लिए आपको WhatsApp पर भेजा जाएगा।",
       enterNameError: "कृपया अपना नाम दर्ज करें।",
       signInHint: "checkout जारी रखने के लिए Google से sign in करें।",
+      policyHint: "ऑर्डर करने से पहले delivery, mismatch और support cases के लिए हमारी refund और replacement policy पढ़ लें।",
+      policyLink: "Refund policy पढ़ें",
     },
     faqPage: {
       eyebrow: "सवाल",
@@ -483,6 +543,10 @@ const copy: Record<SiteLocale, SiteCopy> = {
           answer: "Refund case-by-case आधार पर संभाला जाता है। कृपया अपने order details के साथ WhatsApp पर संपर्क करें।",
         },
         {
+          question: "क्या account shared होगा या private?",
+          answer: "यह specific plan पर निर्भर करता है। Shared या private access की पुष्टि के लिए plan features पढ़ें या payment से पहले WhatsApp पर पूछें।",
+        },
+        {
           question: "Activation में कितना समय लगता है?",
           answer: "अधिकांश subscriptions payment confirmation के बाद 5–30 मिनट में activate हो जाते हैं। कुछ services provider के अनुसार 24 घंटे तक ले सकती हैं।",
         },
@@ -493,6 +557,10 @@ const copy: Record<SiteLocale, SiteCopy> = {
         {
           question: "क्या purchase के बाद मैं अपना plan बदल सकता हूँ?",
           answer: "Plan change service पर निर्भर करता है। अपने order details के साथ WhatsApp पर संपर्क करें, हम availability check करेंगे।",
+        },
+        {
+          question: "अगर subscription जल्दी बंद हो जाए तो क्या होगा?",
+          answer: "कृपया अपने order details के साथ जल्दी WhatsApp पर संपर्क करें। Verified delivery या activation issue होने पर हम policy के अनुसार support या replacement review करते हैं।",
         },
       ],
     },
@@ -551,11 +619,35 @@ const copy: Record<SiteLocale, SiteCopy> = {
       areYouSureQty: "क्या आपको सच में यह संख्या चाहिए",
       yes: "हाँ",
       no: "नहीं",
+      trustTitle: "ऑर्डर से पहले",
+      trustItems: [
+        "Plan features देखकर समझें कि access shared है या private.",
+        "Refund automatic नहीं है, लेकिन verified delivery या activation issue पर support या replacement review होता है.",
+        "अगर कुछ clear नहीं हो, तो payment से पहले WhatsApp पर message करें।",
+      ],
+      policyLink: "Refund policy",
+      faqLink: "Plan FAQ",
     },
     trustSection: {
       title: "सुरक्षित, आसान checkout",
       description:
         "अपनी योजना कार्ट में जोड़ें, विवरण भरें, और तुरंत पुष्टि के लिए तैयार order message भेजें।",
+      cards: [
+        {
+          title: "Refund और replacement support",
+          description: "Verified delivery, activation या mismatch issue होने पर case-by-case review के साथ support या replacement help दी जाती है।",
+        },
+        {
+          title: "Shared या private plan clarity",
+          description: "हर product का access type अलग हो सकता है। Payment से पहले listed features देखें या WhatsApp पर confirm करें।",
+        },
+        {
+          title: "Transparent service model",
+          description: "हम खुद को साफ़ तौर पर subscription activation और digital service support store के रूप में दिखाते हैं, official partner के रूप में नहीं।",
+        },
+      ],
+      policyLink: "Refund policy पढ़ें",
+      faqLink: "Plan FAQ देखें",
     },
     reviews: {
       eyebrow: "टॉप समीक्षाएँ",
@@ -585,6 +677,14 @@ const copy: Record<SiteLocale, SiteCopy> = {
           question: "क्या मैं बाद में नवीनीकरण कर सकता हूं?",
           answer: "हाँ। हम सक्रिय सेवाओं के लिए आसान नवीनीकरण सहायता देते हैं।",
         },
+        {
+          question: "क्या plans shared हैं या private?",
+          answer: "यह product और plan पर निर्भर करता है। Confirm करने के लिए plan features देखें या payment से पहले WhatsApp पर पूछें।",
+        },
+        {
+          question: "अगर plan जल्दी काम करना बंद कर दे तो?",
+          answer: "अपने order details के साथ हमसे संपर्क करें। Verified delivery या activation issue होने पर हम support या replacement के लिए review करते हैं।",
+        },
       ],
     },
     footer: {
@@ -608,6 +708,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
         about: "हमारे बारे में",
         privacy: "प्राइवेसी",
         terms: "शर्तें",
+        refund: "Refund Policy",
       },
     },
   },
@@ -680,6 +781,8 @@ const copy: Record<SiteLocale, SiteCopy> = {
       redirectHint: "अर्डर पुष्टि गर्न तपाईंलाई WhatsApp मा पठाइनेछ।",
       enterNameError: "कृपया आफ्नो नाम लेख्नुहोस्।",
       signInHint: "checkout जारी राख्न Google बाट sign in गर्नुहोस्।",
+      policyHint: "अर्डर गर्नु अघि delivery, mismatch, र support सम्बन्धी हाम्रो refund र replacement policy हेर्नुहोस्।",
+      policyLink: "Refund policy हेर्नुहोस्",
     },
     faqPage: {
       eyebrow: "प्रश्न",
@@ -703,6 +806,10 @@ const copy: Record<SiteLocale, SiteCopy> = {
           answer: "फिर्ता रकम प्रत्येक अवस्थामा छुट्टाछुट्टै हेरिन्छ। कृपया आफ्नो अर्डर विवरणसहित WhatsApp मा सम्पर्क गर्नुहोस्।",
         },
         {
+          question: "Account shared हुन्छ कि private?",
+          answer: "यो सम्बन्धित plan अनुसार फरक हुन्छ। Shared वा private access को पुष्टि गर्न plan features हेर्नुहोस् वा payment अघि WhatsApp मा सोध्नुहोस्।",
+        },
+        {
           question: "सक्रिय हुन कति समय लाग्छ?",
           answer: "धेरैजसो सदस्यताहरू भुक्तानी पुष्टि भएपछि 5–30 मिनेटभित्र सक्रिय हुन्छन्। केही सेवामा प्रदायकअनुसार 24 घण्टासम्म लाग्न सक्छ।",
         },
@@ -713,6 +820,10 @@ const copy: Record<SiteLocale, SiteCopy> = {
         {
           question: "खरिदपछि म प्लान परिवर्तन गर्न सक्छु?",
           answer: "प्लान परिवर्तन सेवा अनुसार फरक पर्छ। आफ्नो अर्डर विवरणसहित WhatsApp मा सम्पर्क गर्नुहोस्, हामी उपलब्धता जाँच गर्छौं।",
+        },
+        {
+          question: "यदि subscription चाँडै चल्न छोड्यो भने के हुन्छ?",
+          answer: "कृपया आफ्नो अर्डर विवरणसहित छिट्टै WhatsApp मा सम्पर्क गर्नुहोस्। Verified delivery वा activation issue भएमा हामी policy अनुसार support वा replacement review गर्छौं।",
         },
       ],
     },
@@ -771,11 +882,35 @@ const copy: Record<SiteLocale, SiteCopy> = {
       areYouSureQty: "तपाईंलाई यो संख्या साँच्चै चाहिएको हो",
       yes: "हो",
       no: "होइन",
+      trustTitle: "अर्डर गर्नु अघि",
+      trustItems: [
+        "Plan features हेरेर access shared हो कि private हो पुष्टि गर्नुहोस्।",
+        "Refund स्वतः हुँदैन, तर verified delivery वा activation issue मा support वा replacement review गरिन्छ।",
+        "केही अस्पष्ट भए payment अघि WhatsApp मा message गरेर plan details confirm गर्नुहोस्।",
+      ],
+      policyLink: "Refund policy",
+      faqLink: "Plan FAQ",
     },
     trustSection: {
       title: "सुरक्षित, सरल checkout",
       description:
         "आफ्नो प्लान कार्टमा थप्नुहोस्, विवरण भर्नुहोस्, र छिटो पुष्टि का लागि तयार अर्डर सन्देश पठाउनुहोस्।",
+      cards: [
+        {
+          title: "Refund र replacement support",
+          description: "Verified delivery, activation, वा mismatch issue मा case-by-case आधारमा support वा replacement सहयोग गरिन्छ।",
+        },
+        {
+          title: "Shared वा private plan clarity",
+          description: "प्रत्येक product को access type फरक हुन सक्छ। Payment अघि listed features हेर्नुहोस् वा WhatsApp मा confirm गर्नुहोस्।",
+        },
+        {
+          title: "Transparent service model",
+          description: "हामी आफूलाई subscription activation र digital service support store का रूपमा स्पष्ट देखाउँछौं, official partner का रूपमा होइन।",
+        },
+      ],
+      policyLink: "Refund policy हेर्नुहोस्",
+      faqLink: "Plan FAQ हेर्नुहोस्",
     },
     reviews: {
       eyebrow: "टप रिभ्यु",
@@ -805,6 +940,14 @@ const copy: Record<SiteLocale, SiteCopy> = {
           question: "के म पछि नवीकरण गर्न सक्छु?",
           answer: "हो। सक्रिय सेवाहरूका लागि हामी सजिलो नवीकरण सहायता दिन्छौं।",
         },
+        {
+          question: "Plans shared हुन् कि private?",
+          answer: "यो product र plan अनुसार फरक हुन्छ। Confirm गर्न plan features हेर्नुहोस् वा payment अघि WhatsApp मा सोध्नुहोस्।",
+        },
+        {
+          question: "यदि plan चाँडै काम गर्न छोड्यो भने?",
+          answer: "आफ्नो अर्डर विवरणसहित हामीलाई सम्पर्क गर्नुहोस्। Verified delivery वा activation issue भएमा support वा replacement का लागि review गरिन्छ।",
+        },
       ],
     },
     footer: {
@@ -828,6 +971,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
         about: "हाम्रो बारेमा",
         privacy: "प्राइभेसी",
         terms: "सर्तहरू",
+        refund: "Refund Policy",
       },
     },
   },

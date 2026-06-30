@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { defaultLocale, isSupportedLocale, locales, localizePath, type SiteLocale } from "@/lib/locale";
 import { absoluteUrl } from "@/lib/site-url";
 
-type StaticPageKey = "home" | "about" | "plans" | "reviews" | "faq" | "privacy" | "terms";
+type StaticPageKey = "home" | "about" | "plans" | "reviews" | "faq" | "privacy" | "terms" | "refund";
 
 type LocalizedSeoCopy = {
   title: string;
@@ -29,7 +29,7 @@ const ogLocaleBySiteLocale: Record<SiteLocale, string> = {
 const staticPageSeo: Record<StaticPageKey, Record<SiteLocale, LocalizedSeoCopy>> = {
   home: {
     en: {
-      title: "Ott Subscription Nepal - Premium OTT Subscriptions in Nepal",
+      title: "Ott Subscription Nepal | Premium OTT Subscriptions in Nepal",
       description:
         "Ott Subscription Nepal helps you shop Netflix, Spotify, Prime Video, YouTube Premium and more in Nepal with fast activation, real customer reviews, and WhatsApp checkout.",
       keywords: [
@@ -47,7 +47,7 @@ const staticPageSeo: Record<StaticPageKey, Record<SiteLocale, LocalizedSeoCopy>>
       ],
     },
     hi: {
-      title: "Ott Subscription Nepal - नेपाल में प्रीमियम OTT सब्सक्रिप्शन",
+      title: "Ott Subscription Nepal | नेपाल में प्रीमियम OTT सब्सक्रिप्शन",
       description:
         "Ott Subscription Nepal से नेपाल में Netflix, Spotify, Prime Video, YouTube Premium और अन्य डिजिटल सेवाएं तेज activation, असली reviews और WhatsApp checkout के साथ खरीदें।",
       keywords: [
@@ -62,7 +62,7 @@ const staticPageSeo: Record<StaticPageKey, Record<SiteLocale, LocalizedSeoCopy>>
       ],
     },
     ne: {
-      title: "Ott Subscription Nepal - नेपालमा प्रिमियम OTT सदस्यता",
+      title: "Ott Subscription Nepal | नेपालमा प्रिमियम OTT सदस्यता",
       description:
         "Ott Subscription Nepal बाट नेपालमा Netflix, Spotify, Prime Video, YouTube Premium र अन्य डिजिटल सेवाहरू छिटो activation, वास्तविक reviews र WhatsApp checkout सहित किन्नुहोस्।",
       keywords: [
@@ -198,6 +198,26 @@ const staticPageSeo: Record<StaticPageKey, Record<SiteLocale, LocalizedSeoCopy>>
       keywords: ["Ott Subscription Nepal terms", "OTT Nepal refund terms"],
     },
   },
+  refund: {
+    en: {
+      title: "Refund and Replacement Policy",
+      description:
+        "Read the refund and replacement policy for Ott Subscription Nepal, including delivery issues, activation mismatches, and support cases.",
+      keywords: ["Ott Subscription Nepal refund policy", "OTT Nepal replacement policy", "subscription refund Nepal"],
+    },
+    hi: {
+      title: "रिफंड और रिप्लेसमेंट पॉलिसी",
+      description:
+        "Ott Subscription Nepal की refund और replacement policy पढ़ें, जिसमें delivery issue, activation mismatch और support cases शामिल हैं।",
+      keywords: ["Ott Subscription Nepal refund policy", "OTT Nepal replacement policy"],
+    },
+    ne: {
+      title: "Refund र Replacement Policy",
+      description:
+        "Ott Subscription Nepal को refund र replacement policy पढ्नुहोस्, जसमा delivery issue, activation mismatch, र support cases समावेश छन्।",
+      keywords: ["Ott Subscription Nepal refund policy", "OTT Nepal replacement policy"],
+    },
+  },
 };
 
 const staticPagePaths: Record<StaticPageKey, string> = {
@@ -208,6 +228,7 @@ const staticPagePaths: Record<StaticPageKey, string> = {
   faq: "/faq",
   privacy: "/privacy",
   terms: "/terms",
+  refund: "/refund-policy",
 };
 
 export function normalizeSiteLocale(locale?: string): SiteLocale {

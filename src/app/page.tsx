@@ -28,7 +28,7 @@ export default async function Home() {
       <JsonLd
         data={buildWebPageSchema({
           pathname,
-          title: "Ott Subscription Nepal - Premium OTT Subscriptions in Nepal",
+          title: "Ott Subscription Nepal | Premium OTT Subscriptions in Nepal",
           description:
             "Ott Subscription Nepal helps you shop Netflix, Spotify, Prime Video, YouTube Premium and more in Nepal with fast activation, real customer reviews, and WhatsApp checkout.",
         })}

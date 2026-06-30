@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getLocaleFromPathname, localizePath } from "@/lib/locale";
+import { LocaleLink } from "@/components/site/locale-link";
 import { getSiteCopy, translateStockStatus } from "@/lib/site-copy";
 import type { Product } from "@/lib/types";
 import { useCartStore } from "@/lib/store/cart-store";
@@ -259,6 +260,25 @@ export function ProductPlansPanel({
           </div>
         );
       })}
+      <div className="rounded-2xl border border-[#159FD3]/15 bg-[#EAF8FE] p-4">
+        <p className="text-sm font-black text-[#111]">{copy.productUi.trustTitle}</p>
+        <ul className="mt-2 space-y-2 text-sm leading-6 text-[#555]">
+          {copy.productUi.trustItems.map((item) => (
+            <li key={item} className="flex gap-2">
+              <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[#159FD3]" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-3 flex flex-wrap gap-3">
+          <LocaleLink href="/refund-policy" className="text-sm font-bold text-[#0B7FAE] hover:text-[#159FD3]">
+            {copy.productUi.policyLink}
+          </LocaleLink>
+          <LocaleLink href="/faq" className="text-sm font-bold text-[#0B7FAE] hover:text-[#159FD3]">
+            {copy.productUi.faqLink}
+          </LocaleLink>
+        </div>
+      </div>
     </div>
   );
 }

@@ -23,6 +23,7 @@ export function GET() {
     `- About: ${absoluteUrl("/about")}`,
     `- Privacy: ${absoluteUrl("/privacy")}`,
     `- Terms: ${absoluteUrl("/terms")}`,
+    `- Refund Policy: ${absoluteUrl("/refund-policy")}`,
     "",
     "## Product Pages",
     "- Browse all active subscription and digital service pages from the plans page.",

@@ -75,6 +75,28 @@ export function TrustSection({ className = "", showBadges = false }: { className
             </p>
           </div>
         </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {copy.trustSection.cards.map((card) => (
+            <div key={card.title} className="rounded-2xl border border-black/10 bg-white/70 p-4 shadow-sm backdrop-blur-xl">
+              <h3 className="text-sm font-black text-[#111]">{card.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-[#555]">{card.description}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <LocaleLink
+            href="/refund-policy"
+            className="inline-flex items-center justify-center rounded-full bg-[#159FD3] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#0B7FAE]"
+          >
+            {copy.trustSection.policyLink}
+          </LocaleLink>
+          <LocaleLink
+            href="/faq"
+            className="inline-flex items-center justify-center rounded-full border border-[#159FD3]/20 bg-white px-5 py-2.5 text-sm font-bold text-[#0B7FAE] transition hover:border-[#159FD3]/40 hover:bg-[#E6F7FD]"
+          >
+            {copy.trustSection.faqLink}
+          </LocaleLink>
+        </div>
         {showBadges ? <TrustBadges className="mt-4 lg:hidden" /> : null}
       </FadeIn>
     </section>

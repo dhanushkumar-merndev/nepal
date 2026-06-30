@@ -26,6 +26,7 @@ export function Footer() {
   const legalLinks = [
     { label: copy.footer.links.privacy, href: "/privacy" },
     { label: copy.footer.links.terms, href: "/terms" },
+    { label: copy.footer.links.refund, href: "/refund-policy" },
   ];
 
   return (
