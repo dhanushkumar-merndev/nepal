@@ -44,11 +44,16 @@ export const metadata: Metadata = {
     template: "%s | Ott Subscription Nepal",
   },
   description:
-    "Buy Netflix, Spotify, Prime Video, YouTube Premium, Crunchyroll, Zee5, Free Fire top-up and other digital services in Nepal with fast activation and easy WhatsApp checkout.",
+    "Ott Subscription Nepal lets you buy Netflix, Spotify, Prime Video, YouTube Premium, Crunchyroll, Zee5, Free Fire top-up and other digital services in Nepal with fast activation and easy WhatsApp checkout.",
   applicationName: "Ott Subscription Nepal",
   category: "shopping",
   keywords: [
     "OTT Subscription Nepal",
+    "Ott Subscription Nepal",
+    "premium ott subscription nepal",
+    "ott subscription in nepal",
+    "subscription nepal",
+    "premium subscription nepal",
     "Netflix subscription Nepal",
     "Spotify Premium Nepal",
     "YouTube Premium Nepal",
@@ -70,9 +75,9 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Ott Subscription Nepal",
+    title: "Ott Subscription Nepal | Premium OTT Subscriptions in Nepal",
     description:
-      "Premium OTT plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
+      "Ott Subscription Nepal offers premium OTT plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
     url: "/",
     siteName: "Ott Subscription Nepal",
     locale: "en_US",
@@ -88,9 +93,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ott Subscription Nepal",
+    title: "Ott Subscription Nepal | Premium OTT Subscriptions in Nepal",
     description:
-      "Premium OTT plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
+      "Ott Subscription Nepal offers premium OTT plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
     images: ["/logo.png"],
   },
   icons: {
@@ -124,7 +129,7 @@ export default async function RootLayout({
       pathname,
       title: "Ott Subscription Nepal",
       description:
-        "Premium OTT plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
+        "Ott Subscription Nepal offers premium OTT plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
     }),
     buildBreadcrumbSchema(pathname),
   ];

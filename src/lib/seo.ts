@@ -29,22 +29,53 @@ const ogLocaleBySiteLocale: Record<SiteLocale, string> = {
 const staticPageSeo: Record<StaticPageKey, Record<SiteLocale, LocalizedSeoCopy>> = {
   home: {
     en: {
-      title: "Premium OTT Subscriptions in Nepal",
+      title: "Ott Subscription Nepal - Premium OTT Subscriptions in Nepal",
       description:
-        "Shop Netflix, Spotify, Prime Video, YouTube Premium and more in Nepal with fast activation, real customer reviews, and WhatsApp checkout.",
-      keywords: ["OTT Subscription Nepal", "Netflix subscription Nepal", "Spotify Premium Nepal", "YouTube Premium Nepal", "Prime Video Nepal"],
+        "Ott Subscription Nepal helps you shop Netflix, Spotify, Prime Video, YouTube Premium and more in Nepal with fast activation, real customer reviews, and WhatsApp checkout.",
+      keywords: [
+        "OTT Subscription Nepal",
+        "Ott Subscription Nepal",
+        "premium ott subscription nepal",
+        "ott subscription in nepal",
+        "subscription nepal",
+        "premium subscription nepal",
+        "digital subscriptions Nepal",
+        "Netflix subscription Nepal",
+        "Spotify Premium Nepal",
+        "YouTube Premium Nepal",
+        "Prime Video Nepal",
+      ],
     },
     hi: {
-      title: "नेपाल में प्रीमियम OTT सब्सक्रिप्शन",
+      title: "Ott Subscription Nepal - नेपाल में प्रीमियम OTT सब्सक्रिप्शन",
       description:
-        "नेपाल में Netflix, Spotify, Prime Video, YouTube Premium और अन्य डिजिटल सेवाएं तेज activation, असली reviews और WhatsApp checkout के साथ खरीदें।",
-      keywords: ["OTT Subscription Nepal", "Netflix Nepal", "Spotify Premium Nepal", "Prime Video Nepal"],
+        "Ott Subscription Nepal से नेपाल में Netflix, Spotify, Prime Video, YouTube Premium और अन्य डिजिटल सेवाएं तेज activation, असली reviews और WhatsApp checkout के साथ खरीदें।",
+      keywords: [
+        "OTT Subscription Nepal",
+        "Ott Subscription Nepal",
+        "premium ott subscription nepal",
+        "ott subscription in nepal",
+        "subscription nepal",
+        "Netflix Nepal",
+        "Spotify Premium Nepal",
+        "Prime Video Nepal",
+      ],
     },
     ne: {
-      title: "नेपालमा प्रिमियम OTT सदस्यता",
+      title: "Ott Subscription Nepal - नेपालमा प्रिमियम OTT सदस्यता",
       description:
-        "नेपालमा Netflix, Spotify, Prime Video, YouTube Premium र अन्य डिजिटल सेवाहरू छिटो activation, वास्तविक reviews र WhatsApp checkout सहित किन्नुहोस्।",
-      keywords: ["OTT Subscription Nepal", "Netflix subscription Nepal", "Spotify Premium Nepal", "YouTube Premium Nepal", "Prime Video Nepal"],
+        "Ott Subscription Nepal बाट नेपालमा Netflix, Spotify, Prime Video, YouTube Premium र अन्य डिजिटल सेवाहरू छिटो activation, वास्तविक reviews र WhatsApp checkout सहित किन्नुहोस्।",
+      keywords: [
+        "OTT Subscription Nepal",
+        "Ott Subscription Nepal",
+        "premium ott subscription nepal",
+        "ott subscription in nepal",
+        "subscription nepal",
+        "Netflix subscription Nepal",
+        "Spotify Premium Nepal",
+        "YouTube Premium Nepal",
+        "Prime Video Nepal",
+      ],
     },
   },
   about: {
@@ -205,9 +236,10 @@ export function buildStaticPageMetadata(page: StaticPageKey, locale: SiteLocale 
   const path = staticPagePaths[page];
   const localizedPath = localizePath(path, locale);
   const keywords = copy.keywords ?? [];
+  const title = page === "home" ? { absolute: copy.title } : copy.title;
 
   return {
-    title: copy.title,
+    title,
     description: copy.description,
     keywords,
     authors: [{ name: siteAuthor, url: absoluteUrl("/") }],
