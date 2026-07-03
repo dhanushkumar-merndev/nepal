@@ -48,6 +48,7 @@ export function ChatWidget() {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -101,6 +102,14 @@ export function ChatWidget() {
     }, 0);
     return () => window.clearTimeout(id);
   }, [loadInitialSession]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const syncViewport = () => setIsDesktopViewport(mediaQuery.matches);
+    syncViewport();
+    mediaQuery.addEventListener("change", syncViewport);
+    return () => mediaQuery.removeEventListener("change", syncViewport);
+  }, []);
 
   useEffect(() => {
     if (open) return;
@@ -716,10 +725,10 @@ export function ChatWidget() {
         {open ? (
           <motion.div
             key="chat-panel"
-            initial={{ opacity: 0, y: 16, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.97 }}
-            transition={{ duration: 0.08 }}
+            initial={isDesktopViewport ? { opacity: 0, y: 16, scale: 0.97 } : false}
+            animate={isDesktopViewport ? { opacity: 1, y: 0, scale: 1 } : undefined}
+            exit={isDesktopViewport ? { opacity: 0, y: 8, scale: 0.97 } : undefined}
+            transition={isDesktopViewport ? { duration: 0.08 } : { duration: 0 }}
             data-chat-panel
             className={cn(
               "fixed z-50 flex overflow-hidden bg-white shadow-2xl [overscroll-behavior:contain]",
@@ -735,15 +744,16 @@ export function ChatWidget() {
       </AnimatePresence>
       <button
         type="button"
-        onClick={async () => {
-          if (!sessionHydrated) {
-            await loadInitialSession();
-          }
-          setOpen((v) => !v);
+        onClick={() => {
+          const nextOpen = !open;
+          setOpen(nextOpen);
           setShowHelpBubble(false);
+          if (nextOpen && !sessionHydrated) {
+            void loadInitialSession();
+          }
         }}
         data-chat-button
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-[#159FD3] p-2.5 text-white shadow-2xl transition hover:bg-[#0B7FAE] lg:py-2.5 lg:pl-3 lg:pr-3"
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-[#159FD3] p-2.5 text-white shadow-2xl lg:py-2.5 lg:pl-3 lg:pr-3 lg:transition lg:hover:bg-[#0B7FAE]"
         aria-label="Open AI chat"
       >
         {showHelpBubble && !open ? (

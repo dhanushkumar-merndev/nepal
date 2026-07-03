@@ -17,7 +17,7 @@ export function TopReviews({ reviews }: { reviews: Review[] }) {
   const copy = getSiteCopy(locale);
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-8 pt-3 lg:pb-16 lg:pt-10">
+    <section className="mx-auto max-w-7xl px-4 pb-8 pt-0 lg:pb-16 lg:pt-10">
       <div className="hidden overflow-hidden p-0 lg:block premium-card">
         <div className="grid gap-0 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="relative overflow-hidden bg-[radial-gradient(circle_at_top_right,#0b2a36_0%,#151515_38%,#111_100%)] p-8 text-white md:p-10">
@@ -74,7 +74,7 @@ export function TopReviews({ reviews }: { reviews: Review[] }) {
           <h2 className="mt-1 whitespace-nowrap text-xl font-bold text-[#111] sm:text-2xl">{copy.reviews.title}</h2>
         </div>
       </div>
-      <div className="mt-6 lg:hidden">
+      <div className="mt-4 lg:hidden">
         <div className="grid gap-3 sm:grid-cols-2">
           {compactReviews.length ? (
             compactReviews.map((review) => <CompactHomeReviewCard key={review.id} review={review} />)

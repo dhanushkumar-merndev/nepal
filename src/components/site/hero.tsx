@@ -28,11 +28,11 @@ export function TrustBadges({ className = "" }: { className?: string }) {
 
   return (
     <div className={className}>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         {copy.hero.trust.map((item) => (
           <span
             key={item}
-            className="flex items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/50 p-3 text-sm font-semibold text-[#555] shadow-sm backdrop-blur-xl"
+            className="flex items-center justify-center gap-1.5 rounded-2xl border border-black/8 bg-white p-3 text-sm font-semibold text-[#555] shadow-[0_10px_24px_rgba(17,17,17,0.06)]"
           >
             <CheckCircle2 className="size-4 shrink-0 text-[#16A34A]" />
             {item}

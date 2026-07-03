@@ -2,7 +2,6 @@
 
 import { MessageCircle, PackageCheck, ShieldCheck, Sparkles } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { FadeIn } from "@/components/site/fade-in";
 import { LocaleLink } from "@/components/site/locale-link";
 import { FAQItem } from "@/components/site/faq-item";
 import { TrustBadges } from "@/components/site/hero";
@@ -58,47 +57,21 @@ export function FAQSection() {
   );
 }
 
-export function TrustSection({ className = "", showBadges = false }: { className?: string; showBadges?: boolean }) {
+export function TrustPreview({ className = "" }: { className?: string }) {
   const pathname = usePathname() || "/";
   const locale = getLocaleFromPathname(pathname);
   const copy = getSiteCopy(locale);
 
   return (
-    <section className={`mx-auto max-w-7xl px-4 pb-8 pt-3 lg:py-10 ${className}`.trim()}>
-      <FadeIn>
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/20 bg-white/40 px-6 py-6 text-center shadow-lg backdrop-blur-2xl md:flex-row md:items-center md:gap-4 md:rounded-full md:px-8 md:py-5 md:text-left">
-          <ShieldCheck className="size-9 shrink-0 text-[#16A34A]" />
-          <div>
-            <h2 className="text-xl font-bold">{copy.trustSection.title}</h2>
-            <p className="mt-1 text-sm text-[#555]">
-              {copy.trustSection.description}
-            </p>
-          </div>
+    <section className={`mx-auto max-w-7xl px-4 pt-3 lg:pb-8 lg:pt-8 ${className}`.trim()}>
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-black/8 bg-white px-6 py-6 text-center shadow-[0_12px_30px_rgba(17,17,17,0.08)] md:flex-row md:items-center md:gap-4 md:rounded-full md:px-8 md:py-5 md:text-left">
+        <ShieldCheck className="size-9 shrink-0 text-[#16A34A]" />
+        <div>
+          <h2 className="text-xl font-bold">{copy.trustPreview.title}</h2>
+          <p className="mt-1 text-sm text-[#555]">{copy.trustPreview.description}</p>
         </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          {copy.trustSection.cards.map((card) => (
-            <div key={card.title} className="rounded-2xl border border-black/10 bg-white/70 p-4 shadow-sm backdrop-blur-xl">
-              <h3 className="text-sm font-black text-[#111]">{card.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-[#555]">{card.description}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <LocaleLink
-            href="/refund-policy"
-            className="inline-flex items-center justify-center rounded-full bg-[#159FD3] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#0B7FAE]"
-          >
-            {copy.trustSection.policyLink}
-          </LocaleLink>
-          <LocaleLink
-            href="/faq"
-            className="inline-flex items-center justify-center rounded-full border border-[#159FD3]/20 bg-white px-5 py-2.5 text-sm font-bold text-[#0B7FAE] transition hover:border-[#159FD3]/40 hover:bg-[#E6F7FD]"
-          >
-            {copy.trustSection.faqLink}
-          </LocaleLink>
-        </div>
-        {showBadges ? <TrustBadges className="mt-4 lg:hidden" /> : null}
-      </FadeIn>
+      </div>
+      <TrustBadges className="mt-2 lg:hidden" />
     </section>
   );
 }

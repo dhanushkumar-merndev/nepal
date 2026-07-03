@@ -6,11 +6,6 @@ type HomeFaqItem = {
   answer: string;
 };
 
-type InfoItem = {
-  title: string;
-  description: string;
-};
-
 type SiteCopy = {
   nav: {
     home: string;
@@ -138,12 +133,9 @@ type SiteCopy = {
     policyLink: string;
     faqLink: string;
   };
-  trustSection: {
+  trustPreview: {
     title: string;
     description: string;
-    cards: InfoItem[];
-    policyLink: string;
-    faqLink: string;
   };
   reviews: {
     eyebrow: string;
@@ -365,26 +357,10 @@ const copy: Record<SiteLocale, SiteCopy> = {
       policyLink: "Refund policy",
       faqLink: "Plan FAQ",
     },
-    trustSection: {
+    trustPreview: {
       title: "Secure, simple checkout",
       description:
         "Add your plans to cart, enter your details, and send a ready-made order message for quick confirmation.",
-      cards: [
-        {
-          title: "Refund and replacement help",
-          description: "Verified delivery, activation, or mismatch issues are reviewed case by case with support or replacement options when applicable.",
-        },
-        {
-          title: "Shared or private plan clarity",
-          description: "Plan access can differ by product. Check the listed features or ask us on WhatsApp before payment if you need confirmation.",
-        },
-        {
-          title: "Transparent service model",
-          description: "We clearly operate as a subscription activation and digital service support store, not as an official platform partner.",
-        },
-      ],
-      policyLink: "Read refund policy",
-      faqLink: "See plan FAQ",
     },
     reviews: {
       eyebrow: "Top reviews",
@@ -628,26 +604,10 @@ const copy: Record<SiteLocale, SiteCopy> = {
       policyLink: "Refund policy",
       faqLink: "Plan FAQ",
     },
-    trustSection: {
+    trustPreview: {
       title: "सुरक्षित, आसान checkout",
       description:
         "अपनी योजना कार्ट में जोड़ें, विवरण भरें, और तुरंत पुष्टि के लिए तैयार order message भेजें।",
-      cards: [
-        {
-          title: "Refund और replacement support",
-          description: "Verified delivery, activation या mismatch issue होने पर case-by-case review के साथ support या replacement help दी जाती है।",
-        },
-        {
-          title: "Shared या private plan clarity",
-          description: "हर product का access type अलग हो सकता है। Payment से पहले listed features देखें या WhatsApp पर confirm करें।",
-        },
-        {
-          title: "Transparent service model",
-          description: "हम खुद को साफ़ तौर पर subscription activation और digital service support store के रूप में दिखाते हैं, official partner के रूप में नहीं।",
-        },
-      ],
-      policyLink: "Refund policy पढ़ें",
-      faqLink: "Plan FAQ देखें",
     },
     reviews: {
       eyebrow: "टॉप समीक्षाएँ",
@@ -891,26 +851,10 @@ const copy: Record<SiteLocale, SiteCopy> = {
       policyLink: "Refund policy",
       faqLink: "Plan FAQ",
     },
-    trustSection: {
+    trustPreview: {
       title: "सुरक्षित, सरल checkout",
       description:
         "आफ्नो प्लान कार्टमा थप्नुहोस्, विवरण भर्नुहोस्, र छिटो पुष्टि का लागि तयार अर्डर सन्देश पठाउनुहोस्।",
-      cards: [
-        {
-          title: "Refund र replacement support",
-          description: "Verified delivery, activation, वा mismatch issue मा case-by-case आधारमा support वा replacement सहयोग गरिन्छ।",
-        },
-        {
-          title: "Shared वा private plan clarity",
-          description: "प्रत्येक product को access type फरक हुन सक्छ। Payment अघि listed features हेर्नुहोस् वा WhatsApp मा confirm गर्नुहोस्।",
-        },
-        {
-          title: "Transparent service model",
-          description: "हामी आफूलाई subscription activation र digital service support store का रूपमा स्पष्ट देखाउँछौं, official partner का रूपमा होइन।",
-        },
-      ],
-      policyLink: "Refund policy हेर्नुहोस्",
-      faqLink: "Plan FAQ हेर्नुहोस्",
     },
     reviews: {
       eyebrow: "टप रिभ्यु",
