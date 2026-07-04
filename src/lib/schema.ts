@@ -3,6 +3,8 @@ import { OFFICIAL_SUPPORT_EMAIL } from "@/lib/contact";
 import { defaultLocale, getLocaleFromPathname, localizePath, stripLocalePrefix, type SiteLocale } from "@/lib/locale";
 import { getSiteCopy } from "@/lib/site-copy";
 import { absoluteUrl } from "@/lib/site-url";
+import { formatPrice } from "@/lib/utils/format";
+import { getDisplayPrice, getStartingPlan } from "@/lib/utils/pricing";
 
 const organizationName = "Ott Subscription Nepal";
 const logoUrl = absoluteUrl("/logo.png");
@@ -19,12 +21,17 @@ export function buildOrganizationSchema() {
     "@type": "Organization",
     "@id": absoluteUrl("/#organization"),
     name: organizationName,
-    alternateName: ["OttSubscriptionNepal", "ottsubscriptionnepal.shop"],
+    alternateName: [
+      "OttSubscriptionNepal",
+      "ottsubscriptionnepal.shop",
+      "OTT Nepal Subscription",
+      "Premium OTT Subscription Nepal",
+    ],
     url: absoluteUrl("/"),
     logo: logoUrl,
     image: logoUrl,
     description:
-      "Premium OTT subscription activation and digital service support in Nepal with fast WhatsApp checkout.",
+      "Premium OTT Subscription Nepal service for OTT subscriptions, digital service activation, and WhatsApp checkout in Nepal.",
     sameAs: [instagramUrl],
     email: OFFICIAL_SUPPORT_EMAIL,
     contactPoint: [
@@ -46,7 +53,12 @@ export function buildWebsiteSchema() {
     "@type": "WebSite",
     "@id": absoluteUrl("/#website"),
     name: organizationName,
-    alternateName: ["OttSubscriptionNepal", "ottsubscriptionnepal.shop"],
+    alternateName: [
+      "OttSubscriptionNepal",
+      "ottsubscriptionnepal.shop",
+      "OTT Nepal Subscription",
+      "Premium OTT Subscription Nepal",
+    ],
     url: absoluteUrl("/"),
     publisher: { "@id": absoluteUrl("/#organization") },
     inLanguage: ["en", "hi", "ne"],
@@ -58,13 +70,13 @@ export function buildServiceSchema() {
     "@context": "https://schema.org",
     "@type": "Service",
     "@id": absoluteUrl("/#service"),
-    name: "OTT subscription activation and digital service support",
+    name: "Premium OTT Subscription Nepal",
     provider: { "@id": absoluteUrl("/#organization") },
     areaServed: {
       "@type": "Country",
       name: "Nepal",
     },
-    serviceType: "Digital subscription activation and renewal support",
+    serviceType: "OTT Nepal subscription activation and digital subscription renewal support",
     availableLanguage: ["en", "hi", "ne"],
     url: absoluteUrl("/plans"),
   };
@@ -170,10 +182,12 @@ export function buildProductSchema({
   pathname,
   product,
   reviews = [],
+  description,
 }: {
   pathname: string;
   product: Product;
   reviews?: Review[];
+  description?: string;
 }) {
   const url = absoluteUrl(pathname);
   const validOffers = product.plans
@@ -197,7 +211,7 @@ export function buildProductSchema({
     "@id": `${url}#product`,
     name: product.name,
     image: [product.image_url || defaultOgImage, product.logo_url || defaultOgImage].filter(Boolean),
-    description: product.description || `${product.name} subscription plans in Nepal.`,
+    description: description || product.description || `${product.name} subscription plans in Nepal.`,
     brand: {
       "@type": "Brand",
       name: product.name,
@@ -223,6 +237,40 @@ export function buildProductSchema({
   }
 
   return schema;
+}
+
+export function buildProductFaqItems(product: Product) {
+  const startingPlan = getStartingPlan(product);
+  const startingPrice = startingPlan ? formatPrice(getDisplayPrice(startingPlan)) : null;
+  const activePlanNames = product.plans
+    .filter((plan) => plan.is_active)
+    .slice(0, 4)
+    .map((plan) => plan.name)
+    .join(", ");
+
+  return [
+    {
+      question: `How much does ${product.name} cost in Nepal?`,
+      answer: startingPrice
+        ? `${product.name} plans currently start from ${startingPrice} on Ott Subscription Nepal. Prices can vary by duration, offer, and availability.`
+        : `${product.name} pricing depends on the selected plan and current availability on Ott Subscription Nepal.`,
+    },
+    {
+      question: `Which ${product.name} plans are available?`,
+      answer: activePlanNames
+        ? `Available ${product.name} options include ${activePlanNames}. Check the plan cards on this page for current duration, stock, and offer details.`
+        : `${product.name} plan availability changes over time. Check this page for the latest active options before checkout.`,
+    },
+    {
+      question: `How do I buy ${product.name} in Nepal?`,
+      answer:
+        "Choose a plan, add the quantity you need, and continue to WhatsApp checkout so Ott Subscription Nepal can confirm activation and support details.",
+    },
+  ];
+}
+
+export function buildProductFaqSchema(product: Product) {
+  return buildFaqSchema(buildProductFaqItems(product));
 }
 
 function buildFaqSchema(items: Array<{ question: string; answer: string }>) {

@@ -8,7 +8,7 @@ import { ChatWidget } from "@/components/chat/chat-widget";
 import { LenisProvider } from "@/components/site/lenis-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { getLocaleFromPathname } from "@/lib/locale";
+import { getLocaleFromPathname, stripLocalePrefix } from "@/lib/locale";
 import { absoluteUrl, getSiteUrlObject } from "@/lib/site-url";
 import {
   buildBreadcrumbSchema,
@@ -40,16 +40,20 @@ const notoSansDevanagari = Noto_Sans_Devanagari({
 export const metadata: Metadata = {
   metadataBase: getSiteUrlObject(),
   title: {
-    default: "Ott Subscription Nepal | Premium OTT Plans & Digital Services",
+    default: "Ott Subscription Nepal | Premium OTT Subscription Nepal",
     template: "%s | Ott Subscription Nepal",
   },
   description:
-    "Ott Subscription Nepal lets you buy Netflix, Spotify, Prime Video, YouTube Premium, Crunchyroll, Zee5, Free Fire top-up and other digital services in Nepal with fast activation and easy WhatsApp checkout.",
+    "Ott Subscription Nepal lets you buy premium OTT subscription plans in Nepal, including Netflix, Spotify, Prime Video, YouTube Premium and more with fast activation and WhatsApp checkout.",
   applicationName: "Ott Subscription Nepal",
   category: "shopping",
   keywords: [
     "OTT Subscription Nepal",
     "Ott Subscription Nepal",
+    "OTT Nepal Subscription",
+    "Premium OTT Subscription Nepal",
+    "Nepal subscription",
+    "Nepal subscription service",
     "premium ott subscription nepal",
     "ott subscription in nepal",
     "subscription nepal",
@@ -75,9 +79,9 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Ott Subscription Nepal | Premium OTT Subscriptions in Nepal",
+    title: "Ott Subscription Nepal | Premium OTT Subscription Nepal",
     description:
-      "Ott Subscription Nepal offers premium OTT plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
+      "Ott Subscription Nepal offers premium OTT subscription plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
     url: "/",
     siteName: "Ott Subscription Nepal",
     locale: "en_US",
@@ -93,9 +97,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ott Subscription Nepal | Premium OTT Subscriptions in Nepal",
+    title: "Ott Subscription Nepal | Premium OTT Subscription Nepal",
     description:
-      "Ott Subscription Nepal offers premium OTT plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
+      "Ott Subscription Nepal offers premium OTT subscription plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
     images: ["/logo.png"],
   },
   icons: {
@@ -121,6 +125,8 @@ export default async function RootLayout({
 }>) {
   const pathname = (await headers()).get("x-current-pathname") || "/";
   const htmlLang = getLocaleFromPathname(pathname);
+  const publicPathname = stripLocalePrefix(pathname);
+  const isProductPlanPage = /^\/plans\/[^/]+\/?$/.test(publicPathname);
   const pageSchemas: Array<Record<string, unknown>> = [
     buildOrganizationSchema(),
     buildWebsiteSchema(),
@@ -129,7 +135,7 @@ export default async function RootLayout({
       pathname,
       title: "Ott Subscription Nepal",
       description:
-        "Ott Subscription Nepal offers premium OTT plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
+        "Ott Subscription Nepal offers premium OTT subscription plans and digital service support in Nepal with fast activation and easy WhatsApp checkout.",
     }),
     buildBreadcrumbSchema(pathname),
   ];
@@ -148,7 +154,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${notoSansDevanagari.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+      <body className={`min-h-full flex flex-col${isProductPlanPage ? " product-detail-page" : ""}`} suppressHydrationWarning>
         <JsonLd data={pageSchemas} />
         <TooltipProvider>
           <LenisProvider />

@@ -191,10 +191,10 @@ const copy: Record<SiteLocale, SiteCopy> = {
       closeMenu: "Close menu",
     },
     hero: {
-      badge: "Premium digital services in Nepal",
+      badge: "Premium OTT Subscription Nepal",
       heading: "Ott Subscription\nNepal",
       description:
-        "Netflix, Spotify, Prime Video, YouTube Premium and more - easy activation, fast support, and simple WhatsApp checkout.",
+        "OTT Nepal subscription plans for Netflix, Spotify, Prime Video, YouTube Premium and more - easy activation, fast support, and simple WhatsApp checkout.",
       viewAllPlans: "View All Plans",
       popularPlans: "Popular OTT Plans",
       trust: ["Fast Activation", "Nepal Support", "Easy Renewal", "Secure Checkout"],
@@ -208,8 +208,8 @@ const copy: Record<SiteLocale, SiteCopy> = {
     },
     plansPage: {
       eyebrow: "All plans",
-      title: "Browse every active OTT and digital service plan",
-      description: "Compare prices, offers, stock status, and add plans to cart. Checkout will prepare the full WhatsApp order message automatically.",
+      title: "Premium OTT Subscription Nepal plans",
+      description: "Compare active OTT Nepal subscription prices, offers, stock status, and add plans to cart. Checkout will prepare the full WhatsApp order message automatically.",
       pressService: "Press a service to view plans",
       categories: {
         all: "All",

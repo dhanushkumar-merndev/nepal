@@ -5,6 +5,15 @@ import { absoluteUrl } from "@/lib/site-url";
 
 const staticRoutes = ["/", "/about", "/plans", "/reviews", "/faq", "/privacy", "/terms", "/refund-policy"];
 
+function sitemapAlternates(route: string) {
+  return {
+    languages: {
+      ...Object.fromEntries(locales.map((locale) => [locale, absoluteUrl(localizePath(route, locale))])),
+      "x-default": absoluteUrl(localizePath(route, defaultLocale)),
+    },
+  };
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const products = await getProducts();
@@ -17,6 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: route === "/" ? homeFrequency : pageFrequency,
       priority: locale === defaultLocale && route === "/" ? 1 : route === "/" ? 0.9 : 0.8,
+      alternates: sitemapAlternates(route),
     })),
   );
 
@@ -25,7 +35,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: absoluteUrl(localizePath(`/plans/${product.slug}`, locale)),
       lastModified: now,
       changeFrequency: pageFrequency,
-      priority: locale === defaultLocale ? 0.8 : 0.7,
+      priority: locale === defaultLocale ? 0.9 : 0.8,
+      alternates: sitemapAlternates(`/plans/${product.slug}`),
     })),
   );
 

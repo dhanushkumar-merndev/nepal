@@ -29,12 +29,16 @@ const ogLocaleBySiteLocale: Record<SiteLocale, string> = {
 const staticPageSeo: Record<StaticPageKey, Record<SiteLocale, LocalizedSeoCopy>> = {
   home: {
     en: {
-      title: "Ott Subscription Nepal | Premium OTT Subscriptions in Nepal",
+      title: "Ott Subscription Nepal | Premium OTT Subscription Nepal",
       description:
-        "Ott Subscription Nepal helps you shop Netflix, Spotify, Prime Video, YouTube Premium and more in Nepal with fast activation, real customer reviews, and WhatsApp checkout.",
+        "Ott Subscription Nepal helps you shop premium OTT subscription plans in Nepal, including Netflix, Spotify, Prime Video, YouTube Premium and more with WhatsApp checkout.",
       keywords: [
         "OTT Subscription Nepal",
         "Ott Subscription Nepal",
+        "OTT Nepal Subscription",
+        "Premium OTT Subscription Nepal",
+        "Nepal subscription",
+        "Nepal subscription service",
         "premium ott subscription nepal",
         "ott subscription in nepal",
         "subscription nepal",
@@ -100,10 +104,10 @@ const staticPageSeo: Record<StaticPageKey, Record<SiteLocale, LocalizedSeoCopy>>
   },
   plans: {
     en: {
-      title: "OTT Plans and Digital Services",
+      title: "Premium OTT Subscription Nepal Plans",
       description:
-        "Browse active OTT and digital service plans in Nepal, compare prices and offers, and checkout through WhatsApp.",
-      keywords: ["OTT plans Nepal", "digital subscriptions Nepal", "buy Netflix Premium Nepal", "OTT comparison Nepal"],
+        "Browse Premium OTT Subscription Nepal plans, compare active OTT Nepal subscription prices and offers, and checkout through WhatsApp.",
+      keywords: ["Premium OTT Subscription Nepal", "OTT Nepal Subscription", "OTT plans Nepal", "digital subscriptions Nepal", "buy Netflix Premium Nepal", "OTT comparison Nepal"],
     },
     hi: {
       title: "OTT प्लान और डिजिटल सेवाएं",
@@ -304,18 +308,28 @@ export function buildProductMetadata({
   slug,
   productName,
   description,
+  category,
+  imageUrl,
+  logoUrl,
+  startingPrice,
+  stockStatus,
 }: {
   locale?: SiteLocale;
   slug: string;
   productName: string;
   description?: string | null;
+  category?: string | null;
+  imageUrl?: string | null;
+  logoUrl?: string | null;
+  startingPrice?: number | null;
+  stockStatus?: string | null;
 }): Metadata {
   const resolvedLocale = normalizeSiteLocale(locale);
   const path = `/plans/${slug}`;
   const titleByLocale: Record<SiteLocale, string> = {
-    en: `${productName} Plans`,
-    hi: `${productName} प्लान`,
-    ne: `${productName} प्लानहरू`,
+    en: `${productName} Plans in Nepal`,
+    hi: `${productName} Plans in Nepal`,
+    ne: `${productName} Plans in Nepal`,
   };
   const fallbackDescriptionByLocale: Record<SiteLocale, string> = {
     en: `View ${productName} plans, pricing, and checkout details on Ott Subscription Nepal.`,
@@ -325,13 +339,45 @@ export function buildProductMetadata({
   const localizedPath = localizePath(path, resolvedLocale);
   const resolvedDescription = description ?? fallbackDescriptionByLocale[resolvedLocale];
   const title = titleByLocale[resolvedLocale];
-  const keywords = [
-    `${productName} Nepal`,
-    `${productName} subscription Nepal`,
-    `${productName} plans Nepal`,
-    `${productName} price Nepal`,
-    "OTT Subscription Nepal",
-  ];
+  const keywords = buildProductSeoKeywords({ productName, category });
+  const productImages = [
+    imageUrl
+      ? {
+          url: absoluteUrl(imageUrl),
+          width: 1200,
+          height: 630,
+          alt: `${productName} plans in Nepal`,
+        }
+      : null,
+    logoUrl
+      ? {
+          url: absoluteUrl(logoUrl),
+          width: 512,
+          height: 512,
+          alt: `${productName} logo`,
+        }
+      : null,
+    defaultOgImage,
+  ].filter(
+    (
+      image,
+    ): image is {
+      url: string;
+      width: number;
+      height: number;
+      alt: string;
+    } => Boolean(image),
+  );
+  const other: NonNullable<Metadata["other"]> = {
+    "product:retailer_item_id": slug,
+    "product:category": category ?? "Digital subscriptions",
+    "product:availability": stockStatus ?? "In Stock",
+  };
+
+  if (startingPrice) {
+    other["product:price:amount"] = String(startingPrice);
+    other["product:price:currency"] = "NPR";
+  }
 
   return {
     title,
@@ -361,14 +407,47 @@ export function buildProductMetadata({
       locale: ogLocaleBySiteLocale[resolvedLocale],
       siteName,
       type: "website",
-      images: [defaultOgImage],
+      images: productImages,
     },
     twitter: {
       card: "summary_large_image",
       title,
       description: resolvedDescription,
       creator: siteHandle,
-      images: [defaultOgImage.url],
+      images: productImages.map((image) => image.url),
     },
+    other,
   };
+}
+
+export function buildProductSeoKeywords({
+  productName,
+  category,
+}: {
+  productName: string;
+  category?: string | null;
+}) {
+  return Array.from(
+    new Set(
+      [
+        `${productName} Nepal`,
+        `${productName} subscription Nepal`,
+        `${productName} plans Nepal`,
+        `${productName} price Nepal`,
+        `buy ${productName} Nepal`,
+        `${productName} account Nepal`,
+        category ? `${category} Nepal` : null,
+        category ? `best ${category} plans Nepal` : null,
+        "OTT Subscription Nepal",
+        "Ott Subscription Nepal",
+        "OTT Nepal Subscription",
+        "Premium OTT Subscription Nepal",
+        "Nepal subscription",
+        "premium ott subscription nepal",
+        "ott subscription in nepal",
+        "digital subscription Nepal",
+        "WhatsApp checkout Nepal",
+      ].filter(Boolean) as string[],
+    ),
+  );
 }

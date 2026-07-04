@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Minus, Plus, ShoppingCart, Zap } from "lucide-react";
+import { CalendarDays, MessageCircle, Minus, Plus, ShieldCheck, ShoppingCart, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { LocaleLink } from "@/components/site/locale-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { PlanFeatureMap } from "@/lib/ai/plan-features";
 import { getLocaleFromPathname } from "@/lib/locale";
 import { getSiteCopy, translateStockStatus } from "@/lib/site-copy";
 import type { Product } from "@/lib/types";
@@ -14,7 +15,13 @@ import { useCartStore } from "@/lib/store/cart-store";
 import { canBuy, getDisplayPrice, getSaveAmount, hasOffer } from "@/lib/utils/pricing";
 import { formatPrice } from "@/lib/utils/format";
 
-export function ProductPlanCheckout({ product }: { product: Product }) {
+export function ProductPlanCheckout({
+  product,
+  generatedPlanFeatures = {},
+}: {
+  product: Product;
+  generatedPlanFeatures?: PlanFeatureMap;
+}) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const pathname = usePathname() || "/";
   const locale = getLocaleFromPathname(pathname);
@@ -66,14 +73,22 @@ export function ProductPlanCheckout({ product }: { product: Product }) {
         const alreadyAdded = usedAddKeys.includes(addKey);
         const cartItem = cartItems.find((item) => item.planId === plan.id);
         const cartQuantity = cartItem?.quantity ?? 0;
+        const manualFeatures = (plan.features ?? []).map((feature) => feature.trim()).filter(Boolean);
+        const hasGeneratedFeatures = Boolean(generatedPlanFeatures[plan.id]?.length);
+        const hasCustomFeatures = manualFeatures.length >= 3 && !hasGeneratedFeatures;
+        const featureItems = getDisplayPlanFeatures(product, plan, generatedPlanFeatures);
         return (
-          <article key={plan.id} className="flex min-h-[420px] flex-col rounded-3xl border border-black/10 bg-white p-5 text-left shadow-sm">
+          <article
+            key={plan.id}
+            className="group flex min-h-[360px] flex-col rounded-[28px] border border-black/10 bg-white/95 p-5 text-left shadow-[0_16px_42px_rgba(17,17,17,0.06)] transition hover:-translate-y-0.5 hover:border-[#159FD3]/25 hover:shadow-[0_22px_55px_rgba(17,17,17,0.09)]"
+          >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-[#159FD3]">Plan</p>
-                <p className="text-xs font-bold uppercase tracking-wide text-[#159FD3]">{copy.productUi.plan}</p>
+                <p className="inline-flex rounded-full bg-[#E6F7FD] px-3 py-1 text-[11px] font-black uppercase tracking-wide text-[#0B7FAE]">
+                  {copy.productUi.plan}
+                </p>
                 <h2 className="mt-1 text-2xl font-black">{plan.name}</h2>
-                <p className="text-sm text-[#555]">{plan.duration}</p>
+                <p className="text-sm text-[#555]">{plan.duration || "Flexible duration"}</p>
               </div>
               <div className="flex flex-col items-end gap-2">
                 <Badge>{translateStockStatus(plan.stock_status, locale)}</Badge>
@@ -84,16 +99,21 @@ export function ProductPlanCheckout({ product }: { product: Product }) {
                 ) : null}
               </div>
             </div>
-            <ul className="mt-5 grid gap-2 text-sm text-[#555]">
-              {plan.features.map((feature) => (
-                <li key={feature} className="flex gap-2">
-                  <Zap className="mt-0.5 size-4 shrink-0 text-[#159FD3]" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-auto grid gap-4">
-              <div className="rounded-3xl bg-[#E6F7FD] p-4">
+            <div className="mt-5 rounded-3xl border border-black/[0.06] bg-[#FAFCFD] p-4">
+              <p className="text-[11px] font-black uppercase tracking-wide text-[#64748B]">
+                {hasCustomFeatures ? "Included" : "Plan highlights"}
+              </p>
+              <ul className="mt-3 grid gap-2 text-sm leading-5 text-[#555]">
+                {featureItems.map((feature) => (
+                  <li key={feature} className="flex gap-2">
+                    <PlanFeatureIcon feature={feature} fallback={!hasCustomFeatures} />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="mt-auto grid gap-4 pt-5">
+              <div className="rounded-[24px] border border-[#159FD3]/10 bg-[#E6F7FD] p-4 transition group-hover:bg-[#DDF4FC]">
                 <div className="flex items-end justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wide text-[#0B7FAE]">{copy.productUi.finalPrice}</p>
@@ -108,10 +128,10 @@ export function ProductPlanCheckout({ product }: { product: Product }) {
                 </div>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="grid h-11 w-36 grid-cols-3 items-center rounded-full border border-black/10 bg-white text-[#111]">
+                <div className="grid h-11 w-36 grid-cols-3 items-center rounded-full border border-black/10 bg-white text-[#111] shadow-sm">
                   <button
                     type="button"
-                    className="grid h-11 place-items-center rounded-l-full"
+                    className="grid h-11 place-items-center rounded-l-full transition hover:bg-[#F6FCFF]"
                     onClick={() => changeQuantity(plan.id, -1)}
                     aria-label={`Decrease ${plan.name} quantity`}
                   >
@@ -120,17 +140,19 @@ export function ProductPlanCheckout({ product }: { product: Product }) {
                   <span className="grid h-11 place-items-center text-center font-black">{quantityFor(plan.id)}</span>
                   <button
                     type="button"
-                    className="grid h-11 place-items-center rounded-r-full"
+                    className="grid h-11 place-items-center rounded-r-full transition hover:bg-[#F6FCFF]"
                     onClick={() => changeQuantity(plan.id, 1)}
                     aria-label={`Increase ${plan.name} quantity`}
                   >
                     <Plus className="size-4" />
                   </button>
                 </div>
-                <Button className="w-40 justify-center" disabled={disabled || alreadyAdded} onClick={() => addPlan(plan)}>
-                  <ShoppingCart className="size-4" />
-                  {alreadyAdded ? copy.productUi.inCart : cartQuantity > 0 ? copy.productUi.addMore : copy.productUi.addToCart}
-                </Button>
+                {cartQuantity === 0 ? (
+                  <Button className="w-40 justify-center" disabled={disabled || alreadyAdded} onClick={() => addPlan(plan)}>
+                    <ShoppingCart className="size-4" />
+                    {copy.productUi.addToCart}
+                  </Button>
+                ) : null}
               </div>
               {disabled ? <p className="text-xs text-[#737373]">{copy.productUi.notAvailable}</p> : null}
             </div>
@@ -163,4 +185,30 @@ export function ProductPlanCheckout({ product }: { product: Product }) {
       </article>
     </div>
   );
+}
+
+function PlanFeatureIcon({ feature, fallback }: { feature: string; fallback: boolean }) {
+  if (!fallback) {
+    return <Zap className="mt-0.5 size-4 shrink-0 text-[#159FD3]" />;
+  }
+
+  const Icon = feature.toLowerCase().includes("whatsapp")
+    ? MessageCircle
+    : feature.toLowerCase().includes("renewal") || feature.toLowerCase().includes("support")
+      ? ShieldCheck
+      : CalendarDays;
+
+  return <Icon className="mt-0.5 size-4 shrink-0 text-[#159FD3]" />;
+}
+
+function getDisplayPlanFeatures(product: Product, plan: Product["plans"][number], generatedFeatures: PlanFeatureMap) {
+  const manualFeatures = (plan.features ?? []).map((feature) => feature.trim()).filter(Boolean);
+  if (generatedFeatures[plan.id]?.length) return generatedFeatures[plan.id];
+  if (manualFeatures.length >= 3) return manualFeatures.slice(0, 3);
+
+  return generatedFeatures[plan.id] ?? [
+    plan.duration ? `${plan.duration} ${product.name} option` : `${product.name} ${plan.name} option`,
+    "WhatsApp checkout confirmation",
+    "Renewal and setup support",
+  ];
 }

@@ -20,9 +20,9 @@ export default async function PlansPage() {
       <JsonLd
         data={buildWebPageSchema({
           pathname,
-          title: "OTT Plans and Digital Services",
+          title: "Premium OTT Subscription Nepal Plans",
           description:
-            "Browse active OTT and digital service plans in Nepal, compare prices and offers, and checkout through WhatsApp.",
+            "Browse Premium OTT Subscription Nepal plans, compare active OTT Nepal subscription prices and offers, and checkout through WhatsApp.",
         })}
       />
       <Header />

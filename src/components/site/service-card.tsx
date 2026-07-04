@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { ShoppingCart, Tv } from "lucide-react";
+import { Info, ShoppingCart, Tv } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { LocaleLink } from "@/components/site/locale-link";
@@ -25,6 +25,7 @@ export function ServiceCard({ product }: { product: Product }) {
   const locale = getLocaleFromPathname(pathname);
   const copy = getSiteCopy(locale);
   const startingPlan = getStartingPlan(product);
+  const detailsHref = `/plans/${product.slug}`;
   const cart = useCartStore();
   const inCartQty = product.plans.reduce((sum, plan) => {
     const item = cart.items.find((ci) => ci.planId === plan.id);
@@ -37,7 +38,7 @@ export function ServiceCard({ product }: { product: Product }) {
         role="button"
         tabIndex={0}
         aria-label={`Quick view ${product.name} plans`}
-        className="flex w-[76px] cursor-pointer flex-col items-center gap-0 transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#159FD3] focus-visible:ring-offset-2 md:hidden"
+        className="relative flex w-[76px] cursor-pointer flex-col items-center gap-0 transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#159FD3] focus-visible:ring-offset-2 md:hidden"
         onClick={() => setModalOpen(true)}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
@@ -92,12 +93,14 @@ export function ServiceCard({ product }: { product: Product }) {
         <div className="mt-1 flex items-center justify-center gap-1">
           <p className="truncate text-center text-[10px] font-medium leading-tight text-[#333]">{product.name}</p>
           <LocaleLink
-            href={`/plans/${product.slug}`}
+            href={detailsHref}
             aria-label={`Open ${product.name} details page`}
-            className="sr-only"
+            className="absolute -right-1 -top-1 z-20 grid size-5 shrink-0 place-items-center rounded-full border border-[#159FD3]/20 bg-white text-[#0B7FAE] shadow-sm transition hover:bg-[#E6F7FD]"
             onClick={(event) => event.stopPropagation()}
+            title={`${product.name} details`}
           >
-            {product.name} details page
+            <Info className="size-3" aria-hidden="true" />
+            <span className="sr-only">{product.name} details page</span>
           </LocaleLink>
         </div>
       </div>
@@ -105,7 +108,7 @@ export function ServiceCard({ product }: { product: Product }) {
         role="button"
         tabIndex={0}
         aria-label={`Quick view ${product.name} plans`}
-        className="hidden h-[405px] gap-0 overflow-hidden border border-black/5 bg-white/92 p-0 shadow-[0_10px_30px_rgba(17,17,17,0.06)] ring-0 transition hover:-translate-y-0.5 hover:border-[#159FD3]/20 hover:shadow-[0_16px_42px_rgba(17,17,17,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#159FD3] focus-visible:ring-offset-2 md:block"
+        className="group/card hidden h-[405px] cursor-pointer gap-0 overflow-hidden border border-black/5 bg-white/92 p-0 shadow-[0_10px_30px_rgba(17,17,17,0.06)] ring-0 transition hover:-translate-y-0.5 hover:border-[#159FD3]/20 hover:shadow-[0_16px_42px_rgba(17,17,17,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#159FD3] focus-visible:ring-offset-2 md:block"
         onClick={() => setModalOpen(true)}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
@@ -117,7 +120,7 @@ export function ServiceCard({ product }: { product: Product }) {
         <div className="relative h-40 overflow-hidden">
           <ProductArt name={product.name} imageUrl={product.image_url} logoUrl={product.logo_url} />
           {inCartQty > 0 ? (
-            <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-red-500 shadow-sm">
+            <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-red-500 shadow-sm">
               <ShoppingCart className="size-3" />
               {inCartQty}
             </span>
@@ -138,7 +141,7 @@ export function ServiceCard({ product }: { product: Product }) {
                 <div className="mt-1.5">
                   <h3 className="text-base font-bold">{product.name}</h3>
                   <LocaleLink
-                    href={`/plans/${product.slug}`}
+                    href={detailsHref}
                     aria-label={`Open ${product.name} details page`}
                     className="sr-only"
                     onClick={(event) => event.stopPropagation()}
@@ -166,17 +169,28 @@ export function ServiceCard({ product }: { product: Product }) {
                   </div>
                 ) : null}
               </div>
-              <div className="mt-auto pt-2">
+              <div className="relative mt-auto pt-2">
                 <div className="flex items-center gap-1 text-[10px] text-[#555]">
                   <Stars rating={product.rating ?? 4.8} />
                   <span>{product.rating ?? 4.8}</span>
                   {product.review_count ? <span>({product.review_count})</span> : null}
                 </div>
-                <div className="mt-2 pb-1">
-                <span className="inline-flex w-full items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-bold text-black transition group-hover/card:bg-[#E6F7FD]">
+                <div className="mt-2 pb-1 pr-10">
+                <span className="inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-bold text-black transition group-hover/card:border-[#159FD3]/25 group-hover/card:bg-[#E6F7FD] group-hover/card:text-[#0B7FAE]">
                   {copy.productUi.viewPlans}
                 </span>
                 </div>
+                <LocaleLink
+                  href={detailsHref}
+                  aria-label={`Open ${product.name} details page`}
+                  title={`${product.name} details`}
+                  className="absolute bottom-1 right-0 z-20 grid size-8 place-items-center rounded-full border border-[#159FD3]/30 bg-white text-[#0B7FAE] shadow-sm transition hover:scale-105 hover:bg-[#E6F7FD] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#159FD3] focus-visible:ring-offset-2"
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                >
+                  <Info className="size-4" aria-hidden="true" />
+                  <span className="sr-only">{product.name} details page</span>
+                </LocaleLink>
               </div>
             </div>
           </div>
