@@ -92,16 +92,6 @@ export function ServiceCard({ product }: { product: Product }) {
         </div>
         <div className="mt-1 flex items-center justify-center gap-1">
           <p className="truncate text-center text-[10px] font-medium leading-tight text-[#333]">{product.name}</p>
-          <LocaleLink
-            href={detailsHref}
-            aria-label={`Open ${product.name} details page`}
-            className="absolute -right-1 -top-1 z-20 grid size-5 shrink-0 place-items-center rounded-full border border-[#159FD3]/20 bg-white text-[#0B7FAE] shadow-sm transition hover:bg-[#E6F7FD]"
-            onClick={(event) => event.stopPropagation()}
-            title={`${product.name} details`}
-          >
-            <Info className="size-3" aria-hidden="true" />
-            <span className="sr-only">{product.name} details page</span>
-          </LocaleLink>
         </div>
       </div>
       <Card

@@ -7,6 +7,7 @@ import { Hero } from "@/components/site/hero";
 import { ServiceCard } from "@/components/site/service-card";
 import { FAQSection, TrustPreview } from "@/components/site/sections";
 import { TopReviews } from "@/components/site/top-reviews";
+import { FadeIn } from "@/components/site/fade-in";
 import { SlideIn } from "@/components/site/slide-in";
 import { getHomeReviews } from "@/lib/data/home-reviews";
 import { getProducts } from "@/lib/data/products";
@@ -36,9 +37,13 @@ export default async function Home() {
       <Header />
       <main className="flex-1">
         <Hero services={heroServices} />
-        <TrustPreview className="hidden lg:block" />
+        <FadeIn delay={0.05}>
+          <TrustPreview className="hidden lg:block" />
+        </FadeIn>
         <section id="popular-plans" className="mx-auto max-w-7xl px-4 pb-12 pt-0 md:pb-8 md:pt-0 lg:pt-8">
-          <HomePopularPlansHeader />
+          <FadeIn delay={0.08}>
+            <HomePopularPlansHeader />
+          </FadeIn>
           <div className="mt-6 flex flex-wrap justify-center gap-3 md:mt-2 md:grid md:grid-cols-2 md:gap-4 lg:mt-6 lg:grid-cols-4">
             {popularPlans.map((product, i) => (
               <SlideIn key={product.id} delay={i * 0.08}>

@@ -115,7 +115,7 @@ export default async function ProductPlansPage({
                     <p key={line}>{line}</p>
                   ))}
                 </div>
-                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:max-w-3xl xl:grid-cols-4">
+                <div className="mt-6 grid grid-cols-2 gap-3 lg:max-w-3xl xl:grid-cols-4">
                   {highlights.map((item) => {
                     const Icon = item.icon;
                     return (

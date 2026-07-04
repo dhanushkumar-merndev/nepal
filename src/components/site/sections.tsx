@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { MessageCircle, PackageCheck, ShieldCheck, Sparkles } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { LocaleLink } from "@/components/site/locale-link";
@@ -64,13 +65,18 @@ export function TrustPreview({ className = "" }: { className?: string }) {
 
   return (
     <section className={`mx-auto max-w-7xl px-4 pt-3 lg:pb-8 lg:pt-8 ${className}`.trim()}>
-      <div className="flex flex-col items-center gap-3 rounded-2xl border border-black/8 bg-white px-6 py-6 text-center shadow-[0_12px_30px_rgba(17,17,17,0.08)] md:flex-row md:items-center md:gap-4 md:rounded-full md:px-8 md:py-5 md:text-left">
+      <motion.div
+        className="flex flex-col items-center gap-3 rounded-2xl border border-black/8 bg-white px-6 py-6 text-center shadow-[0_12px_30px_rgba(17,17,17,0.08)] md:flex-row md:items-center md:gap-4 md:rounded-full md:px-8 md:py-5 md:text-left"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
+      >
         <ShieldCheck className="size-9 shrink-0 text-[#16A34A]" />
         <div>
           <h2 className="text-xl font-bold">{copy.trustPreview.title}</h2>
           <p className="mt-1 text-sm text-[#555]">{copy.trustPreview.description}</p>
         </div>
-      </div>
+      </motion.div>
       <TrustBadges className="mt-2 lg:hidden" />
     </section>
   );

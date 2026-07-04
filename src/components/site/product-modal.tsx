@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { usePathname } from "next/navigation";
-import { X } from "lucide-react";
+import { Info, X } from "lucide-react";
 import type { Product } from "@/lib/types";
+import { LocaleLink } from "@/components/site/locale-link";
 import { ProductPlansPanel } from "@/components/site/product-plans-panel";
 import { getLocaleFromPathname } from "@/lib/locale";
 import { getSiteCopy } from "@/lib/site-copy";
@@ -64,9 +65,20 @@ export function ProductModal({
                 {copy.productUi.choosePlanAndQuantity}
               </Dialog.Description>
             </div>
-            <Dialog.Close className="grid size-9 shrink-0 place-items-center rounded-full bg-[#E6F7FD] text-[#0B7FAE]" aria-label="Close">
-              <X className="size-4" />
-            </Dialog.Close>
+            <div className="flex shrink-0 items-center gap-2">
+              <LocaleLink
+                href={`/plans/${product.slug}`}
+                className="grid size-9 place-items-center rounded-full border border-[#159FD3]/20 bg-white text-[#0B7FAE] shadow-sm transition active:scale-95 lg:hidden"
+                aria-label={`Open ${product.name} details page`}
+                title={`${product.name} details`}
+              >
+                <Info className="size-4" aria-hidden="true" />
+                <span className="sr-only">{product.name} details page</span>
+              </LocaleLink>
+              <Dialog.Close className="grid size-9 place-items-center rounded-full bg-[#E6F7FD] text-[#0B7FAE]" aria-label="Close">
+                <X className="size-4" />
+              </Dialog.Close>
+            </div>
           </div>
           <div data-lenis-prevent className="touch-pan-y overflow-y-auto overscroll-contain px-4 py-4 max-h-[calc(86dvh-5.5rem)] lg:max-h-none lg:flex-1 lg:[scrollbar-width:thin] lg:[scrollbar-color:#CBD5E1_transparent]">
             <ProductPlansPanel product={product} />

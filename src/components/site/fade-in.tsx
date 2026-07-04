@@ -1,12 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsCompactViewport } from "@/hooks/use-compact-viewport";
 
 export function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  const isMobile = useIsMobile();
+  const isCompactViewport = useIsCompactViewport();
 
-  if (isMobile) return <>{children}</>;
+  if (isCompactViewport) return <>{children}</>;
 
   return (
     <motion.div
