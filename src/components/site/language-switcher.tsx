@@ -1,7 +1,8 @@
 "use client";
 
 import { LanguagesIcon } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +20,6 @@ export function LanguageSwitcher({
   mobile?: boolean;
   onNavigate?: () => void;
 }) {
-  const router = useRouter();
   const pathname = usePathname() || "/";
   const searchParams = useSearchParams();
   const currentLocale = getLocaleFromPathname(pathname);
@@ -39,10 +39,7 @@ export function LanguageSwitcher({
               currentPath={currentPath}
               locale={locale}
               mobile
-              onNavigate={() => {
-                router.push(localizePath(currentPath, locale));
-                onNavigate?.();
-              }}
+              onNavigate={onNavigate}
             />
           ))}
         </div>
@@ -60,7 +57,8 @@ export function LanguageSwitcher({
         {locales.map((locale) => (
           <DropdownMenuItem
             key={locale}
-            onClick={() => router.push(localizePath(currentPath, locale))}
+            render={<Link href={localizePath(currentPath, locale)} hrefLang={locale} />}
+            aria-current={locale === currentLocale ? "page" : undefined}
             className={cn(
               "cursor-pointer rounded-[1rem] px-3 py-2.5 text-sm text-[#22313c] transition hover:bg-[#F7FBFD]",
               locale === currentLocale && "bg-[#F1FAFE] font-semibold text-[#0B7FAE]",
@@ -91,8 +89,10 @@ function LocaleOption({
   onNavigate?: () => void;
 }) {
   return (
-    <button
-      type="button"
+    <Link
+      href={localizePath(currentPath, locale)}
+      hrefLang={locale}
+      aria-current={locale === currentLocale ? "page" : undefined}
       onClick={onNavigate}
       className={cn(
         "flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition",
@@ -102,6 +102,6 @@ function LocaleOption({
     >
       <span>{localeLabels[locale].label}</span>
       <span className="text-xs text-[#737373]">{locale === defaultLocale ? "Default" : localeLabels[locale].nativeLabel}</span>
-    </button>
+    </Link>
   );
 }

@@ -26,6 +26,7 @@ export function ProductPlanCheckout({
   const pathname = usePathname() || "/";
   const locale = getLocaleFromPathname(pathname);
   const copy = getSiteCopy(locale);
+  const detailCopy = getProductCheckoutCopy(locale);
   const cartItems = useCartStore((state) => state.items);
   const usedAddKeys = useCartStore((state) => state.usedAddKeys ?? []);
   const addItem = useCartStore((state) => state.addItem);
@@ -45,7 +46,7 @@ export function ProductPlanCheckout({
     const quantity = quantityFor(plan.id);
     const addKey = `${product.slug}:${plan.id}:${quantity}`;
     if (usedAddKeys.includes(addKey)) {
-      toast.info("Already in cart", {
+      toast.info(detailCopy.alreadyInCart, {
         description: `${product.name} ${plan.name} x${quantity}`,
       });
       return;
@@ -76,7 +77,7 @@ export function ProductPlanCheckout({
         const manualFeatures = (plan.features ?? []).map((feature) => feature.trim()).filter(Boolean);
         const hasGeneratedFeatures = Boolean(generatedPlanFeatures[plan.id]?.length);
         const hasCustomFeatures = manualFeatures.length >= 3 && !hasGeneratedFeatures;
-        const featureItems = getDisplayPlanFeatures(product, plan, generatedPlanFeatures);
+        const featureItems = getDisplayPlanFeatures(product, plan, generatedPlanFeatures, locale);
         return (
           <article
             key={plan.id}
@@ -88,7 +89,7 @@ export function ProductPlanCheckout({
                   {copy.productUi.plan}
                 </p>
                 <h2 className="mt-1 text-2xl font-black">{plan.name}</h2>
-                <p className="text-sm text-[#555]">{plan.duration || "Flexible duration"}</p>
+                <p className="text-sm text-[#555]">{plan.duration || detailCopy.flexibleDuration}</p>
               </div>
               <div className="flex flex-col items-end gap-2">
                 <Badge>{translateStockStatus(plan.stock_status, locale)}</Badge>
@@ -101,7 +102,7 @@ export function ProductPlanCheckout({
             </div>
             <div className="mt-5 rounded-3xl border border-black/[0.06] bg-[#FAFCFD] p-4">
               <p className="text-[11px] font-black uppercase tracking-wide text-[#64748B]">
-                {hasCustomFeatures ? "Included" : "Plan highlights"}
+                {hasCustomFeatures ? detailCopy.included : detailCopy.planHighlights}
               </p>
               <ul className="mt-3 grid gap-2 text-sm leading-5 text-[#555]">
                 {featureItems.map((feature) => (
@@ -201,14 +202,62 @@ function PlanFeatureIcon({ feature, fallback }: { feature: string; fallback: boo
   return <Icon className="mt-0.5 size-4 shrink-0 text-[#159FD3]" />;
 }
 
-function getDisplayPlanFeatures(product: Product, plan: Product["plans"][number], generatedFeatures: PlanFeatureMap) {
+function getDisplayPlanFeatures(
+  product: Product,
+  plan: Product["plans"][number],
+  generatedFeatures: PlanFeatureMap,
+  locale: ReturnType<typeof getLocaleFromPathname>,
+) {
   const manualFeatures = (plan.features ?? []).map((feature) => feature.trim()).filter(Boolean);
   if (generatedFeatures[plan.id]?.length) return generatedFeatures[plan.id];
   if (manualFeatures.length >= 3) return manualFeatures.slice(0, 3);
+
+  if (locale === "hi") {
+    return generatedFeatures[plan.id] ?? [
+      plan.duration ? `${plan.duration} ${product.name} विकल्प` : `${product.name} ${plan.name} विकल्प`,
+      "WhatsApp checkout की पुष्टि",
+      "नवीनीकरण और सेटअप सहायता",
+    ];
+  }
+
+  if (locale === "ne") {
+    return generatedFeatures[plan.id] ?? [
+      plan.duration ? `${plan.duration} ${product.name} विकल्प` : `${product.name} ${plan.name} विकल्प`,
+      "WhatsApp checkout पुष्टि",
+      "नवीकरण र सेटअप सहयोग",
+    ];
+  }
 
   return generatedFeatures[plan.id] ?? [
     plan.duration ? `${plan.duration} ${product.name} option` : `${product.name} ${plan.name} option`,
     "WhatsApp checkout confirmation",
     "Renewal and setup support",
   ];
+}
+
+function getProductCheckoutCopy(locale: ReturnType<typeof getLocaleFromPathname>) {
+  if (locale === "hi") {
+    return {
+      alreadyInCart: "पहले से कार्ट में है",
+      flexibleDuration: "लचीली अवधि",
+      included: "शामिल सुविधाएं",
+      planHighlights: "प्लान की खास बातें",
+    };
+  }
+
+  if (locale === "ne") {
+    return {
+      alreadyInCart: "पहिल्यै कार्टमा छ",
+      flexibleDuration: "लचिलो अवधि",
+      included: "समावेश सुविधाहरू",
+      planHighlights: "प्लानका मुख्य विशेषता",
+    };
+  }
+
+  return {
+    alreadyInCart: "Already in cart",
+    flexibleDuration: "Flexible duration",
+    included: "Included",
+    planHighlights: "Plan highlights",
+  };
 }

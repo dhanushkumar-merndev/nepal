@@ -239,7 +239,7 @@ export function buildProductSchema({
   return schema;
 }
 
-export function buildProductFaqItems(product: Product) {
+export function buildProductFaqItems(product: Product, locale: SiteLocale = defaultLocale) {
   const startingPlan = getStartingPlan(product);
   const startingPrice = startingPlan ? formatPrice(getDisplayPrice(startingPlan)) : null;
   const activePlanNames = product.plans
@@ -247,6 +247,50 @@ export function buildProductFaqItems(product: Product) {
     .slice(0, 4)
     .map((plan) => plan.name)
     .join(", ");
+
+  if (locale === "hi") {
+    return [
+      {
+        question: `नेपाल में ${product.name} की कीमत क्या है?`,
+        answer: startingPrice
+          ? `Ott Subscription Nepal पर ${product.name} के प्लान अभी ${startingPrice} से शुरू होते हैं। कीमत अवधि, ऑफर और उपलब्धता के अनुसार बदल सकती है।`
+          : `${product.name} की कीमत चुने गए प्लान और Ott Subscription Nepal पर मौजूदा उपलब्धता पर निर्भर करती है।`,
+      },
+      {
+        question: `${product.name} के कौन से प्लान उपलब्ध हैं?`,
+        answer: activePlanNames
+          ? `${product.name} के उपलब्ध विकल्पों में ${activePlanNames} शामिल हैं। मौजूदा अवधि, स्टॉक और ऑफर के लिए इस पेज के प्लान कार्ड देखें।`
+          : `${product.name} प्लान की उपलब्धता समय के साथ बदलती है। checkout से पहले इस पेज पर सक्रिय विकल्प देखें।`,
+      },
+      {
+        question: `नेपाल में ${product.name} कैसे खरीदें?`,
+        answer:
+          "प्लान चुनें, जरूरी मात्रा कार्ट में जोड़ें और WhatsApp checkout पर जाएं, ताकि Ott Subscription Nepal सक्रियण और सहायता की जानकारी की पुष्टि कर सके।",
+      },
+    ];
+  }
+
+  if (locale === "ne") {
+    return [
+      {
+        question: `नेपालमा ${product.name} को मूल्य कति छ?`,
+        answer: startingPrice
+          ? `Ott Subscription Nepal मा ${product.name} का प्लान हाल ${startingPrice} बाट सुरु हुन्छन्। अवधि, अफर र उपलब्धताअनुसार मूल्य फरक हुन सक्छ।`
+          : `${product.name} को मूल्य छानिएको प्लान र Ott Subscription Nepal मा हालको उपलब्धतामा निर्भर हुन्छ।`,
+      },
+      {
+        question: `${product.name} का कुन प्लान उपलब्ध छन्?`,
+        answer: activePlanNames
+          ? `${product.name} का उपलब्ध विकल्पमा ${activePlanNames} समावेश छन्। हालको अवधि, स्टक र अफर हेर्न यस पृष्ठका प्लान कार्ड जाँच गर्नुहोस्।`
+          : `${product.name} प्लानको उपलब्धता समयसँगै बदलिन्छ। checkout अघि यस पृष्ठमा सक्रिय विकल्प हेर्नुहोस्।`,
+      },
+      {
+        question: `नेपालमा ${product.name} कसरी किन्ने?`,
+        answer:
+          "प्लान छान्नुहोस्, आवश्यक संख्या कार्टमा थप्नुहोस् र WhatsApp checkout मा जानुहोस्, ताकि Ott Subscription Nepal ले सक्रियता र सहयोगका विवरण पुष्टि गर्न सकोस्।",
+      },
+    ];
+  }
 
   return [
     {
@@ -269,8 +313,8 @@ export function buildProductFaqItems(product: Product) {
   ];
 }
 
-export function buildProductFaqSchema(product: Product) {
-  return buildFaqSchema(buildProductFaqItems(product));
+export function buildProductFaqSchema(product: Product, locale: SiteLocale = defaultLocale) {
+  return buildFaqSchema(buildProductFaqItems(product, locale));
 }
 
 function buildFaqSchema(items: Array<{ question: string; answer: string }>) {

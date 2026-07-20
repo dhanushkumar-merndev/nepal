@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "seo:audit": "node scripts/seo-audit.mjs",
     "migrate:product-images": "node scripts/migrate-existing-product-images.mjs",
     "generate:assets": "node scripts/generate-service-assets.mjs",
     "seed": "node scripts/generate-service-assets.mjs && node scripts/seed-demo-data.mjs"

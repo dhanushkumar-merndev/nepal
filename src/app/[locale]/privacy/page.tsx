@@ -1,13 +1,26 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { LegalPage } from "@/components/site/legal-page";
+import { isSupportedLocale } from "@/lib/locale";
 import { buildStaticPageMetadata, normalizeSiteLocale } from "@/lib/seo";
 
-export { default } from "../../privacy/page";
+type LocalizedLegalPageProps = {
+  params: Promise<{ locale: string }>;
+};
+
+export default async function LocalizedPrivacyPage({ params }: LocalizedLegalPageProps) {
+  const { locale } = await params;
+
+  if (!isSupportedLocale(locale) || locale === "en") {
+    notFound();
+  }
+
+  return <LegalPage page="privacy" locale={locale} />;
+}
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
+}: LocalizedLegalPageProps): Promise<Metadata> {
   const { locale } = await params;
   return buildStaticPageMetadata("privacy", normalizeSiteLocale(locale));
 }

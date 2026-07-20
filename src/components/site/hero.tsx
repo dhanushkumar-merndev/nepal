@@ -43,7 +43,7 @@ export function TrustBadges({ className = "" }: { className?: string }) {
   );
 }
 
-export function Hero({ services }: { services: Pick<Product, "name" | "logo_url" | "stock_status">[] }) {
+export function Hero({ services }: { services: Pick<Product, "name" | "slug" | "logo_url" | "stock_status">[] }) {
   const heroServices = services.slice(0, 4);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const pathname = usePathname() || "/";
@@ -162,7 +162,12 @@ export function Hero({ services }: { services: Pick<Product, "name" | "logo_url"
         transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
       >
         {heroServices.map((service, index) => (
-          <div key={service.name} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/50 p-5 shadow-sm backdrop-blur-xl">
+          <LocaleLink
+            key={service.name}
+            href={`/plans/${service.slug}`}
+            aria-label={`View ${service.name} plans`}
+            className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/50 p-5 shadow-sm backdrop-blur-xl"
+          >
             <div className="flex min-w-0 items-center gap-4">
               <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-md">
                 {service.logo_url ? (
@@ -190,7 +195,7 @@ export function Hero({ services }: { services: Pick<Product, "name" | "logo_url"
               </div>
             </div>
             <Badge className="shrink-0">{service.stock_status === "Coming Soon" ? copy.hero.soon : copy.hero.available}</Badge>
-          </div>
+          </LocaleLink>
         ))}
       </motion.div>
     </section>

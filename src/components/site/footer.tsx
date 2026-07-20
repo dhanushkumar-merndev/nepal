@@ -16,10 +16,11 @@ export function Footer() {
   const locale = getLocaleFromPathname(pathname);
   const copy = getSiteCopy(locale);
   const navigationLinks = [
+    { label: copy.nav.home, href: "/" },
     { label: copy.footer.links.plans, href: "/plans" },
     { label: copy.footer.links.services, href: "/#popular-plans" },
     { label: copy.footer.links.reviews, href: "/reviews" },
-    { label: copy.footer.links.faq, href: "/#faq" },
+    { label: copy.footer.links.faq, href: "/faq" },
     { label: copy.footer.links.contact, href: "/#contact" },
     { label: copy.footer.links.about, href: "/about" },
   ];

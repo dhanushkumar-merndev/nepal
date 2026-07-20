@@ -20,12 +20,16 @@ pnpm build
 
 ## Environment
 
-The app uses `NEXT_PUBLIC_SITE_URL` for canonical URLs, sitemap entries, Open Graph URLs, and robots metadata.
+SEO metadata, sitemap entries, Open Graph URLs, and robots metadata always use the canonical production origin:
 
-Set it to your public origin in every deployed environment:
+```text
+https://www.ottsubscriptionnepal.shop
+```
+
+`NEXT_PUBLIC_SITE_URL` is still used for authentication callback redirects. Set it to the URL of the environment you are running; for production:
 
 ```bash
 NEXT_PUBLIC_SITE_URL=https://www.ottsubscriptionnepal.shop
 ```
 
-Do not leave it as `localhost` in production. CI and Vercel production builds are guarded against that.
+Use `http://localhost:3000` during local development, and do not leave it as `localhost` in production.

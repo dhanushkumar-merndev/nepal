@@ -38,7 +38,7 @@ export const getProductSeoDescription = cache(async (product: Product, locale: S
 });
 
 export const getProductPageIntroLines = cache(async (product: Product, locale: SiteLocale = defaultLocale) => {
-  const fallback = buildFallbackPageIntroLines(product);
+  const fallback = buildFallbackPageIntroLines(product, locale);
   const redis = getRedis();
   const cacheKey = productPageIntroCacheKey(product, locale);
 
@@ -67,25 +67,52 @@ export function buildFallbackSeoDescription(product: Product, locale: SiteLocale
     : isEditing
       ? "creative editing plans"
       : "subscription plans";
-  const priceText = startingPrice ? ` from ${startingPrice}` : "";
-  const fallbackDescription = `${product.name} ${productUse} in Nepal${priceText}. View active plan details, stock status, and local support from Ott Subscription Nepal.`;
-
   if (locale === "hi") {
-    return normalizeSeoDescription(fallbackDescription)!;
+    const localizedUse = isTopUp ? "टॉप-अप विकल्प" : isEditing ? "क्रिएटिव एडिटिंग प्लान" : "सब्सक्रिप्शन प्लान";
+    const localizedPrice = startingPrice ? ` ${startingPrice} से शुरू होते हैं` : " उपलब्ध हैं";
+    return normalizeSeoDescription(
+      `${product.name} के ${localizedUse} नेपाल में${localizedPrice}। सक्रिय प्लान, स्टॉक स्थिति और Ott Subscription Nepal की स्थानीय सहायता देखें।`,
+    )!;
   }
 
   if (locale === "ne") {
-    return normalizeSeoDescription(fallbackDescription)!;
+    const localizedUse = isTopUp ? "टप-अप विकल्प" : isEditing ? "क्रिएटिभ एडिटिङ प्लान" : "सब्सक्रिप्सन प्लान";
+    const localizedPrice = startingPrice ? ` ${startingPrice} बाट सुरु हुन्छन्` : " उपलब्ध छन्";
+    return normalizeSeoDescription(
+      `${product.name} का ${localizedUse} नेपालमा${localizedPrice}। सक्रिय प्लान, स्टक स्थिति र Ott Subscription Nepal को स्थानीय सहयोग हेर्नुहोस्।`,
+    )!;
   }
 
+  const priceText = startingPrice ? ` from ${startingPrice}` : "";
+  const fallbackDescription = `${product.name} ${productUse} in Nepal${priceText}. View active plan details, stock status, and local support from Ott Subscription Nepal.`;
   return normalizeSeoDescription(fallbackDescription)!;
 }
 
-function buildFallbackPageIntroLines(product: Product) {
+function buildFallbackPageIntroLines(product: Product, locale: SiteLocale) {
   const startingPlan = getStartingPlan(product);
   const startingPrice = startingPlan ? formatPrice(getDisplayPrice(startingPlan)) : "available pricing";
   const activePlanCount = product.plans.filter((plan) => plan.is_active).length;
   const planText = activePlanCount === 1 ? "one active option" : `${activePlanCount} active options`;
+
+  if (locale === "hi") {
+    const localizedPrice = startingPlan ? startingPrice : "उपलब्ध कीमत";
+    const optionText = activePlanCount === 1 ? "एक सक्रिय विकल्प" : `${activePlanCount} सक्रिय विकल्प`;
+    return [
+      `${product.name} के प्लान नेपाल में ${localizedPrice} से शुरू होते हैं और ${optionText} उपलब्ध हैं।`,
+      "खरीदने से पहले प्लान की अवधि, सुविधाएं और मौजूदा स्टॉक स्थिति ध्यान से देखें।",
+      "WhatsApp checkout से ऑर्डर की पुष्टि करें और नेपाल में सहायता पाएं।",
+    ];
+  }
+
+  if (locale === "ne") {
+    const localizedPrice = startingPlan ? startingPrice : "उपलब्ध मूल्य";
+    const optionText = activePlanCount === 1 ? "एउटा सक्रिय विकल्प" : `${activePlanCount} सक्रिय विकल्प`;
+    return [
+      `${product.name} का प्लान नेपालमा ${localizedPrice} बाट सुरु हुन्छन् र ${optionText} उपलब्ध छन्।`,
+      "किन्नुअघि प्लानको अवधि, सुविधाहरू र हालको स्टक अवस्था ध्यानपूर्वक हेर्नुहोस्।",
+      "WhatsApp checkout बाट अर्डर पुष्टि गर्नुहोस् र नेपालमा सहयोग पाउनुहोस्।",
+    ];
+  }
 
   return [
     `${product.name} plans in Nepal start from ${startingPrice}, with ${planText} to choose from.`,
@@ -246,8 +273,8 @@ function buildSeoPrompt(product: Product, locale: SiteLocale) {
     .join("\n");
   const languageInstruction: Record<SiteLocale, string> = {
     en: "Write in English.",
-    hi: "Write in Hindi/Hinglish for Nepal users, keeping product and brand names in English.",
-    ne: "Write in Nepali-friendly English for Nepal users, keeping product and brand names in English.",
+    hi: "Write in natural Hindi using Devanagari script for Nepal users; keep only product and brand names in English.",
+    ne: "Write in natural Nepali using Devanagari script; keep only product and brand names in English.",
   };
 
   return [
@@ -280,8 +307,8 @@ function buildPageIntroPrompt(product: Product, locale: SiteLocale) {
     .join("\n");
   const languageInstruction: Record<SiteLocale, string> = {
     en: "Write in English.",
-    hi: "Write in Hindi/Hinglish for Nepal users, keeping product and brand names in English.",
-    ne: "Write in Nepali-friendly English for Nepal users, keeping product and brand names in English.",
+    hi: "Write in natural Hindi using Devanagari script for Nepal users; keep only product and brand names in English.",
+    ne: "Write in natural Nepali using Devanagari script; keep only product and brand names in English.",
   };
 
   return [

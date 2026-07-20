@@ -242,16 +242,16 @@ export function normalizeSiteLocale(locale?: string): SiteLocale {
 
 export function buildLanguageAlternates(path: string) {
   return Object.fromEntries(
-    locales.map((locale) => [locale, localizePath(path, locale)]),
+    locales.map((locale) => [locale, absoluteUrl(localizePath(path, locale))]),
   ) as Record<SiteLocale, string>;
 }
 
 export function buildAlternates(path: string, locale: SiteLocale) {
   return {
-    canonical: localizePath(path, locale),
+    canonical: absoluteUrl(localizePath(path, locale)),
     languages: {
       ...buildLanguageAlternates(path),
-      "x-default": localizePath(path, defaultLocale),
+      "x-default": absoluteUrl(localizePath(path, defaultLocale)),
     },
   } satisfies NonNullable<Metadata["alternates"]>;
 }
@@ -287,7 +287,7 @@ export function buildStaticPageMetadata(page: StaticPageKey, locale: SiteLocale 
     openGraph: {
       title: copy.title,
       description: copy.description,
-      url: localizedPath,
+      url: absoluteUrl(localizedPath),
       locale: ogLocaleBySiteLocale[locale],
       siteName,
       type: "website",
@@ -328,8 +328,8 @@ export function buildProductMetadata({
   const path = `/plans/${slug}`;
   const titleByLocale: Record<SiteLocale, string> = {
     en: `${productName} Plans in Nepal`,
-    hi: `${productName} Plans in Nepal`,
-    ne: `${productName} Plans in Nepal`,
+    hi: `${productName} प्लान नेपाल में`,
+    ne: `${productName} प्लान नेपालमा`,
   };
   const fallbackDescriptionByLocale: Record<SiteLocale, string> = {
     en: `View ${productName} plans, pricing, and checkout details on Ott Subscription Nepal.`,
@@ -403,7 +403,7 @@ export function buildProductMetadata({
     openGraph: {
       title,
       description: resolvedDescription,
-      url: localizedPath,
+      url: absoluteUrl(localizedPath),
       locale: ogLocaleBySiteLocale[resolvedLocale],
       siteName,
       type: "website",

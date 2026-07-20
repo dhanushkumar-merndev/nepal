@@ -9,7 +9,7 @@ import { LenisProvider } from "@/components/site/lenis-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getLocaleFromPathname, stripLocalePrefix } from "@/lib/locale";
-import { absoluteUrl, getSiteUrlObject } from "@/lib/site-url";
+import { absoluteUrl } from "@/lib/site-url";
 import {
   buildBreadcrumbSchema,
   buildFaqPageSchema,
@@ -38,7 +38,7 @@ const notoSansDevanagari = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
-  metadataBase: getSiteUrlObject(),
+  metadataBase: new URL("https://www.ottsubscriptionnepal.shop"),
   title: {
     default: "Ott Subscription Nepal | Premium OTT Subscription Nepal",
     template: "%s | Ott Subscription Nepal",

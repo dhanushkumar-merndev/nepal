@@ -24,6 +24,11 @@ export function ServiceCard({ product }: { product: Product }) {
   const pathname = usePathname() || "/";
   const locale = getLocaleFromPathname(pathname);
   const copy = getSiteCopy(locale);
+  const productDescription = locale === "hi"
+    ? `${product.name} के उपलब्ध प्लान, कीमत, अवधि और स्टॉक की जानकारी देखें।`
+    : locale === "ne"
+      ? `${product.name} का उपलब्ध प्लान, मूल्य, अवधि र स्टक विवरण हेर्नुहोस्।`
+      : product.description;
   const startingPlan = getStartingPlan(product);
   const detailsHref = `/plans/${product.slug}`;
   const cart = useCartStore();
@@ -91,7 +96,15 @@ export function ServiceCard({ product }: { product: Product }) {
           ) : null}
         </div>
         <div className="mt-1 flex items-center justify-center gap-1">
-          <p className="truncate text-center text-[10px] font-medium leading-tight text-[#333]">{product.name}</p>
+          <LocaleLink
+            href={detailsHref}
+            aria-label={`Open ${product.name} details page`}
+            className="truncate text-center text-[10px] font-medium leading-tight text-[#333]"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            {product.name}
+          </LocaleLink>
         </div>
       </div>
       <Card
@@ -129,17 +142,18 @@ export function ServiceCard({ product }: { product: Product }) {
                   {product.is_limited ? <Badge className="bg-amber-50 text-[10px] text-amber-700">{copy.productUi.limited}</Badge> : null}
                 </div>
                 <div className="mt-1.5">
-                  <h3 className="text-base font-bold">{product.name}</h3>
-                  <LocaleLink
-                    href={detailsHref}
-                    aria-label={`Open ${product.name} details page`}
-                    className="sr-only"
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    {product.name} details page
-                  </LocaleLink>
+                  <h3 className="text-base font-bold">
+                    <LocaleLink
+                      href={detailsHref}
+                      aria-label={`Open ${product.name} details page`}
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                    >
+                      {product.name}
+                    </LocaleLink>
+                  </h3>
                 </div>
-                <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#555]">{product.description}</p>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#555]">{productDescription}</p>
                 {startingPlan ? (
                   <div className="mt-1.5">
                     <p className="text-xs text-[#737373]">{copy.productUi.from}</p>

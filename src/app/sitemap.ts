@@ -15,30 +15,25 @@ function sitemapAlternates(route: string) {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
   const products = await getProducts();
-  const homeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] = "daily";
-  const pageFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] = "weekly";
 
   const localizedStaticEntries = staticRoutes.flatMap((route) =>
     locales.map((locale) => ({
       url: absoluteUrl(localizePath(route, locale)),
-      lastModified: now,
-      changeFrequency: route === "/" ? homeFrequency : pageFrequency,
-      priority: locale === defaultLocale && route === "/" ? 1 : route === "/" ? 0.9 : 0.8,
       alternates: sitemapAlternates(route),
     })),
   );
 
-  const productEntries = products.flatMap((product) =>
-    locales.map((locale) => ({
-      url: absoluteUrl(localizePath(`/plans/${product.slug}`, locale)),
-      lastModified: now,
-      changeFrequency: pageFrequency,
-      priority: locale === defaultLocale ? 0.9 : 0.8,
-      alternates: sitemapAlternates(`/plans/${product.slug}`),
-    })),
-  );
+  const productEntries = products
+    .filter((product) => product.is_active && product.slug && !/[/?#]/.test(product.slug))
+    .flatMap((product) => {
+      const route = `/plans/${encodeURIComponent(product.slug)}`;
+
+      return locales.map((locale) => ({
+        url: absoluteUrl(localizePath(route, locale)),
+        alternates: sitemapAlternates(route),
+      }));
+    });
 
   return [...localizedStaticEntries, ...productEntries];
 }

@@ -19,7 +19,7 @@ export const getAiPlanFeatures = cache(async (product: Product, locale: SiteLoca
   if (!plansNeedingFeatures.length) return {} satisfies PlanFeatureMap;
 
   const fallback = Object.fromEntries(
-    plansNeedingFeatures.map((plan) => [plan.id, buildFallbackPlanFeatures(product, plan)]),
+    plansNeedingFeatures.map((plan) => [plan.id, buildFallbackPlanFeatures(product, plan, locale)]),
   ) as PlanFeatureMap;
   const redis = getRedis();
   const cacheKey = planFeaturesCacheKey(product, locale);
@@ -40,11 +40,16 @@ export const getAiPlanFeatures = cache(async (product: Product, locale: SiteLoca
   return featureMap;
 });
 
-export function getDisplayPlanFeatures(product: Product, plan: Plan, generatedFeatures?: PlanFeatureMap) {
+export function getDisplayPlanFeatures(
+  product: Product,
+  plan: Plan,
+  generatedFeatures?: PlanFeatureMap,
+  locale: SiteLocale = defaultLocale,
+) {
   const manualFeatures = normalizedManualFeatures(plan);
   if (generatedFeatures?.[plan.id]) return generatedFeatures[plan.id];
   if (manualFeatures.length) return manualFeatures.slice(0, FEATURE_COUNT);
-  return buildFallbackPlanFeatures(product, plan);
+  return buildFallbackPlanFeatures(product, plan, locale);
 }
 
 function normalizedManualFeatures(plan: Plan) {
@@ -131,8 +136,8 @@ async function generatePlanFeatures(product: Product, plans: Plan[], locale: Sit
 function buildPlanFeaturePrompt(product: Product, plans: Plan[], locale: SiteLocale) {
   const languageInstruction: Record<SiteLocale, string> = {
     en: "Write in English.",
-    hi: "Write in simple Hindi/Hinglish for Nepal users, keeping product and plan names in English.",
-    ne: "Write in Nepali-friendly English for Nepal users, keeping product and plan names in English.",
+    hi: "Write in simple Hindi using Devanagari script for Nepal users; keep only product and plan names in English.",
+    ne: "Write in natural Nepali using Devanagari script; keep only product and plan names in English.",
   };
   const isTopUp = isTopUpProduct(product);
   const categoryGuidance = isTopUp
@@ -232,7 +237,53 @@ function normalizeFeatureList(value: unknown, product?: Product) {
     .slice(0, FEATURE_COUNT);
 }
 
-function buildFallbackPlanFeatures(product: Product, plan: Plan) {
+function buildFallbackPlanFeatures(product: Product, plan: Plan, locale: SiteLocale) {
+  if (locale === "hi") {
+    if (isTopUpProduct(product)) {
+      return [
+        `${plan.name} गेम टॉप-अप विकल्प`,
+        "WhatsApp पर ऑर्डर की पुष्टि",
+        "नेपाल में रिचार्ज सहायता",
+      ];
+    }
+
+    const isEditing = /edit|capcut/i.test(`${product.name} ${product.category}`);
+    return isEditing
+      ? [
+          plan.duration ? `${plan.duration} क्रिएटिव प्लान` : `${product.name} क्रिएटर प्लान`,
+          "WhatsApp पर सेटअप मार्गदर्शन",
+          "नेपाल में क्रिएटर सहायता",
+        ]
+      : [
+          plan.duration ? `${plan.duration} देखने का विकल्प` : `${product.name} ${plan.name} विकल्प`,
+          "WhatsApp checkout की पुष्टि",
+          "नेपाल में नवीनीकरण सहायता",
+        ];
+  }
+
+  if (locale === "ne") {
+    if (isTopUpProduct(product)) {
+      return [
+        `${plan.name} गेम टप-अप विकल्प`,
+        "WhatsApp मा अर्डर पुष्टि",
+        "नेपालमा रिचार्ज सहयोग",
+      ];
+    }
+
+    const isEditing = /edit|capcut/i.test(`${product.name} ${product.category}`);
+    return isEditing
+      ? [
+          plan.duration ? `${plan.duration} क्रिएटिभ प्लान` : `${product.name} क्रिएटर प्लान`,
+          "WhatsApp मा सेटअप मार्गदर्शन",
+          "नेपालमा क्रिएटर सहयोग",
+        ]
+      : [
+          plan.duration ? `${plan.duration} हेर्ने विकल्प` : `${product.name} ${plan.name} विकल्प`,
+          "WhatsApp checkout पुष्टि",
+          "नेपालमा नवीकरण सहयोग",
+        ];
+  }
+
   if (isTopUpProduct(product)) {
     return [
       `${plan.name} game top-up option`,
