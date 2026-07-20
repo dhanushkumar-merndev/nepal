@@ -11,7 +11,7 @@ pnpm install
 pnpm dev
 ```
 
-Useful checks:
+Useful checks
 
 ```bash
 pnpm lint
